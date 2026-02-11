@@ -31,6 +31,44 @@ class FeaturePropertyConstants:
     igStatusRollback = 2
 
 
+class FeatureOperationConstants:
+    """Feature operation type constants"""
+    igFeatureAdd = 0
+    igFeatureCut = 1
+    igFeatureIntersect = 2
+    igFeatureJoin = 3
+
+
+class ExtrudedProtrusion:
+    """Extrusion direction constants"""
+    igRight = 0  # Normal direction
+    igLeft = 1   # Reverse direction
+    igSymmetric = 2  # Symmetric (both directions)
+
+
+class HoleTypeConstants:
+    """Hole type constants"""
+    igRegularHole = 0
+    igCounterboreHole = 1
+    igCountersinkHole = 2
+    igVHole = 3
+
+
+class MateTypeConstants:
+    """Assembly mate type constants"""
+    igMate = 0
+    igPlanarAlign = 1
+    igAxialAlign = 2
+    igInsert = 3
+    igAngle = 4
+    igTangent = 5
+    igCam = 6
+    igGear = 7
+    igParallel = 8
+    igConnect = 9
+    igMatchCoordSys = 10
+
+
 class ViewOrientationConstants:
     """View orientation constants"""
     seIsoView = 1
