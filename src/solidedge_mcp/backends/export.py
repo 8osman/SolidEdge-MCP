@@ -304,6 +304,35 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
+    # Aliases for consistency with MCP tool names
+    def export_step(self, file_path: str) -> Dict[str, Any]:
+        """Alias for export_to_step"""
+        return self.export_to_step(file_path)
+
+    def export_stl(self, file_path: str, quality: str = "Medium") -> Dict[str, Any]:
+        """Alias for export_to_stl"""
+        return self.export_to_stl(file_path, quality)
+
+    def export_iges(self, file_path: str) -> Dict[str, Any]:
+        """Alias for export_to_iges"""
+        return self.export_to_iges(file_path)
+
+    def export_pdf(self, file_path: str) -> Dict[str, Any]:
+        """Alias for export_to_pdf"""
+        return self.export_to_pdf(file_path)
+
+    def export_dxf(self, file_path: str) -> Dict[str, Any]:
+        """Alias for export_to_dxf"""
+        return self.export_to_dxf(file_path)
+
+    def export_parasolid(self, file_path: str) -> Dict[str, Any]:
+        """Alias for export_to_parasolid"""
+        return self.export_to_parasolid(file_path)
+
+    def export_jt(self, file_path: str) -> Dict[str, Any]:
+        """Alias for export_to_jt"""
+        return self.export_to_jt(file_path)
+
 
 class ViewModel:
     """Manages view manipulation"""

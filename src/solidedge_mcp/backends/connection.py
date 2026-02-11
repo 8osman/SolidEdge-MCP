@@ -93,6 +93,10 @@ class SolidEdgeConnection:
                 "traceback": traceback.format_exc()
             }
 
+    def get_application_info(self) -> Dict[str, Any]:
+        """Alias for get_info() for consistency with MCP tool name"""
+        return self.get_info()
+
     def is_connected(self) -> bool:
         """Check if connected to Solid Edge"""
         return self._is_connected and self.application is not None
