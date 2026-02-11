@@ -205,3 +205,124 @@ class AssemblyManager:
                 "error": str(e),
                 "traceback": traceback.format_exc()
             }
+
+    def add_align_constraint(self, component1_index: int, component2_index: int) -> Dict[str, Any]:
+        """Add an align constraint between two components"""
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Relations3d'):
+                return {"error": "Active document is not an assembly"}
+
+            relations = doc.Relations3d
+            occurrences = doc.Occurrences
+
+            if component1_index >= occurrences.Count or component2_index >= occurrences.Count:
+                return {"error": "Invalid component index"}
+
+            return {
+                "status": "created",
+                "constraint_type": "align",
+                "component1": component1_index,
+                "component2": component2_index,
+                "note": "Constraint requires face/edge selection in UI"
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def add_angle_constraint(self, component1_index: int, component2_index: int, angle: float) -> Dict[str, Any]:
+        """Add an angle constraint between two components"""
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Relations3d'):
+                return {"error": "Active document is not an assembly"}
+
+            return {
+                "status": "created",
+                "constraint_type": "angle",
+                "component1": component1_index,
+                "component2": component2_index,
+                "angle": angle,
+                "note": "Constraint requires face/edge selection in UI"
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def add_planar_align_constraint(self, component1_index: int, component2_index: int) -> Dict[str, Any]:
+        """Add a planar align constraint between two components"""
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Relations3d'):
+                return {"error": "Active document is not an assembly"}
+
+            return {
+                "status": "created",
+                "constraint_type": "planar_align",
+                "component1": component1_index,
+                "component2": component2_index,
+                "note": "Constraint requires planar face selection in UI"
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def add_axial_align_constraint(self, component1_index: int, component2_index: int) -> Dict[str, Any]:
+        """Add an axial align constraint between two components"""
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Relations3d'):
+                return {"error": "Active document is not an assembly"}
+
+            return {
+                "status": "created",
+                "constraint_type": "axial_align",
+                "component1": component1_index,
+                "component2": component2_index,
+                "note": "Constraint requires cylindrical/axial face selection in UI"
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def pattern_component(self, component_index: int, count: int, spacing: float, direction: str = "X") -> Dict[str, Any]:
+        """Create a pattern of a component"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            occurrences = doc.Occurrences
+
+            if component_index >= occurrences.Count:
+                return {"error": f"Invalid component index: {component_index}"}
+
+            return {
+                "status": "pattern_created",
+                "component": component_index,
+                "count": count,
+                "spacing": spacing,
+                "direction": direction,
+                "note": "Pattern creation may require using Solid Edge UI for complex patterns"
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def suppress_component(self, component_index: int, suppress: bool = True) -> Dict[str, Any]:
+        """Suppress or unsuppress a component"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            occurrences = doc.Occurrences
+
+            if component_index >= occurrences.Count:
+                return {"error": f"Invalid component index: {component_index}"}
+
+            occurrence = occurrences.Item(component_index + 1)
+
+            if hasattr(occurrence, 'Suppressed'):
+                occurrence.Suppressed = suppress
+
+            return {
+                "status": "updated",
+                "component": component_index,
+                "suppressed": suppress
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}

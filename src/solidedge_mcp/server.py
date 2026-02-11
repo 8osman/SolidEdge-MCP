@@ -244,6 +244,58 @@ def draw_polygon(center_x: float, center_y: float, radius: float, sides: int) ->
 
 
 @mcp.tool()
+def draw_ellipse(
+    center_x: float,
+    center_y: float,
+    major_radius: float,
+    minor_radius: float,
+    angle: float = 0.0
+) -> dict:
+    """
+    Draw an ellipse in the active sketch.
+
+    Args:
+        center_x, center_y: Ellipse center coordinates (meters)
+        major_radius: Major axis radius (meters)
+        minor_radius: Minor axis radius (meters)
+        angle: Rotation angle in degrees (default 0)
+
+    Returns:
+        Ellipse creation status
+    """
+    return sketch_manager.draw_ellipse(center_x, center_y, major_radius, minor_radius, angle)
+
+
+@mcp.tool()
+def draw_spline(points: list) -> dict:
+    """
+    Draw a B-spline curve through a list of points.
+
+    Args:
+        points: List of [x, y] coordinate pairs, e.g., [[0, 0], [1, 1], [2, 0]]
+
+    Returns:
+        Spline creation status
+    """
+    return sketch_manager.draw_spline(points)
+
+
+@mcp.tool()
+def add_constraint(constraint_type: str, elements: list) -> dict:
+    """
+    Add a geometric constraint to sketch elements.
+
+    Args:
+        constraint_type: Type of constraint (e.g., 'Horizontal', 'Vertical', 'Parallel', 'Equal')
+        elements: List of sketch element references
+
+    Returns:
+        Constraint creation status
+    """
+    return sketch_manager.add_constraint(constraint_type, elements)
+
+
+@mcp.tool()
 def close_sketch() -> dict:
     """
     Close/finish the active sketch.
@@ -347,6 +399,34 @@ def create_revolve_thin_wall(angle: float, wall_thickness: float) -> dict:
         Thin-wall revolve creation status
     """
     return feature_manager.create_revolve_thin_wall(angle, wall_thickness)
+
+
+@mcp.tool()
+def create_revolve_sync(angle: float) -> dict:
+    """
+    Create a synchronous revolve feature.
+
+    Args:
+        angle: Revolution angle in degrees
+
+    Returns:
+        Synchronous revolve creation status
+    """
+    return feature_manager.create_revolve_sync(angle)
+
+
+@mcp.tool()
+def create_revolve_finite_sync(angle: float) -> dict:
+    """
+    Create a finite synchronous revolve feature.
+
+    Args:
+        angle: Revolution angle in degrees
+
+    Returns:
+        Finite synchronous revolve creation status
+    """
+    return feature_manager.create_revolve_finite_sync(angle)
 
 
 # ============================================================================
@@ -553,6 +633,70 @@ def create_helix(
     return feature_manager.create_helix(pitch, height, revolutions, direction)
 
 
+@mcp.tool()
+def create_helix_sync(
+    pitch: float,
+    height: float,
+    revolutions: Optional[float] = None
+) -> dict:
+    """
+    Create a synchronous helical feature.
+
+    Args:
+        pitch: Distance between coils in meters
+        height: Total height of helix in meters
+        revolutions: Number of turns (optional)
+
+    Returns:
+        Synchronous helix creation status
+    """
+    return feature_manager.create_helix_sync(pitch, height, revolutions)
+
+
+@mcp.tool()
+def create_helix_thin_wall(
+    pitch: float,
+    height: float,
+    wall_thickness: float,
+    revolutions: Optional[float] = None
+) -> dict:
+    """
+    Create a thin-walled helical feature.
+
+    Args:
+        pitch: Distance between coils in meters
+        height: Total height of helix in meters
+        wall_thickness: Wall thickness in meters
+        revolutions: Number of turns (optional)
+
+    Returns:
+        Thin-wall helix creation status
+    """
+    return feature_manager.create_helix_thin_wall(pitch, height, wall_thickness, revolutions)
+
+
+@mcp.tool()
+def create_helix_sync_thin_wall(
+    pitch: float,
+    height: float,
+    wall_thickness: float,
+    revolutions: Optional[float] = None
+) -> dict:
+    """
+    Create a synchronous thin-walled helical feature.
+
+    Args:
+        pitch: Distance between coils in meters
+        height: Total height of helix in meters
+        wall_thickness: Wall thickness in meters
+        revolutions: Number of turns (optional)
+
+    Returns:
+        Synchronous thin-wall helix creation status
+    """
+    return feature_manager.create_helix_sync_thin_wall(pitch, height, wall_thickness, revolutions)
+
+
 # ============================================================================
 # SHEET METAL FEATURES
 # ============================================================================
@@ -592,6 +736,94 @@ def create_base_tab(thickness: float, width: Optional[float] = None) -> dict:
     return feature_manager.create_base_tab(thickness, width)
 
 
+@mcp.tool()
+def create_lofted_flange(thickness: float) -> dict:
+    """
+    Create a lofted flange (sheet metal).
+
+    Args:
+        thickness: Material thickness in meters
+
+    Returns:
+        Lofted flange creation status
+    """
+    return feature_manager.create_lofted_flange(thickness)
+
+
+@mcp.tool()
+def create_web_network() -> dict:
+    """
+    Create a web network (sheet metal).
+
+    Returns:
+        Web network creation status
+    """
+    return feature_manager.create_web_network()
+
+
+@mcp.tool()
+def create_base_contour_flange_advanced(
+    thickness: float,
+    bend_radius: float,
+    relief_type: str = "Default"
+) -> dict:
+    """
+    Create base contour flange with bend deduction or bend allowance (advanced sheet metal).
+
+    Args:
+        thickness: Material thickness (meters)
+        bend_radius: Bend radius (meters)
+        relief_type: Relief type - 'Default', 'Rectangular', 'Obround'
+
+    Returns:
+        Base contour flange creation status
+    """
+    return feature_manager.create_base_contour_flange_advanced(thickness, bend_radius, relief_type)
+
+
+@mcp.tool()
+def create_base_tab_multi_profile(thickness: float) -> dict:
+    """
+    Create base tab with multiple profiles (sheet metal).
+
+    Args:
+        thickness: Material thickness (meters)
+
+    Returns:
+        Base tab creation status
+    """
+    return feature_manager.create_base_tab_multi_profile(thickness)
+
+
+@mcp.tool()
+def create_lofted_flange_advanced(thickness: float, bend_radius: float) -> dict:
+    """
+    Create lofted flange with bend deduction or bend allowance (advanced sheet metal).
+
+    Args:
+        thickness: Material thickness (meters)
+        bend_radius: Bend radius (meters)
+
+    Returns:
+        Lofted flange creation status
+    """
+    return feature_manager.create_lofted_flange_advanced(thickness, bend_radius)
+
+
+@mcp.tool()
+def create_lofted_flange_ex(thickness: float) -> dict:
+    """
+    Create extended lofted flange (sheet metal).
+
+    Args:
+        thickness: Material thickness (meters)
+
+    Returns:
+        Lofted flange creation status
+    """
+    return feature_manager.create_lofted_flange_ex(thickness)
+
+
 # ============================================================================
 # BODY OPERATIONS
 # ============================================================================
@@ -625,6 +857,53 @@ def thicken_surface(thickness: float, direction: str = "Both") -> dict:
     return feature_manager.thicken_surface(thickness, direction)
 
 
+@mcp.tool()
+def add_body_by_mesh() -> dict:
+    """
+    Add a body by mesh facets.
+
+    Returns:
+        Body by mesh creation status
+    """
+    return feature_manager.add_body_by_mesh()
+
+
+@mcp.tool()
+def add_body_feature() -> dict:
+    """
+    Add a body feature.
+
+    Returns:
+        Body feature creation status
+    """
+    return feature_manager.add_body_feature()
+
+
+@mcp.tool()
+def add_by_construction() -> dict:
+    """
+    Add a construction body.
+
+    Returns:
+        Construction body creation status
+    """
+    return feature_manager.add_by_construction()
+
+
+@mcp.tool()
+def add_body_by_tag(tag: str) -> dict:
+    """
+    Add a body by tag reference.
+
+    Args:
+        tag: Tag identifier for the body
+
+    Returns:
+        Body by tag creation status
+    """
+    return feature_manager.add_body_by_tag(tag)
+
+
 # ============================================================================
 # SIMPLIFICATION FEATURES
 # ============================================================================
@@ -649,6 +928,28 @@ def simplify_enclosure() -> dict:
         Simplification status
     """
     return feature_manager.simplify_enclosure()
+
+
+@mcp.tool()
+def simplify_duplicate() -> dict:
+    """
+    Create a simplified duplicate of the model.
+
+    Returns:
+        Simplification status
+    """
+    return feature_manager.simplify_duplicate()
+
+
+@mcp.tool()
+def local_simplify_enclosure() -> dict:
+    """
+    Create a local simplified enclosure.
+
+    Returns:
+        Simplification status
+    """
+    return feature_manager.local_simplify_enclosure()
 
 
 # ============================================================================
@@ -903,6 +1204,20 @@ def zoom_to_selection() -> dict:
     return view_manager.zoom_to_selection()
 
 
+@mcp.tool()
+def set_display_mode(mode: str) -> dict:
+    """
+    Set the display mode for the active view.
+
+    Args:
+        mode: Display mode - 'Shaded', 'ShadedWithEdges', 'Wireframe', 'HiddenEdgesVisible'
+
+    Returns:
+        Display mode setting status
+    """
+    return view_manager.set_display_mode(mode)
+
+
 # ============================================================================
 # ASSEMBLY TOOLS
 # ============================================================================
@@ -980,6 +1295,99 @@ def update_component_position(component_index: int, x: float, y: float, z: float
     Note: May require adjusting assembly relationships
     """
     return assembly_manager.update_component_position(component_index, x, y, z)
+
+
+@mcp.tool()
+def add_align_constraint(component1_index: int, component2_index: int) -> dict:
+    """
+    Add an align constraint between two components.
+
+    Args:
+        component1_index: Index of first component (0-based)
+        component2_index: Index of second component (0-based)
+
+    Returns:
+        Constraint creation status
+    """
+    return assembly_manager.add_align_constraint(component1_index, component2_index)
+
+
+@mcp.tool()
+def add_angle_constraint(component1_index: int, component2_index: int, angle: float) -> dict:
+    """
+    Add an angle constraint between two components.
+
+    Args:
+        component1_index: Index of first component (0-based)
+        component2_index: Index of second component (0-based)
+        angle: Angle in degrees
+
+    Returns:
+        Constraint creation status
+    """
+    return assembly_manager.add_angle_constraint(component1_index, component2_index, angle)
+
+
+@mcp.tool()
+def add_planar_align_constraint(component1_index: int, component2_index: int) -> dict:
+    """
+    Add a planar align constraint between two components.
+
+    Args:
+        component1_index: Index of first component (0-based)
+        component2_index: Index of second component (0-based)
+
+    Returns:
+        Constraint creation status
+    """
+    return assembly_manager.add_planar_align_constraint(component1_index, component2_index)
+
+
+@mcp.tool()
+def add_axial_align_constraint(component1_index: int, component2_index: int) -> dict:
+    """
+    Add an axial align constraint between two components.
+
+    Args:
+        component1_index: Index of first component (0-based)
+        component2_index: Index of second component (0-based)
+
+    Returns:
+        Constraint creation status
+    """
+    return assembly_manager.add_axial_align_constraint(component1_index, component2_index)
+
+
+@mcp.tool()
+def pattern_component(component_index: int, count: int, spacing: float, direction: str = "X") -> dict:
+    """
+    Create a pattern of a component in the assembly.
+
+    Args:
+        component_index: Index of the component to pattern (0-based)
+        count: Number of instances in the pattern
+        spacing: Distance between instances (meters)
+        direction: Pattern direction - 'X', 'Y', or 'Z'
+
+    Returns:
+        Pattern creation status
+    """
+    return assembly_manager.pattern_component(component_index, count, spacing, direction)
+
+
+@mcp.tool()
+def suppress_component(component_index: int, suppress: bool = True) -> dict:
+    """
+    Suppress or unsuppress a component in the assembly.
+
+    Args:
+        component_index: Index of the component (0-based)
+        suppress: True to suppress, False to unsuppress
+
+    Returns:
+        Component suppression status
+    """
+    return assembly_manager.suppress_component(component_index, suppress)
 
 
 # ============================================================================

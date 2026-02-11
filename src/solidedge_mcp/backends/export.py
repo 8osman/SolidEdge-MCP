@@ -416,3 +416,56 @@ class ViewModel:
                 "error": str(e),
                 "traceback": traceback.format_exc()
             }
+
+    def set_display_mode(self, mode: str) -> Dict[str, Any]:
+        """
+        Set the display mode for the active view.
+
+        Args:
+            mode: Display mode - 'Shaded', 'ShadedWithEdges', 'Wireframe', 'HiddenEdgesVisible'
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Windows') or doc.Windows.Count == 0:
+                return {"error": "No window available"}
+
+            window = doc.Windows.Item(1)
+            view_obj = window.View if hasattr(window, 'View') else None
+
+            if not view_obj:
+                return {"error": "Cannot access view object"}
+
+            # Map mode names to display style values
+            # Note: Actual constants may vary by Solid Edge version
+            mode_map = {
+                "Shaded": 1,
+                "ShadedWithEdges": 2,
+                "Wireframe": 3,
+                "HiddenEdgesVisible": 4
+            }
+
+            mode_value = mode_map.get(mode)
+            if mode_value is None:
+                return {"error": f"Invalid mode: {mode}. Use 'Shaded', 'ShadedWithEdges', 'Wireframe', or 'HiddenEdgesVisible'"}
+
+            # Set display style
+            if hasattr(view_obj, 'Style'):
+                view_obj.Style = mode_value
+                return {
+                    "status": "display_mode_set",
+                    "mode": mode
+                }
+            else:
+                return {
+                    "error": "Display mode not accessible",
+                    "note": "Use View > Display Style in Solid Edge UI"
+                }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }

@@ -238,6 +238,94 @@ class SketchManager:
                 "traceback": traceback.format_exc()
             }
 
+    def draw_ellipse(self, center_x: float, center_y: float,
+                     major_radius: float, minor_radius: float, angle: float = 0.0) -> Dict[str, Any]:
+        """
+        Draw an ellipse in the active sketch.
+
+        Args:
+            center_x, center_y: Ellipse center coordinates
+            major_radius: Major axis radius
+            minor_radius: Minor axis radius
+            angle: Rotation angle in degrees (default 0)
+        """
+        try:
+            if not self.active_profile:
+                return {"error": "No active sketch. Call create_sketch() first"}
+
+            # Get Ellipses2d collection
+            ellipses = self.active_profile.Ellipses2d
+
+            # Convert angle to radians
+            angle_rad = math.radians(angle)
+
+            # Add ellipse by center and radii
+            ellipse = ellipses.AddByCenterRadii(
+                center_x, center_y,
+                major_radius, minor_radius,
+                angle_rad
+            )
+
+            return {
+                "status": "created",
+                "type": "ellipse",
+                "center": [center_x, center_y],
+                "major_radius": major_radius,
+                "minor_radius": minor_radius,
+                "angle": angle
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def draw_spline(self, points: list) -> Dict[str, Any]:
+        """
+        Draw a B-spline curve through a list of points.
+
+        Args:
+            points: List of [x, y] coordinate pairs
+
+        Returns:
+            Dict with status and spline info
+        """
+        try:
+            if not self.active_profile:
+                return {"error": "No active sketch. Call create_sketch() first"}
+
+            if len(points) < 2:
+                return {"error": "Spline requires at least 2 points"}
+
+            # Get BSplineCurves2d collection
+            splines = self.active_profile.BSplineCurves2d
+
+            # Convert points list to flat array format expected by COM
+            point_array = []
+            for point in points:
+                if len(point) != 2:
+                    return {"error": f"Invalid point format: {point}. Expected [x, y]"}
+                point_array.extend(point)
+
+            # Add spline by points
+            spline = splines.AddByPoints(
+                Order=3,  # Cubic spline
+                NumPoints=len(points),
+                PointArray=tuple(point_array)
+            )
+
+            return {
+                "status": "created",
+                "type": "spline",
+                "points": points,
+                "num_points": len(points)
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     def add_constraint(self, constraint_type: str, elements: list) -> Dict[str, Any]:
         """Add a geometric constraint to sketch elements"""
         try:

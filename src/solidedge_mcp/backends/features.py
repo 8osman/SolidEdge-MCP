@@ -1160,3 +1160,461 @@ class FeatureManager:
                 "error": str(e),
                 "traceback": traceback.format_exc()
             }
+
+    def simplify_duplicate(self) -> Dict[str, Any]:
+        """Create simplified duplicate"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            model = models.AddSimplifyDuplicate()
+
+            return {
+                "status": "created",
+                "type": "simplify_duplicate"
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def local_simplify_enclosure(self) -> Dict[str, Any]:
+        """Create local simplified enclosure"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            model = models.AddLocalSimplifyEnclosure()
+
+            return {
+                "status": "created",
+                "type": "local_simplify_enclosure"
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # ADDITIONAL REVOLVE VARIANTS
+    # =================================================================
+
+    def create_revolve_sync(self, angle: float) -> Dict[str, Any]:
+        """Create synchronous revolve feature"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+
+            if not profile:
+                return {"error": "No active sketch profile"}
+
+            models = doc.Models
+
+            import math
+            angle_rad = math.radians(angle)
+
+            model = models.AddRevolvedProtrusionSync(
+                NumberOfProfiles=1,
+                ProfileArray=(profile,),
+                AxisOfRevolution=None,
+                Angle=angle_rad
+            )
+
+            return {
+                "status": "created",
+                "type": "revolve_sync",
+                "angle": angle
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def create_revolve_finite_sync(self, angle: float) -> Dict[str, Any]:
+        """Create finite synchronous revolve feature"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+
+            if not profile:
+                return {"error": "No active sketch profile"}
+
+            models = doc.Models
+
+            import math
+            angle_rad = math.radians(angle)
+
+            model = models.AddFiniteRevolvedProtrusionSync(
+                NumberOfProfiles=1,
+                ProfileArray=(profile,),
+                AxisOfRevolution=None,
+                Angle=angle_rad
+            )
+
+            return {
+                "status": "created",
+                "type": "revolve_finite_sync",
+                "angle": angle
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # ADDITIONAL HELIX VARIANTS
+    # =================================================================
+
+    def create_helix_sync(self, pitch: float, height: float, revolutions: float = None) -> Dict[str, Any]:
+        """Create synchronous helix feature"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+
+            if not profile:
+                return {"error": "No active sketch profile"}
+
+            models = doc.Models
+
+            if revolutions is None:
+                revolutions = height / pitch
+
+            model = models.AddFiniteBaseHelixSync(
+                NumberOfProfiles=1,
+                ProfileArray=(profile,),
+                Pitch=pitch,
+                Height=height,
+                Revolutions=revolutions
+            )
+
+            return {
+                "status": "created",
+                "type": "helix_sync",
+                "pitch": pitch,
+                "height": height,
+                "revolutions": revolutions
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def create_helix_thin_wall(
+        self,
+        pitch: float,
+        height: float,
+        wall_thickness: float,
+        revolutions: float = None
+    ) -> Dict[str, Any]:
+        """Create thin-walled helix feature"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+
+            if not profile:
+                return {"error": "No active sketch profile"}
+
+            models = doc.Models
+
+            if revolutions is None:
+                revolutions = height / pitch
+
+            model = models.AddFiniteBaseHelixWithThinWall(
+                NumberOfProfiles=1,
+                ProfileArray=(profile,),
+                Pitch=pitch,
+                Height=height,
+                Revolutions=revolutions,
+                WallThickness=wall_thickness
+            )
+
+            return {
+                "status": "created",
+                "type": "helix_thin_wall",
+                "pitch": pitch,
+                "height": height,
+                "wall_thickness": wall_thickness
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def create_helix_sync_thin_wall(
+        self,
+        pitch: float,
+        height: float,
+        wall_thickness: float,
+        revolutions: float = None
+    ) -> Dict[str, Any]:
+        """Create synchronous thin-walled helix feature"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+
+            if not profile:
+                return {"error": "No active sketch profile"}
+
+            models = doc.Models
+
+            if revolutions is None:
+                revolutions = height / pitch
+
+            model = models.AddFiniteBaseHelixSyncWithThinWall(
+                NumberOfProfiles=1,
+                ProfileArray=(profile,),
+                Pitch=pitch,
+                Height=height,
+                Revolutions=revolutions,
+                WallThickness=wall_thickness
+            )
+
+            return {
+                "status": "created",
+                "type": "helix_sync_thin_wall",
+                "pitch": pitch,
+                "height": height,
+                "wall_thickness": wall_thickness
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # ADDITIONAL SHEET METAL FEATURES
+    # =================================================================
+
+    def create_lofted_flange(self, thickness: float) -> Dict[str, Any]:
+        """Create lofted flange (sheet metal)"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            model = models.AddLoftedFlange(Thickness=thickness)
+
+            return {
+                "status": "created",
+                "type": "lofted_flange",
+                "thickness": thickness
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def create_web_network(self) -> Dict[str, Any]:
+        """Create web network (sheet metal)"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            model = models.AddWebNetwork()
+
+            return {
+                "status": "created",
+                "type": "web_network"
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # ADDITIONAL BODY OPERATIONS
+    # =================================================================
+
+    def add_body_by_mesh(self) -> Dict[str, Any]:
+        """Add body by mesh facets"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            model = models.AddBodyByMeshFacets()
+
+            return {
+                "status": "created",
+                "type": "body_by_mesh"
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def add_body_feature(self) -> Dict[str, Any]:
+        """Add body feature"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            model = models.AddBodyFeature()
+
+            return {
+                "status": "created",
+                "type": "body_feature"
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def add_by_construction(self) -> Dict[str, Any]:
+        """Add construction body"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            model = models.AddByConstruction()
+
+            return {
+                "status": "created",
+                "type": "construction_body"
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def add_body_by_tag(self, tag: str) -> Dict[str, Any]:
+        """Add body by tag reference"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            model = models.AddBodyByTag(tag)
+
+            return {
+                "status": "created",
+                "type": "body_by_tag",
+                "tag": tag
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # ADVANCED SHEET METAL FEATURES
+    # =================================================================
+
+    def create_base_contour_flange_advanced(
+        self,
+        thickness: float,
+        bend_radius: float,
+        relief_type: str = "Default"
+    ) -> Dict[str, Any]:
+        """Create base contour flange with bend deduction or bend allowance"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+
+            if not profile:
+                return {"error": "No active sketch profile"}
+
+            models = doc.Models
+
+            # AddBaseContourFlangeByBendDeductionOrBendAllowance
+            model = models.AddBaseContourFlangeByBendDeductionOrBendAllowance(
+                Profile=profile,
+                NormalSide=1,
+                Thickness=thickness,
+                BendRadius=bend_radius
+            )
+
+            return {
+                "status": "created",
+                "type": "base_contour_flange_advanced",
+                "thickness": thickness,
+                "bend_radius": bend_radius
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def create_base_tab_multi_profile(self, thickness: float) -> Dict[str, Any]:
+        """Create base tab with multiple profiles"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+
+            if not profile:
+                return {"error": "No active sketch profile"}
+
+            models = doc.Models
+
+            # AddBaseTabWithMultipleProfiles
+            model = models.AddBaseTabWithMultipleProfiles(
+                NumberOfProfiles=1,
+                ProfileArray=(profile,),
+                Thickness=thickness
+            )
+
+            return {
+                "status": "created",
+                "type": "base_tab_multi_profile",
+                "thickness": thickness
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def create_lofted_flange_advanced(self, thickness: float, bend_radius: float) -> Dict[str, Any]:
+        """Create lofted flange with bend deduction or bend allowance"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            # AddLoftedFlangeByBendDeductionOrBendAllowance
+            model = models.AddLoftedFlangeByBendDeductionOrBendAllowance(
+                Thickness=thickness,
+                BendRadius=bend_radius
+            )
+
+            return {
+                "status": "created",
+                "type": "lofted_flange_advanced",
+                "thickness": thickness,
+                "bend_radius": bend_radius
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def create_lofted_flange_ex(self, thickness: float) -> Dict[str, Any]:
+        """Create extended lofted flange"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            # AddLoftedFlangeEx
+            model = models.AddLoftedFlangeEx(Thickness=thickness)
+
+            return {
+                "status": "created",
+                "type": "lofted_flange_ex",
+                "thickness": thickness
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
