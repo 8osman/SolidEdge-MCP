@@ -365,8 +365,10 @@ class SketchManager:
                 "sketch_id": self.active_sketch.Name if hasattr(self.active_sketch, 'Name') else "sketch"
             }
 
-            self.active_sketch = None
-            self.active_profile = None
+            # NOTE: We keep active_profile valid after closing so it can be used
+            # by feature operations (extrude, revolve, etc.). The profile object
+            # remains valid even after End() is called.
+            # Only clear it when a new sketch is created.
 
             return result
         except Exception as e:
