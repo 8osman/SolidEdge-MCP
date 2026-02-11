@@ -1,0 +1,99 @@
+{
+  "Models": {
+    "exists": true,
+    "count": 0,
+    "add_methods": [
+      "AddAutoSimplify",
+      "AddBaseContourFlange",
+      "AddBaseContourFlangeByBendDeductionOrBendAllowance",
+      "AddBaseTab",
+      "AddBaseTabWithMultipleProfiles",
+      "AddBody",
+      "AddBodyByMeshFacets",
+      "AddBodyByTag",
+      "AddBodyFeature",
+      "AddBoxByCenter",
+      "AddBoxByThreePoints",
+      "AddBoxByTwoPoints",
+      "AddByConstruction",
+      "AddCopiedPart",
+      "AddCopiedPartEx",
+      "AddCopiedPartWithMatchedCoordinateSystems",
+      "AddCylinderByCenterAndRadius",
+      "AddExtrudedProtrusion",
+      "AddExtrudedProtrusionWithThinWall",
+      "AddFiniteBaseHelix",
+      "AddFiniteBaseHelixSync",
+      "AddFiniteBaseHelixSyncWithThinWall",
+      "AddFiniteBaseHelixWithThinWall",
+      "AddFiniteExtrudedProtrusion",
+      "AddFiniteRevolvedProtrusion",
+      "AddFiniteRevolvedProtrusionSync",
+      "AddLocalSimplifyEnclosure",
+      "AddLoftedFlange",
+      "AddLoftedFlangeByBendDeductionOrBendAllowance",
+      "AddLoftedFlangeEx",
+      "AddLoftedProtrusion",
+      "AddLoftedProtrusionWithThinWall",
+      "AddRef",
+      "AddRevolvedProtrusion",
+      "AddRevolvedProtrusionSync",
+      "AddRevolvedProtrusionWithThinWall",
+      "AddSimplifyDuplicate",
+      "AddSimplifyEnclosure",
+      "AddSphereByCenterAndRadius",
+      "AddSweptProtrusion",
+      "AddSweptProtrusionWithThinWall",
+      "AddThickenFeature",
+      "AddWebNetwork"
+    ]
+  },
+  "ProfileSets": {
+    "exists": true,
+    "count": 0,
+    "add_methods": [
+      "Add",
+      "AddRef"
+    ]
+  },
+  "Constructions": {
+    "exists": true,
+    "count": 0,
+    "add_methods": [
+      "AddRef"
+    ]
+  },
+  "RefPlanes": {
+    "exists": true,
+    "count": 3,
+    "add_methods": [
+      "AddAngularByAngle",
+      "AddBy3Points",
+      "AddMidPlane",
+      "AddNormalToCurve",
+      "AddNormalToCurveAtArcLengthRatio",
+      "AddNormalToCurveAtDistance",
+      "AddNormalToCurveAtDistanceAlongCurve",
+      "AddNormalToCurveAtKeyPoint",
+      "AddParallelByDistance",
+      "AddParallelByTangent",
+      "AddRef",
+      "AddTangentToCurvedSurfaceAtKeyPoint",
+      "AddTangentToCylinderOrConeAtAngle",
+      "AddTangentToCylinderOrConeAtKeyPoint"
+    ]
+  },
+  "Sketches": {
+    "exists": true,
+    "count": 0,
+    "add_methods": [
+      "Add",
+      "AddByMirror",
+      "AddByPlanarFace",
+      "AddByPlane",
+      "AddByPlaneGeometry",
+      "AddByTearOff",
+      "AddRef"
+    ]
+  }
+}
