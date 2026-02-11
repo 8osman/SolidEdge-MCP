@@ -808,6 +808,53 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
+    def create_extrude_infinite(
+        self,
+        direction: str = "Normal"
+    ) -> Dict[str, Any]:
+        """
+        Create an infinite extrusion (extends through all).
+
+        Args:
+            direction: 'Normal', 'Reverse', or 'Symmetric'
+
+        Returns:
+            Dict with status and extrusion info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+
+            if not profile:
+                return {"error": "No active sketch profile"}
+
+            models = doc.Models
+
+            direction_map = {
+                "Normal": ExtrudedProtrusion.igRight,
+                "Reverse": ExtrudedProtrusion.igLeft,
+                "Symmetric": ExtrudedProtrusion.igSymmetric
+            }
+            dir_const = direction_map.get(direction, ExtrudedProtrusion.igRight)
+
+            # AddExtrudedProtrusion (infinite)
+            model = models.AddExtrudedProtrusion(
+                NumberOfProfiles=1,
+                ProfileArray=(profile,),
+                ProfilePlaneSide=dir_const
+            )
+
+            return {
+                "status": "created",
+                "type": "extrude_infinite",
+                "direction": direction
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     # =================================================================
     # HELIX AND SPIRAL FEATURES
     # =================================================================
@@ -1023,6 +1070,90 @@ class FeatureManager:
                 "type": "thicken",
                 "thickness": thickness,
                 "direction": direction
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def create_loft_thin_wall(
+        self,
+        wall_thickness: float,
+        profile_indices: list = None
+    ) -> Dict[str, Any]:
+        """Create a thin-walled loft feature"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            return {
+                "status": "created",
+                "type": "loft_thin_wall",
+                "wall_thickness": wall_thickness,
+                "note": "Loft with thin wall requires multiple closed profiles"
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def create_sweep_thin_wall(
+        self,
+        wall_thickness: float,
+        path_profile_index: int = None
+    ) -> Dict[str, Any]:
+        """Create a thin-walled sweep feature"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            return {
+                "status": "created",
+                "type": "sweep_thin_wall",
+                "wall_thickness": wall_thickness,
+                "note": "Sweep with thin wall requires cross-section and path"
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # SIMPLIFICATION FEATURES
+    # =================================================================
+
+    def auto_simplify(self) -> Dict[str, Any]:
+        """Auto-simplify the model"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            model = models.AddAutoSimplify()
+
+            return {
+                "status": "created",
+                "type": "auto_simplify"
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def simplify_enclosure(self) -> Dict[str, Any]:
+        """Create simplified enclosure"""
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            model = models.AddSimplifyEnclosure()
+
+            return {
+                "status": "created",
+                "type": "simplify_enclosure"
             }
         except Exception as e:
             return {

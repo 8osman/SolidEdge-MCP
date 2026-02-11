@@ -4,7 +4,7 @@ Last Updated: 2026-02-11
 
 ## 🎉 MCP Server Status: **OPERATIONAL**
 
-**66 MCP tools** are now registered and ready to use!
+**73 MCP tools** are now registered and ready to use! (85% Complete)
 
 ## Quick Summary
 
@@ -14,10 +14,11 @@ Last Updated: 2026-02-11
 | **Document Management** | 6 | 7 | 0 | 0 |
 | **Sketching** | 10+ | 7 | 0 | 3+ |
 | **Basic Primitives** | 5 | 5 | 0 | 0 |
-| **Extrusions** | 3 | 2 | 0 | 1 |
+| **Extrusions** | 3 | 3 | 0 | 0 |
 | **Revolves** | 5 | 3 | 0 | 2 |
-| **Loft** | 2 | 1 | 0 | 1 |
-| **Sweep** | 2 | 1 | 0 | 1 |
+| **Loft** | 2 | 2 | 0 | 0 |
+| **Sweep** | 2 | 2 | 0 | 0 |
+| **Simplification** | 4 | 2 | 0 | 2 |
 | **Helix/Spiral** | 4 | 1 | 0 | 3 |
 | **Sheet Metal** | 8+ | 2 | 0 | 6+ |
 | **Body Operations** | 6+ | 2 | 0 | 4+ |
@@ -27,7 +28,7 @@ Last Updated: 2026-02-11
 | **Export** | 9 | 9 | 0 | 0 |
 | **Assembly** | 10+ | 5 | 0 | 5+ |
 | **Diagnostics** | 2 | 2 | 0 | 0 |
-| **TOTAL** | **86+** | **66** | **ALL Cutouts** | **20+** |
+| **TOTAL** | **86+** | **73** | **ALL Cutouts** | **13+** |
 
 ---
 

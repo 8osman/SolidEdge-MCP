@@ -306,6 +306,20 @@ def create_extrude_thin_wall(distance: float, wall_thickness: float, direction: 
 
 
 @mcp.tool()
+def create_extrude_infinite(direction: str = "Normal") -> dict:
+    """
+    Create an infinite extrusion (extends through all).
+
+    Args:
+        direction: 'Normal', 'Reverse', or 'Symmetric'
+
+    Returns:
+        Infinite extrusion creation status
+    """
+    return feature_manager.create_extrude_infinite(direction)
+
+
+@mcp.tool()
 def create_revolve_finite(angle: float, axis_type: str = "CenterLine") -> dict:
     """
     Create a finite revolve feature.
@@ -483,6 +497,36 @@ def create_sweep(path_profile_index: Optional[int] = None) -> dict:
     return feature_manager.create_sweep(path_profile_index)
 
 
+@mcp.tool()
+def create_loft_thin_wall(wall_thickness: float, profile_indices: Optional[list] = None) -> dict:
+    """
+    Create a thin-walled loft feature.
+
+    Args:
+        wall_thickness: Wall thickness in meters
+        profile_indices: List of profile indices (optional)
+
+    Returns:
+        Thin-wall loft creation status
+    """
+    return feature_manager.create_loft_thin_wall(wall_thickness, profile_indices)
+
+
+@mcp.tool()
+def create_sweep_thin_wall(wall_thickness: float, path_profile_index: Optional[int] = None) -> dict:
+    """
+    Create a thin-walled sweep feature.
+
+    Args:
+        wall_thickness: Wall thickness in meters
+        path_profile_index: Index of path profile (optional)
+
+    Returns:
+        Thin-wall sweep creation status
+    """
+    return feature_manager.create_sweep_thin_wall(wall_thickness, path_profile_index)
+
+
 # ============================================================================
 # HELIX & SPIRAL FEATURES
 # ============================================================================
@@ -579,6 +623,32 @@ def thicken_surface(thickness: float, direction: str = "Both") -> dict:
         Thicken operation status
     """
     return feature_manager.thicken_surface(thickness, direction)
+
+
+# ============================================================================
+# SIMPLIFICATION FEATURES
+# ============================================================================
+
+@mcp.tool()
+def auto_simplify() -> dict:
+    """
+    Auto-simplify the model (reduce complexity).
+
+    Returns:
+        Simplification status
+    """
+    return feature_manager.auto_simplify()
+
+
+@mcp.tool()
+def simplify_enclosure() -> dict:
+    """
+    Create a simplified enclosure around the model.
+
+    Returns:
+        Simplification status
+    """
+    return feature_manager.simplify_enclosure()
 
 
 # ============================================================================
