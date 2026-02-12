@@ -126,19 +126,20 @@ class FeatureManager:
             angle_rad = math.radians(angle)
 
             # Create the revolve
+            # AddRevolvedProtrusion takes positional args: NumProfiles, ProfileArray, AxisOfRevolution, Angle
             if models.Count == 0 or operation == "Add":
                 model = models.AddRevolvedProtrusion(
-                    NumberOfProfiles=1,
-                    ProfileArray=(profile,),
-                    AxisOfRevolution=None,  # Will use default axis
-                    Angle=angle_rad
+                    1,  # NumberOfProfiles
+                    (profile,),  # ProfileArray
+                    None,  # AxisOfRevolution (None = use default from sketch)
+                    angle_rad  # Angle
                 )
             elif operation == "Cut":
                 model = models.AddRevolvedCutout(
-                    NumberOfProfiles=1,
-                    ProfileArray=(profile,),
-                    AxisOfRevolution=None,
-                    Angle=angle_rad
+                    1,  # NumberOfProfiles
+                    (profile,),  # ProfileArray
+                    None,  # AxisOfRevolution
+                    angle_rad  # Angle
                 )
             else:
                 return {"error": f"Invalid operation: {operation}"}
@@ -741,11 +742,11 @@ class FeatureManager:
             import math
             angle_rad = math.radians(angle)
 
-            # AddFiniteRevolvedProtrusion
+            # AddFiniteRevolvedProtrusion - positional args
             model = models.AddFiniteRevolvedProtrusion(
-                NumberOfProfiles=1,
-                ProfileArray=(profile,),
-                AxisOfRevolution=None,
+                1,  # NumberOfProfiles
+                (profile,),  # ProfileArray
+                None,  # AxisOfRevolution
                 Angle=angle_rad
             )
 
@@ -787,11 +788,11 @@ class FeatureManager:
             import math
             angle_rad = math.radians(angle)
 
-            # AddRevolvedProtrusionWithThinWall
+            # AddRevolvedProtrusionWithThinWall - positional args
             model = models.AddRevolvedProtrusionWithThinWall(
-                NumberOfProfiles=1,
-                ProfileArray=(profile,),
-                AxisOfRevolution=None,
+                1,  # NumberOfProfiles
+                (profile,),  # ProfileArray
+                None,  # AxisOfRevolution
                 Angle=angle_rad,
                 WallThickness=wall_thickness
             )
@@ -1216,9 +1217,9 @@ class FeatureManager:
             angle_rad = math.radians(angle)
 
             model = models.AddRevolvedProtrusionSync(
-                NumberOfProfiles=1,
-                ProfileArray=(profile,),
-                AxisOfRevolution=None,
+                1,  # NumberOfProfiles
+                (profile,),  # ProfileArray
+                None,  # AxisOfRevolution
                 Angle=angle_rad
             )
 
@@ -1248,9 +1249,9 @@ class FeatureManager:
             angle_rad = math.radians(angle)
 
             model = models.AddFiniteRevolvedProtrusionSync(
-                NumberOfProfiles=1,
-                ProfileArray=(profile,),
-                AxisOfRevolution=None,
+                1,  # NumberOfProfiles
+                (profile,),  # ProfileArray
+                None,  # AxisOfRevolution
                 Angle=angle_rad
             )
 
@@ -1398,7 +1399,7 @@ class FeatureManager:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            model = models.AddLoftedFlange(Thickness=thickness)
+            model = models.AddLoftedFlange(thickness)  # Positional arg
 
             return {
                 "status": "created",
@@ -1606,7 +1607,7 @@ class FeatureManager:
             models = doc.Models
 
             # AddLoftedFlangeEx
-            model = models.AddLoftedFlangeEx(Thickness=thickness)
+            model = models.AddLoftedFlangeEx(thickness)  # Positional arg
 
             return {
                 "status": "created",
