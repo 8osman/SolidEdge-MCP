@@ -117,3 +117,69 @@ class SolidEdgeConnection:
         """Get the application object"""
         self.ensure_connected()
         return self.application
+
+    def set_performance_mode(
+        self,
+        delay_compute: bool = None,
+        screen_updating: bool = None,
+        interactive: bool = None,
+        display_alerts: bool = None
+    ) -> Dict[str, Any]:
+        """
+        Set application performance flags for batch operations.
+
+        These flags can significantly speed up batch operations by disabling
+        UI updates and delayed computation. Remember to restore defaults after.
+
+        Args:
+            delay_compute: If True, delays feature recomputation until reset
+            screen_updating: If False, disables screen refreshes
+            interactive: If False, suppresses all UI dialogs
+            display_alerts: If False, suppresses alert dialogs
+
+        Returns:
+            Dict with status and current settings
+        """
+        try:
+            self.ensure_connected()
+            app = self.application
+
+            settings = {}
+
+            if delay_compute is not None:
+                try:
+                    app.DelayCompute = delay_compute
+                    settings["delay_compute"] = delay_compute
+                except Exception as e:
+                    settings["delay_compute_error"] = str(e)
+
+            if screen_updating is not None:
+                try:
+                    app.ScreenUpdating = screen_updating
+                    settings["screen_updating"] = screen_updating
+                except Exception as e:
+                    settings["screen_updating_error"] = str(e)
+
+            if interactive is not None:
+                try:
+                    app.Interactive = interactive
+                    settings["interactive"] = interactive
+                except Exception as e:
+                    settings["interactive_error"] = str(e)
+
+            if display_alerts is not None:
+                try:
+                    app.DisplayAlerts = display_alerts
+                    settings["display_alerts"] = display_alerts
+                except Exception as e:
+                    settings["display_alerts_error"] = str(e)
+
+            return {
+                "status": "updated",
+                "settings": settings
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }

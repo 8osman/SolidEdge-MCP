@@ -4,14 +4,14 @@ Last Updated: 2026-02-12
 
 ## MCP Server Status: **OPERATIONAL**
 
-**101 MCP tools** are now registered and ready to use!
+**113 MCP tools** are now registered and ready to use!
 
 ## Quick Summary
 
 | Category | Implemented | Notes |
 |----------|-------------|-------|
 | **Connection** | 2 | Connect, app info |
-| **Document Management** | 7 | Create, open, save, close, list |
+| **Document Management** | 8 | Create (part, assembly, sheet metal), open, save, close, list |
 | **Sketching** | 11 | Lines, circles, arcs, rects, polygons, ellipses, splines, constraints, axis |
 | **Basic Primitives** | 5 | Box (3 variants), cylinder, sphere |
 | **Extrusions** | 3 | Finite, infinite, thin-wall |
@@ -26,11 +26,15 @@ Last Updated: 2026-02-12
 | **Body Operations** | 7 | Add body, thicken, mesh, tag, construction |
 | **Simplification** | 4 | Auto-simplify, enclosure, duplicate |
 | **View/Display** | 4 | Orientation, zoom, display mode |
+| **Variables** | 3 | Get all, get by name, set value |
+| **Custom Properties** | 3 | Get all, set/create, delete |
+| **Body Topology** | 3 | Body faces, body edges, face info |
+| **Performance** | 2 | Set performance mode, recompute |
 | **Query/Analysis** | 6 | Mass properties, bounding box, features, measurements |
 | **Export** | 9 | STEP, STL, IGES, PDF, DXF, Parasolid, JT, drawing, screenshot |
 | **Assembly** | 11 | Place, list, constraints, patterns, suppress |
 | **Diagnostics** | 2 | API and feature inspection |
-| **TOTAL** | **101** | |
+| **TOTAL** | **113** | |
 
 ---
 
@@ -42,11 +46,12 @@ Last Updated: 2026-02-12
 | connect_to_solidedge | GetActiveObject/Dispatch | Working |
 | get_application_info | Application properties | Working |
 
-### 2. Document Management (7)
+### 2. Document Management (8)
 | Tool | API Method | Status |
 |------|-----------|--------|
 | create_part_document | Documents.Add | Working |
 | create_assembly_document | Documents.Add | Working |
+| create_sheet_metal_document | Documents.Add("SolidEdge.SheetMetalDocument") | Implemented |
 | open_document | Documents.Open | Working |
 | save_document | Document.Save/SaveAs | Working |
 | close_document | Document.Close | Working |
@@ -215,6 +220,33 @@ Last Updated: 2026-02-12
 |------|-----------|--------|
 | diagnose_api | Runtime introspection | Working |
 | diagnose_feature | Feature property inspection | Working |
+
+### 20. Variables (3)
+| Tool | API Method | Status |
+|------|-----------|--------|
+| get_variables | Document.Variables iteration | Implemented |
+| get_variable | Variable.DisplayName match | Implemented |
+| set_variable | Variable.Value = newValue | Implemented |
+
+### 21. Custom Properties (3)
+| Tool | API Method | Status |
+|------|-----------|--------|
+| get_custom_properties | Document.Properties iteration | Implemented |
+| set_custom_property | Property.Value / Properties.Add | Implemented |
+| delete_custom_property | Property.Delete | Implemented |
+
+### 22. Body Topology (3)
+| Tool | API Method | Status |
+|------|-----------|--------|
+| get_body_faces | Body.Faces(igQueryAll) | Implemented |
+| get_body_edges | Face.Edges iteration | Implemented |
+| get_face_info | Face properties (Type, Area, Edges) | Implemented |
+
+### 23. Performance (2)
+| Tool | API Method | Status |
+|------|-----------|--------|
+| set_performance_mode | App.DelayCompute/ScreenUpdating/etc | Implemented |
+| recompute | Model.Recompute + Document.Recompute | Implemented |
 
 ---
 

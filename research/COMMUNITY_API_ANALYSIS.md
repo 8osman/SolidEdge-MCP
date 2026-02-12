@@ -10,10 +10,10 @@
 
 | Metric | Count |
 |--------|-------|
-| **Our implemented MCP tools** | 101 |
+| **Our implemented MCP tools** | 113 |
 | **API operations found in community repos** | 250+ |
-| **Operations we're missing** | ~75 |
-| **High-priority gaps (Tier 2)** | ~25 |
+| **Operations we're missing** | ~63 |
+| **High-priority gaps (Tier 2)** | ~15 |
 | **Community repos analyzed** | 10 |
 
 ---
@@ -72,7 +72,7 @@
 | Create part document | `Documents.Add("SolidEdge.PartDocument")` | YES | Working | Samples |
 | Create assembly document | `Documents.Add("SolidEdge.AssemblyDocument")` | YES | Working | Samples |
 | Create draft document | `Documents.Add("SolidEdge.DraftDocument")` | YES (via create_drawing) | Working | Samples |
-| Create sheet metal document | `Documents.Add("SolidEdge.SheetMetalDocument")` | NO | **Available** | Samples |
+| Create sheet metal document | `Documents.Add("SolidEdge.SheetMetalDocument")` | YES | Working | Samples |
 | Create weldment document | `Documents.Add("SolidEdge.WeldmentDocument")` | NO | Available | SDK |
 | Open document | `Documents.Open(filename)` | YES | Working | Samples |
 | Open in background (no window) | `Documents.Open(filename, 0x8)` | NO | Available | SDK |
@@ -82,8 +82,8 @@
 | Close all documents | `Documents.CloseDocument(...)` per doc | NO | Available | Samples |
 | List documents | Documents collection iteration | YES | Working | — |
 | Get active document | `Application.ActiveDocument` | YES (internal) | Working | SDK |
-| Recompute document | `Document.Recompute()` | NO | **Available** | Samples |
-| Recompute model | `Model.Recompute()` | NO | **Available** | Samples |
+| Recompute document | `Document.Recompute()` | YES | Working | Samples |
+| Recompute model | `Model.Recompute()` | YES | Working | Samples |
 | Toggle modeling mode | `PartDocument.ModelingMode` | NO | **Available** | Samples |
 | Get/set modeling mode (Ordered/Sync) | `seModelingModeOrdered/Synchronous` | NO | **Available** | Samples |
 
@@ -359,10 +359,10 @@
 | API Operation | COM Method | We Have? | Status | Source |
 |---|---|---|---|---|
 | Get file properties | `Document.Properties` | YES (basic) | Working | Samples |
-| Get custom properties | `PropertySets["Custom"]` | NO | **Available** | Samples |
-| Add custom property | `Properties.Add(name, value)` | NO | **Available** | Samples |
-| Update custom property | `Property.Value = newValue` | NO | **Available** | SDK |
-| Delete custom property | `Property.Delete()` | NO | **Available** | Samples |
+| Get custom properties | `PropertySets["Custom"]` | YES | Working | Samples |
+| Add custom property | `Properties.Add(name, value)` | YES | Working | Samples |
+| Update custom property | `Property.Value = newValue` | YES | Working | SDK |
+| Delete custom property | `Property.Delete()` | YES | Working | Samples |
 | Get summary info | `Document.SummaryInfo` | NO | Available | SDK |
 | Get created version | `Document.CreatedVersion` | NO | Available | SDK |
 | Get last saved version | `Document.LastSavedVersion` | NO | Available | SDK |
@@ -371,11 +371,11 @@
 
 | API Operation | COM Method | We Have? | Status | Source |
 |---|---|---|---|---|
-| Get variables collection | `Document.Variables` | NO | **Available** | Samples |
+| Get variables collection | `Document.Variables` | YES | Working | Samples |
 | Query variables | `Variables.Query(criteria, nameBy, varType)` | NO | **Available** | Samples |
-| Get variable value | `Variable.DisplayName`, `Variable.Value` | NO | **Available** | Samples |
-| Set variable value | `Variable.Value = newValue` | NO | **Available** | Samples |
-| Report all variables | Full variables iteration | NO | **Available** | Samples |
+| Get variable value | `Variable.DisplayName`, `Variable.Value` | YES | Working | Samples |
+| Set variable value | `Variable.Value = newValue` | YES | Working | Samples |
+| Report all variables | Full variables iteration | YES | Working | Samples |
 | Units of measure | Unit conversion API | NO | Available | Samples |
 | Global parameters | `Application.GetGlobalParameter(ref)` | NO | Available | SDK |
 
@@ -423,10 +423,10 @@ From `SolidEdge.Community.Reader` - reads OLE compound storage files directly.
 
 | API Operation | COM Method | We Have? | Status | Source |
 |---|---|---|---|---|
-| Delay compute | `Application.DelayCompute = true/false` | NO | **Available** | Samples |
-| Disable alerts | `Application.DisplayAlerts = false` | NO | **Available** | Samples |
-| Non-interactive mode | `Application.Interactive = false` | NO | **Available** | Samples |
-| Disable screen updates | `Application.ScreenUpdating = false` | NO | **Available** | Samples |
+| Delay compute | `Application.DelayCompute = true/false` | YES | Working | Samples |
+| Disable alerts | `Application.DisplayAlerts = false` | YES | Working | Samples |
+| Non-interactive mode | `Application.Interactive = false` | YES | Working | Samples |
+| Disable screen updates | `Application.ScreenUpdating = false` | YES | Working | Samples |
 | Do idle | `Application.DoIdle()` | NO | Available | Samples |
 
 **Note:** These performance flags are critical for batch operations. HIGH PRIORITY.
@@ -445,10 +445,10 @@ From `SolidEdge.Community.Reader` - reads OLE compound storage files directly.
 
 | API Operation | COM Method | We Have? | Status | Source |
 |---|---|---|---|---|
-| Get faces | `Body.Faces[igQueryAll]` | NO | **Available** | Samples |
-| Get edges | `Body.Edges[igQueryAll]` | NO | **Available** | Samples |
-| Get face edges | `Face.Edges` | NO | **Available** | Samples |
-| Get face vertices | `Face.Vertices` | NO | **Available** | Samples |
+| Get faces | `Body.Faces[igQueryAll]` | YES | Working | Samples |
+| Get edges | `Body.Edges[igQueryAll]` | YES (via faces) | Working | Samples |
+| Get face edges | `Face.Edges` | YES | Working | Samples |
+| Get face vertices | `Face.Vertices` | YES | Working | Samples |
 | Feature faces | `Feature.Faces[igQueryAll]` | NO | **Available** | Samples |
 | Feature edges | `Feature.Edges[igQueryAll]` | NO | **Available** | Samples |
 | Body is solid | `Body.IsSolid` | NO | Available | Samples |
@@ -484,23 +484,22 @@ These operations are now fully implemented with MCP tool wrappers:
 | **Normal cutout** (`NormalCutouts.AddFiniteMulti`) | Low | Medium | **DONE** (create_normal_cutout) |
 | **Lofted cutout** (`LoftedCutouts.AddSimple`) | Medium | Medium | **DONE** (create_lofted_cutout) |
 
-### Tier 2: HIGH PRIORITY - Important missing capabilities
+### Tier 2: HIGH PRIORITY - Partially completed
 
-| Operation | Effort | Impact |
-|---|---|---|
-| **Variables read/write** | Low | Very High |
-| **Custom properties** (CRUD) | Low | Very High |
-| **Performance flags** (DelayCompute, ScreenUpdating) | Low | High |
-| **Recompute document/model** | Low | High |
-| **Create sheet metal document** | Low | High |
-| **Face/edge topology query** | Medium | Very High (unlocks constraints) |
-| **Body facet data** (mesh export) | Medium | High |
-| **Interference check** (assembly) | Medium | High |
-| **Report BOM** (assembly) | Medium | High |
-| **Draft: Add assembly view** | Low | High |
-| **Draft: Add sheet** | Low | Medium |
-| **Occurrence bounding box** | Low | Medium |
-| **Report variables** | Low | Medium |
+| Operation | Effort | Impact | Status |
+|---|---|---|---|
+| **Variables read/write** | Low | Very High | **DONE** (get_variables, get_variable, set_variable) |
+| **Custom properties** (CRUD) | Low | Very High | **DONE** (get/set/delete_custom_property) |
+| **Performance flags** (DelayCompute, ScreenUpdating) | Low | High | **DONE** (set_performance_mode) |
+| **Recompute document/model** | Low | High | **DONE** (recompute) |
+| **Create sheet metal document** | Low | High | **DONE** (create_sheet_metal_document) |
+| **Face/edge topology query** | Medium | Very High | **DONE** (get_body_faces, get_body_edges, get_face_info) |
+| **Body facet data** (mesh export) | Medium | High | |
+| **Interference check** (assembly) | Medium | High | |
+| **Report BOM** (assembly) | Medium | High | |
+| **Draft: Add assembly view** | Low | High | |
+| **Draft: Add sheet** | Low | Medium | |
+| **Occurrence bounding box** | Low | Medium | |
 
 ### Tier 3: MEDIUM PRIORITY - Useful additions
 

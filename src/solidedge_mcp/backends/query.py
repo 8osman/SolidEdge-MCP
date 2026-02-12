@@ -281,3 +281,470 @@ class QueryManager:
                 "error": str(e),
                 "traceback": traceback.format_exc()
             }
+
+    # =================================================================
+    # VARIABLES
+    # =================================================================
+
+    def get_variables(self) -> Dict[str, Any]:
+        """
+        Get all variables from the active document.
+
+        Queries the Variables collection using Query() to list all
+        variable names, values, and formulas.
+
+        Returns:
+            Dict with list of variables
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            variables = doc.Variables
+
+            var_list = []
+            for i in range(1, variables.Count + 1):
+                try:
+                    var = variables.Item(i)
+                    var_info = {
+                        "index": i - 1,
+                        "name": var.DisplayName if hasattr(var, 'DisplayName') else f"Var_{i}",
+                    }
+                    try:
+                        var_info["value"] = var.Value
+                    except Exception:
+                        pass
+                    try:
+                        var_info["formula"] = var.Formula
+                    except Exception:
+                        pass
+                    try:
+                        var_info["units"] = var.Units
+                    except Exception:
+                        pass
+                    var_list.append(var_info)
+                except Exception:
+                    var_list.append({"index": i - 1, "name": f"Var_{i}"})
+
+            return {
+                "variables": var_list,
+                "count": len(var_list)
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def get_variable(self, name: str) -> Dict[str, Any]:
+        """
+        Get a specific variable by name.
+
+        Args:
+            name: Variable display name (e.g., 'V1', 'Mass', 'Volume')
+
+        Returns:
+            Dict with variable value and info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            variables = doc.Variables
+
+            # Search for the variable by display name
+            for i in range(1, variables.Count + 1):
+                try:
+                    var = variables.Item(i)
+                    display_name = var.DisplayName if hasattr(var, 'DisplayName') else ""
+                    if display_name == name:
+                        result = {"name": name, "index": i - 1}
+                        try:
+                            result["value"] = var.Value
+                        except Exception:
+                            pass
+                        try:
+                            result["formula"] = var.Formula
+                        except Exception:
+                            pass
+                        try:
+                            result["units"] = var.Units
+                        except Exception:
+                            pass
+                        return result
+                except Exception:
+                    continue
+
+            return {"error": f"Variable '{name}' not found"}
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def set_variable(self, name: str, value: float) -> Dict[str, Any]:
+        """
+        Set a variable's value by name.
+
+        Args:
+            name: Variable display name
+            value: New value to set
+
+        Returns:
+            Dict with status and updated value
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            variables = doc.Variables
+
+            for i in range(1, variables.Count + 1):
+                try:
+                    var = variables.Item(i)
+                    display_name = var.DisplayName if hasattr(var, 'DisplayName') else ""
+                    if display_name == name:
+                        old_value = var.Value
+                        var.Value = value
+                        return {
+                            "status": "updated",
+                            "name": name,
+                            "old_value": old_value,
+                            "new_value": value
+                        }
+                except Exception:
+                    continue
+
+            return {"error": f"Variable '{name}' not found"}
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # CUSTOM PROPERTIES
+    # =================================================================
+
+    def get_custom_properties(self) -> Dict[str, Any]:
+        """
+        Get all custom properties from the active document.
+
+        Accesses the PropertySets collection to retrieve custom properties.
+
+        Returns:
+            Dict with list of custom properties (name/value pairs)
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            prop_sets = doc.Properties
+
+            properties = {}
+
+            # Iterate through property sets to find Custom
+            for ps_idx in range(1, prop_sets.Count + 1):
+                try:
+                    ps = prop_sets.Item(ps_idx)
+                    ps_name = ps.Name if hasattr(ps, 'Name') else f"Set_{ps_idx}"
+
+                    props = {}
+                    for p_idx in range(1, ps.Count + 1):
+                        try:
+                            prop = ps.Item(p_idx)
+                            prop_name = prop.Name if hasattr(prop, 'Name') else f"Prop_{p_idx}"
+                            try:
+                                props[prop_name] = prop.Value
+                            except Exception:
+                                props[prop_name] = None
+                        except Exception:
+                            continue
+
+                    properties[ps_name] = props
+                except Exception:
+                    continue
+
+            return {
+                "property_sets": properties,
+                "count": len(properties)
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def set_custom_property(self, name: str, value: str) -> Dict[str, Any]:
+        """
+        Set or create a custom property.
+
+        Creates the property if it doesn't exist, updates it if it does.
+
+        Args:
+            name: Property name
+            value: Property value (string)
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            prop_sets = doc.Properties
+
+            # Find "Custom" property set (typically the last one, index varies)
+            custom_ps = None
+            for ps_idx in range(1, prop_sets.Count + 1):
+                try:
+                    ps = prop_sets.Item(ps_idx)
+                    if hasattr(ps, 'Name') and ps.Name == "Custom":
+                        custom_ps = ps
+                        break
+                except Exception:
+                    continue
+
+            if custom_ps is None:
+                return {"error": "Custom property set not found"}
+
+            # Check if property exists
+            for p_idx in range(1, custom_ps.Count + 1):
+                try:
+                    prop = custom_ps.Item(p_idx)
+                    if hasattr(prop, 'Name') and prop.Name == name:
+                        old_value = prop.Value
+                        prop.Value = value
+                        return {
+                            "status": "updated",
+                            "name": name,
+                            "old_value": old_value,
+                            "new_value": value
+                        }
+                except Exception:
+                    continue
+
+            # Property doesn't exist, add it
+            custom_ps.Add(name, value)
+            return {
+                "status": "created",
+                "name": name,
+                "value": value
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def delete_custom_property(self, name: str) -> Dict[str, Any]:
+        """
+        Delete a custom property by name.
+
+        Args:
+            name: Property name to delete
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            prop_sets = doc.Properties
+
+            # Find "Custom" property set
+            for ps_idx in range(1, prop_sets.Count + 1):
+                try:
+                    ps = prop_sets.Item(ps_idx)
+                    if hasattr(ps, 'Name') and ps.Name == "Custom":
+                        for p_idx in range(1, ps.Count + 1):
+                            try:
+                                prop = ps.Item(p_idx)
+                                if hasattr(prop, 'Name') and prop.Name == name:
+                                    prop.Delete()
+                                    return {
+                                        "status": "deleted",
+                                        "name": name
+                                    }
+                            except Exception:
+                                continue
+                        return {"error": f"Property '{name}' not found in Custom set"}
+                except Exception:
+                    continue
+
+            return {"error": "Custom property set not found"}
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # BODY TOPOLOGY QUERIES
+    # =================================================================
+
+    def get_body_faces(self) -> Dict[str, Any]:
+        """
+        Get all faces on the model body.
+
+        Uses Body.Faces(igQueryAll=6) to enumerate faces with their
+        type and edge count.
+
+        Returns:
+            Dict with list of faces
+        """
+        try:
+            doc, model = self._get_first_model()
+            body = model.Body
+
+            faces = body.Faces(6)  # igQueryAll = 6
+            face_list = []
+
+            for i in range(1, faces.Count + 1):
+                try:
+                    face = faces.Item(i)
+                    face_info = {"index": i - 1}
+                    try:
+                        face_info["type"] = face.Type
+                    except Exception:
+                        pass
+                    try:
+                        face_info["area"] = face.Area
+                    except Exception:
+                        pass
+                    try:
+                        edge_count = face.Edges.Count if hasattr(face.Edges, 'Count') else 0
+                        face_info["edge_count"] = edge_count
+                    except Exception:
+                        pass
+                    face_list.append(face_info)
+                except Exception:
+                    face_list.append({"index": i - 1})
+
+            return {
+                "faces": face_list,
+                "count": len(face_list)
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def get_body_edges(self) -> Dict[str, Any]:
+        """
+        Get all unique edges on the model body.
+
+        Enumerates edges via faces since Body.Edges() doesn't work
+        in COM late binding. Deduplicates by collecting from all faces.
+
+        Returns:
+            Dict with edge count and face-edge mapping
+        """
+        try:
+            doc, model = self._get_first_model()
+            body = model.Body
+
+            faces = body.Faces(6)  # igQueryAll = 6
+            total_edges = 0
+            face_edges = []
+
+            for fi in range(1, faces.Count + 1):
+                try:
+                    face = faces.Item(fi)
+                    edges = face.Edges
+                    edge_count = edges.Count if hasattr(edges, 'Count') else 0
+                    total_edges += edge_count
+                    face_edges.append({
+                        "face_index": fi - 1,
+                        "edge_count": edge_count
+                    })
+                except Exception:
+                    face_edges.append({"face_index": fi - 1, "edge_count": 0})
+
+            return {
+                "face_edges": face_edges,
+                "total_face_count": faces.Count,
+                "total_edge_references": total_edges,
+                "note": "Edge count includes shared edges (counted once per face)"
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def get_face_info(self, face_index: int) -> Dict[str, Any]:
+        """
+        Get detailed information about a specific face.
+
+        Args:
+            face_index: 0-based face index
+
+        Returns:
+            Dict with face type, area, edge count, and vertex count
+        """
+        try:
+            doc, model = self._get_first_model()
+            body = model.Body
+
+            faces = body.Faces(6)  # igQueryAll = 6
+            if face_index < 0 or face_index >= faces.Count:
+                return {"error": f"Invalid face index: {face_index}. Count: {faces.Count}"}
+
+            face = faces.Item(face_index + 1)
+
+            info = {"index": face_index}
+
+            try:
+                info["type"] = face.Type
+            except Exception:
+                pass
+            try:
+                info["area"] = face.Area
+            except Exception:
+                pass
+            try:
+                edges = face.Edges
+                info["edge_count"] = edges.Count if hasattr(edges, 'Count') else 0
+            except Exception:
+                pass
+            try:
+                vertices = face.Vertices
+                info["vertex_count"] = vertices.Count if hasattr(vertices, 'Count') else 0
+            except Exception:
+                pass
+
+            return info
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # PERFORMANCE & RECOMPUTE
+    # =================================================================
+
+    def recompute(self) -> Dict[str, Any]:
+        """
+        Recompute the active document and model.
+
+        Forces recalculation of all features.
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            # Try model-level recompute first
+            try:
+                models = doc.Models
+                if models.Count > 0:
+                    model = models.Item(1)
+                    model.Recompute()
+            except Exception:
+                pass
+
+            # Also try document-level recompute
+            try:
+                doc.Recompute()
+            except Exception:
+                pass
+
+            return {"status": "recomputed"}
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }

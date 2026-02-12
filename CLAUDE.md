@@ -65,11 +65,11 @@ src/solidedge_mcp/
 
 ### Current State
 
-**✅ FULLY IMPLEMENTED**: All 95 MCP tools are registered and operational!
+**✅ FULLY IMPLEMENTED**: All 99 MCP tools are registered and operational!
 
 - **Backend layer**: Complete COM automation using pywin32 (connection, documents, sketching, features, assembly, query, export, diagnostics)
-- **MCP tools**: All 95 tools registered in `server.py` using `@mcp.tool()` decorator
-- **Tool categories**: Connection (2), Documents (7), Sketching (11), Primitives (5), Extrusions (3), Revolves (5), Cutouts (3), Ref Planes (1), Loft (2), Sweep (2), Helix (4), Sheet Metal (8), Body Operations (7), Simplification (4), View (4), Query (6), Export (9), Assembly (11), Diagnostics (2)
+- **MCP tools**: All 99 tools registered in `server.py` using `@mcp.tool()` decorator
+- **Tool categories**: Connection (2), Documents (7), Sketching (11), Primitives (5), Extrusions (3), Revolves (5), Cutouts (3), Ref Planes (1), Rounds/Chamfers/Holes (3), Mirror (1), Loft (2), Sweep (2), Helix (4), Sheet Metal (8), Body Operations (7), Simplification (4), View (4), Query (6), Export (9), Assembly (11), Diagnostics (2)
 - **Coverage**: 100% of core Solid Edge COM API methods including cutout operations via collection-level APIs
 
 **Pending**: Resource providers (read-only state), prompt templates, session management/undo
@@ -78,7 +78,7 @@ src/solidedge_mcp/
 
 Following the MCP spec, the server exposes:
 
-- **Tools** ✅ (95 implemented): Actions that create/modify models (connect, create_sketch, extrude, cutout, place_component, export)
+- **Tools** ✅ (99 implemented): Actions that create/modify models (connect, create_sketch, extrude, cutout, round, chamfer, hole, mirror, place_component, export)
 - **Resources** ⏳ (pending): Read-only model data (feature list, component tree, mass properties, document info)
 - **Prompts** ⏳ (pending): Conversation templates (design review, manufacturability check, modeling guidance)
 

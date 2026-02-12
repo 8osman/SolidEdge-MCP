@@ -89,6 +89,20 @@ def create_assembly_document(template: Optional[str] = None) -> dict:
 
 
 @mcp.tool()
+def create_sheet_metal_document(template: Optional[str] = None) -> dict:
+    """
+    Create a new sheet metal document.
+
+    Args:
+        template: Optional template file path
+
+    Returns:
+        Document creation status
+    """
+    return doc_manager.create_sheet_metal(template)
+
+
+@mcp.tool()
 def open_document(file_path: str) -> dict:
     """
     Open an existing document.
@@ -1281,6 +1295,196 @@ def get_feature_count() -> dict:
         Feature count
     """
     return query_manager.get_feature_count()
+
+
+# ============================================================================
+# VARIABLES
+# ============================================================================
+
+@mcp.tool()
+def get_variables() -> dict:
+    """
+    Get all variables from the active document.
+
+    Returns all dimension variables, user variables, and system variables
+    with their names, values, formulas, and units.
+
+    Returns:
+        List of variables with name, value, formula, units
+    """
+    return query_manager.get_variables()
+
+
+@mcp.tool()
+def get_variable(name: str) -> dict:
+    """
+    Get a specific variable by name.
+
+    Args:
+        name: Variable display name (e.g., 'V1', 'Mass', 'Volume')
+
+    Returns:
+        Variable value, formula, and units
+    """
+    return query_manager.get_variable(name)
+
+
+@mcp.tool()
+def set_variable(name: str, value: float) -> dict:
+    """
+    Set a variable's value by name.
+
+    Use get_variables() first to see available variable names.
+    Changing a variable value triggers feature recomputation.
+
+    Args:
+        name: Variable display name
+        value: New value to set
+
+    Returns:
+        Update status with old and new values
+    """
+    return query_manager.set_variable(name, value)
+
+
+# ============================================================================
+# CUSTOM PROPERTIES
+# ============================================================================
+
+@mcp.tool()
+def get_custom_properties() -> dict:
+    """
+    Get all property sets from the active document.
+
+    Returns all property sets (Summary, Project, Custom, etc.) with their
+    name/value pairs.
+
+    Returns:
+        Property sets with name/value pairs
+    """
+    return query_manager.get_custom_properties()
+
+
+@mcp.tool()
+def set_custom_property(name: str, value: str) -> dict:
+    """
+    Set or create a custom property on the active document.
+
+    Creates the property if it doesn't exist, updates it if it does.
+
+    Args:
+        name: Property name
+        value: Property value (string)
+
+    Returns:
+        Status (created or updated)
+    """
+    return query_manager.set_custom_property(name, value)
+
+
+@mcp.tool()
+def delete_custom_property(name: str) -> dict:
+    """
+    Delete a custom property by name.
+
+    Args:
+        name: Property name to delete
+
+    Returns:
+        Deletion status
+    """
+    return query_manager.delete_custom_property(name)
+
+
+# ============================================================================
+# BODY TOPOLOGY QUERIES
+# ============================================================================
+
+@mcp.tool()
+def get_body_faces() -> dict:
+    """
+    Get all faces on the model body.
+
+    Returns face types, areas, and edge counts. Useful for understanding
+    model topology before applying rounds, chamfers, or constraints.
+
+    Returns:
+        List of faces with type, area, and edge count
+    """
+    return query_manager.get_body_faces()
+
+
+@mcp.tool()
+def get_body_edges() -> dict:
+    """
+    Get edge information from the model body.
+
+    Enumerates edges via faces. Returns per-face edge counts and total.
+    Useful for understanding model topology.
+
+    Returns:
+        Face-edge mapping and total edge count
+    """
+    return query_manager.get_body_edges()
+
+
+@mcp.tool()
+def get_face_info(face_index: int) -> dict:
+    """
+    Get detailed information about a specific face.
+
+    Args:
+        face_index: 0-based face index (from get_body_faces)
+
+    Returns:
+        Face type, area, edge count, and vertex count
+    """
+    return query_manager.get_face_info(face_index)
+
+
+# ============================================================================
+# PERFORMANCE & RECOMPUTE
+# ============================================================================
+
+@mcp.tool()
+def set_performance_mode(
+    delay_compute: Optional[bool] = None,
+    screen_updating: Optional[bool] = None,
+    interactive: Optional[bool] = None,
+    display_alerts: Optional[bool] = None
+) -> dict:
+    """
+    Set application performance flags for batch operations.
+
+    Disabling screen updates and delaying compute can significantly speed
+    up batch operations. Remember to restore defaults when done.
+
+    Args:
+        delay_compute: If True, delays feature recomputation
+        screen_updating: If False, disables screen refreshes
+        interactive: If False, suppresses all UI dialogs
+        display_alerts: If False, suppresses alert dialogs
+
+    Returns:
+        Current settings after update
+    """
+    return connection.set_performance_mode(
+        delay_compute, screen_updating, interactive, display_alerts
+    )
+
+
+@mcp.tool()
+def recompute() -> dict:
+    """
+    Recompute the active document and model.
+
+    Forces recalculation of all features. Useful after changing
+    variables or when features are out of date.
+
+    Returns:
+        Recompute status
+    """
+    return query_manager.recompute()
 
 
 # ============================================================================

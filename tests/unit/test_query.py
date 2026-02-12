@@ -1,0 +1,397 @@
+"""
+Unit tests for QueryManager backend methods (Tier 2).
+
+Tests variables, custom properties, topology queries, and recompute.
+Uses unittest.mock to simulate COM objects.
+"""
+
+from unittest.mock import MagicMock
+
+import pytest
+
+
+@pytest.fixture
+def doc_mgr():
+    """Create mock doc_manager."""
+    dm = MagicMock()
+    doc = MagicMock()
+    dm.get_active_document.return_value = doc
+    return dm, doc
+
+
+@pytest.fixture
+def query_mgr(doc_mgr):
+    """Create QueryManager with mocked dependencies."""
+    from solidedge_mcp.backends.query import QueryManager
+    dm, doc = doc_mgr
+    return QueryManager(dm), doc
+
+
+# ============================================================================
+# VARIABLES
+# ============================================================================
+
+class TestGetVariables:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+        var1 = MagicMock()
+        var1.DisplayName = "Width"
+        var1.Value = 0.1
+        var1.Formula = "100 mm"
+        var1.Units = "m"
+
+        var2 = MagicMock()
+        var2.DisplayName = "Height"
+        var2.Value = 0.05
+        var2.Formula = "50 mm"
+        var2.Units = "m"
+
+        variables = MagicMock()
+        variables.Count = 2
+        variables.Item.side_effect = lambda i: [None, var1, var2][i]
+        doc.Variables = variables
+
+        result = qm.get_variables()
+        assert result["count"] == 2
+        assert result["variables"][0]["name"] == "Width"
+        assert result["variables"][0]["value"] == 0.1
+        assert result["variables"][1]["name"] == "Height"
+
+    def test_empty(self, query_mgr):
+        qm, doc = query_mgr
+        variables = MagicMock()
+        variables.Count = 0
+        doc.Variables = variables
+
+        result = qm.get_variables()
+        assert result["count"] == 0
+        assert result["variables"] == []
+
+
+class TestGetVariable:
+    def test_found(self, query_mgr):
+        qm, doc = query_mgr
+        var = MagicMock()
+        var.DisplayName = "Width"
+        var.Value = 0.1
+        var.Formula = "100 mm"
+        var.Units = "m"
+
+        variables = MagicMock()
+        variables.Count = 1
+        variables.Item.return_value = var
+        doc.Variables = variables
+
+        result = qm.get_variable("Width")
+        assert result["name"] == "Width"
+        assert result["value"] == 0.1
+
+    def test_not_found(self, query_mgr):
+        qm, doc = query_mgr
+        var = MagicMock()
+        var.DisplayName = "Width"
+
+        variables = MagicMock()
+        variables.Count = 1
+        variables.Item.return_value = var
+        doc.Variables = variables
+
+        result = qm.get_variable("Nonexistent")
+        assert "error" in result
+
+
+class TestSetVariable:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+        var = MagicMock()
+        var.DisplayName = "Width"
+        var.Value = 0.1
+
+        variables = MagicMock()
+        variables.Count = 1
+        variables.Item.return_value = var
+        doc.Variables = variables
+
+        result = qm.set_variable("Width", 0.2)
+        assert result["status"] == "updated"
+        assert result["old_value"] == 0.1
+        assert result["new_value"] == 0.2
+
+    def test_not_found(self, query_mgr):
+        qm, doc = query_mgr
+        var = MagicMock()
+        var.DisplayName = "Width"
+
+        variables = MagicMock()
+        variables.Count = 1
+        variables.Item.return_value = var
+        doc.Variables = variables
+
+        result = qm.set_variable("Nonexistent", 0.5)
+        assert "error" in result
+
+
+# ============================================================================
+# CUSTOM PROPERTIES
+# ============================================================================
+
+class TestGetCustomProperties:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+
+        prop = MagicMock()
+        prop.Name = "Material"
+        prop.Value = "Steel"
+
+        ps = MagicMock()
+        ps.Name = "Custom"
+        ps.Count = 1
+        ps.Item.return_value = prop
+
+        prop_sets = MagicMock()
+        prop_sets.Count = 1
+        prop_sets.Item.return_value = ps
+        doc.Properties = prop_sets
+
+        result = qm.get_custom_properties()
+        assert "property_sets" in result
+        assert "Custom" in result["property_sets"]
+        assert result["property_sets"]["Custom"]["Material"] == "Steel"
+
+
+class TestSetCustomProperty:
+    def test_update_existing(self, query_mgr):
+        qm, doc = query_mgr
+
+        prop = MagicMock()
+        prop.Name = "Material"
+        prop.Value = "Aluminum"
+
+        ps = MagicMock()
+        ps.Name = "Custom"
+        ps.Count = 1
+        ps.Item.return_value = prop
+
+        prop_sets = MagicMock()
+        prop_sets.Count = 1
+        prop_sets.Item.return_value = ps
+        doc.Properties = prop_sets
+
+        result = qm.set_custom_property("Material", "Steel")
+        assert result["status"] == "updated"
+        assert result["old_value"] == "Aluminum"
+
+    def test_create_new(self, query_mgr):
+        qm, doc = query_mgr
+
+        prop = MagicMock()
+        prop.Name = "OtherProp"
+
+        ps = MagicMock()
+        ps.Name = "Custom"
+        ps.Count = 1
+        ps.Item.return_value = prop
+
+        prop_sets = MagicMock()
+        prop_sets.Count = 1
+        prop_sets.Item.return_value = ps
+        doc.Properties = prop_sets
+
+        result = qm.set_custom_property("NewProp", "NewValue")
+        assert result["status"] == "created"
+        ps.Add.assert_called_once_with("NewProp", "NewValue")
+
+
+class TestDeleteCustomProperty:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+
+        prop = MagicMock()
+        prop.Name = "Material"
+
+        ps = MagicMock()
+        ps.Name = "Custom"
+        ps.Count = 1
+        ps.Item.return_value = prop
+
+        prop_sets = MagicMock()
+        prop_sets.Count = 1
+        prop_sets.Item.return_value = ps
+        doc.Properties = prop_sets
+
+        result = qm.delete_custom_property("Material")
+        assert result["status"] == "deleted"
+        prop.Delete.assert_called_once()
+
+    def test_not_found(self, query_mgr):
+        qm, doc = query_mgr
+
+        prop = MagicMock()
+        prop.Name = "OtherProp"
+
+        ps = MagicMock()
+        ps.Name = "Custom"
+        ps.Count = 1
+        ps.Item.return_value = prop
+
+        prop_sets = MagicMock()
+        prop_sets.Count = 1
+        prop_sets.Item.return_value = ps
+        doc.Properties = prop_sets
+
+        result = qm.delete_custom_property("Nonexistent")
+        assert "error" in result
+
+
+# ============================================================================
+# TOPOLOGY QUERIES
+# ============================================================================
+
+class TestGetBodyFaces:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+
+        # Set up model
+        model = MagicMock()
+        models = MagicMock()
+        models.Count = 1
+        models.Item.return_value = model
+        doc.Models = models
+
+        # Set up faces
+        face1 = MagicMock()
+        face1.Type = 1
+        face1.Area = 0.01
+        face1.Edges.Count = 4
+
+        face2 = MagicMock()
+        face2.Type = 2
+        face2.Area = 0.005
+        face2.Edges.Count = 3
+
+        faces = MagicMock()
+        faces.Count = 2
+        faces.Item.side_effect = lambda i: [None, face1, face2][i]
+        model.Body.Faces.return_value = faces
+
+        result = qm.get_body_faces()
+        assert result["count"] == 2
+        assert result["faces"][0]["area"] == 0.01
+        assert result["faces"][0]["edge_count"] == 4
+
+
+class TestGetBodyEdges:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+
+        model = MagicMock()
+        models = MagicMock()
+        models.Count = 1
+        models.Item.return_value = model
+        doc.Models = models
+
+        face = MagicMock()
+        face.Edges.Count = 4
+
+        faces = MagicMock()
+        faces.Count = 1
+        faces.Item.return_value = face
+        model.Body.Faces.return_value = faces
+
+        result = qm.get_body_edges()
+        assert result["total_face_count"] == 1
+        assert result["total_edge_references"] == 4
+
+
+class TestGetFaceInfo:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+
+        model = MagicMock()
+        models = MagicMock()
+        models.Count = 1
+        models.Item.return_value = model
+        doc.Models = models
+
+        face = MagicMock()
+        face.Type = 1
+        face.Area = 0.01
+        face.Edges.Count = 4
+        face.Vertices.Count = 4
+
+        faces = MagicMock()
+        faces.Count = 6
+        faces.Item.return_value = face
+        model.Body.Faces.return_value = faces
+
+        result = qm.get_face_info(0)
+        assert result["index"] == 0
+        assert result["area"] == 0.01
+
+    def test_invalid_index(self, query_mgr):
+        qm, doc = query_mgr
+
+        model = MagicMock()
+        models = MagicMock()
+        models.Count = 1
+        models.Item.return_value = model
+        doc.Models = models
+
+        faces = MagicMock()
+        faces.Count = 6
+        model.Body.Faces.return_value = faces
+
+        result = qm.get_face_info(10)
+        assert "error" in result
+
+
+# ============================================================================
+# RECOMPUTE
+# ============================================================================
+
+class TestRecompute:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+
+        model = MagicMock()
+        models = MagicMock()
+        models.Count = 1
+        models.Item.return_value = model
+        doc.Models = models
+
+        result = qm.recompute()
+        assert result["status"] == "recomputed"
+        model.Recompute.assert_called_once()
+
+
+# ============================================================================
+# PERFORMANCE FLAGS
+# ============================================================================
+
+class TestSetPerformanceMode:
+    def test_success(self):
+        from solidedge_mcp.backends.connection import SolidEdgeConnection
+        conn = SolidEdgeConnection()
+        conn.application = MagicMock()
+        conn._is_connected = True
+
+        result = conn.set_performance_mode(
+            delay_compute=True,
+            screen_updating=False,
+            display_alerts=False
+        )
+        assert result["status"] == "updated"
+        assert result["settings"]["delay_compute"] is True
+        assert result["settings"]["screen_updating"] is False
+        assert result["settings"]["display_alerts"] is False
+
+    def test_partial_update(self):
+        from solidedge_mcp.backends.connection import SolidEdgeConnection
+        conn = SolidEdgeConnection()
+        conn.application = MagicMock()
+        conn._is_connected = True
+
+        result = conn.set_performance_mode(screen_updating=False)
+        assert result["status"] == "updated"
+        assert "screen_updating" in result["settings"]
+        assert "delay_compute" not in result["settings"]
