@@ -1,0 +1,1454 @@
+Connected to existing Solid Edge instance
+================================================================================
+COMPREHENSIVE SOLID EDGE COM API INTROSPECTION
+================================================================================
+
+This will take a few minutes to examine all available methods...
+
+================================================================================
+  MODELS COLLECTION - ALL 'Add' METHODS
+================================================================================
+
+Found 43 'Add' methods
+
+
+AddAutoSimplify
+--------------------------------------------------------------------------------
+Parameters: 5
+Signature: (numInputs=<PyOleMissing object at 0x0000027B95D89BE0>, Occurrences=<PyOleMissing object at 0x0000027B95D89BE0>, vbRemoveInternals=<PyOleMissing object at 0x0000027B95D89BE0>, BodyName=<PyOleMissing object at 0x0000027B95D89BE0>, ppModel=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddBaseContourFlange
+--------------------------------------------------------------------------------
+Parameters: 18
+Signature: (pProfile=<PyOleMissing object at 0x0000027B95D89BE0>, varThicknessSide=<PyOleMissing object at 0x0000027B95D89BE0>, varExtentType=<PyOleMissing object at 0x0000027B95D89BE0>, varProjectionSide=<PyOleMissing object at 0x0000027B95D89BE0>, varProjectionDistance=<PyOleMissing object at 0x0000027B95D89BE0>, varRadius=<PyOleMissing object at 0x0000027B95D89BE0>, varNeutralFactor=<PyOleMissing object at 0x0000027B95D89BE0>, varBnParamType=<PyOleMissing object at 0x0000027B95D89BE0>, vtMitrePosition=<PyOleMissing object at 0x0000027B95D89BE0>, vtMitreTypeAtStart=<PyOleMissing object at 0x0000027B95D89BE0>, vtMitreTypeAtEnd=<PyOleMissing object at 0x0000027B95D89BE0>, vtMitreSideAtStart=<PyOleMissing object at 0x0000027B95D89BE0>, vtMitreSideAtEnd=<PyOleMissing object at 0x0000027B95D89BE0>, vtMitreByDistOrAngleAtStart=<PyOleMissing object at 0x0000027B95D89BE0>, vtMitreByDistOrAngleAtEnd=<PyOleMissing object at 0x0000027B95D89BE0>, vtMitreDistOrAngleAtStart=<PyOleMissing object at 0x0000027B95D89BE0>, vtMitreDistOrAngleAtEnd=<PyOleMissing object at 0x0000027B95D89BE0>, vtMitreCutType=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddBaseContourFlangeByBendDeductionOrBendAllowance
+--------------------------------------------------------------------------------
+Parameters: 20
+Signature: (pProfile=<PyOleMissing object at 0x0000027B95D89BE0>, varThicknessSide=<PyOleMissing object at 0x0000027B95D89BE0>, varExtentType=<PyOleMissing object at 0x0000027B95D89BE0>, varProjectionSide=<PyOleMissing object at 0x0000027B95D89BE0>, varProjectionDistance=<PyOleMissing object at 0x0000027B95D89BE0>, varRadius=<PyOleMissing object at 0x0000027B95D89BE0>, varNeutralFactor=<PyOleMissing object at 0x0000027B95D89BE0>, varBnParamType=<PyOleMissing object at 0x0000027B95D89BE0>, vtMitrePosition=<PyOleMissing object at 0x0000027B95D89BE0>, vtMitreTypeAtStart=<PyOleMissing object at 0x0000027B95D89BE0>, vtMitreTypeAtEnd=<PyOleMissing object at 0x0000027B95D89BE0>, vtMitreSideAtStart=<PyOleMissing object at 0x0000027B95D89BE0>, vtMitreSideAtEnd=<PyOleMissing object at 0x0000027B95D89BE0>, vtMitreByDistOrAngleAtStart=<PyOleMissing object at 0x0000027B95D89BE0>, vtMitreByDistOrAngleAtEnd=<PyOleMissing object at 0x0000027B95D89BE0>, vtMitreDistOrAngleAtStart=<PyOleMissing object at 0x0000027B95D89BE0>, vtMitreDistOrAngleAtEnd=<PyOleMissing object at 0x0000027B95D89BE0>, vtMitreCutType=<PyOleMissing object at 0x0000027B95D89BE0>, BendCalculationMethod=<PyOleMissing object at 0x0000027B95D89BE0>, BendCalculationMethodValue=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddBaseTab
+--------------------------------------------------------------------------------
+Parameters: 2
+Signature: (Profile=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentSide=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddBaseTabWithMultipleProfiles
+--------------------------------------------------------------------------------
+Parameters: 3
+Signature: (NumberOfProfiles=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileArray=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentSide=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddBody
+--------------------------------------------------------------------------------
+Parameters: 2
+Signature: (igBodyType=<PyOleMissing object at 0x0000027B95D89BE0>, BodyName=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddBodyByMeshFacets
+--------------------------------------------------------------------------------
+Parameters: 2
+Signature: (NumberOfVertices=<PyOleMissing object at 0x0000027B95D89BE0>, VertextPostionsOfFacets=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddBodyByTag
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (nBodyTag=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddBodyFeature
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (ImportFileName=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddBoxByCenter
+--------------------------------------------------------------------------------
+Parameters: 12
+Signature: (x=<PyOleMissing object at 0x0000027B95D89BE0>, y=<PyOleMissing object at 0x0000027B95D89BE0>, z=<PyOleMissing object at 0x0000027B95D89BE0>, dWidth=<PyOleMissing object at 0x0000027B95D89BE0>, dHeight=<PyOleMissing object at 0x0000027B95D89BE0>, dAngle=<PyOleMissing object at 0x0000027B95D89BE0>, dDepth=<PyOleMissing object at 0x0000027B95D89BE0>, pPlane=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentSide=<PyOleMissing object at 0x0000027B95D89BE0>, vbKeyPointExtent=<PyOleMissing object at 0x0000027B95D89BE0>, pKeyPointObj=<PyOleMissing object at 0x0000027B95D89BE0>, pKeyPointFlags=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddBoxByThreePoints
+--------------------------------------------------------------------------------
+Parameters: 15
+Signature: (x1=<PyOleMissing object at 0x0000027B95D89BE0>, y1=<PyOleMissing object at 0x0000027B95D89BE0>, Z1=<PyOleMissing object at 0x0000027B95D89BE0>, x2=<PyOleMissing object at 0x0000027B95D89BE0>, y2=<PyOleMissing object at 0x0000027B95D89BE0>, Z2=<PyOleMissing object at 0x0000027B95D89BE0>, x3=<PyOleMissing object at 0x0000027B95D89BE0>, y3=<PyOleMissing object at 0x0000027B95D89BE0>, z3=<PyOleMissing object at 0x0000027B95D89BE0>, dDepth=<PyOleMissing object at 0x0000027B95D89BE0>, pPlane=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentSide=<PyOleMissing object at 0x0000027B95D89BE0>, vbKeyPointExtent=<PyOleMissing object at 0x0000027B95D89BE0>, pKeyPointObj=<PyOleMissing object at 0x0000027B95D89BE0>, pKeyPointFlags=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddBoxByTwoPoints
+--------------------------------------------------------------------------------
+Parameters: 13
+Signature: (x1=<PyOleMissing object at 0x0000027B95D89BE0>, y1=<PyOleMissing object at 0x0000027B95D89BE0>, Z1=<PyOleMissing object at 0x0000027B95D89BE0>, x2=<PyOleMissing object at 0x0000027B95D89BE0>, y2=<PyOleMissing object at 0x0000027B95D89BE0>, Z2=<PyOleMissing object at 0x0000027B95D89BE0>, dAngle=<PyOleMissing object at 0x0000027B95D89BE0>, dDepth=<PyOleMissing object at 0x0000027B95D89BE0>, pPlane=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentSide=<PyOleMissing object at 0x0000027B95D89BE0>, vbKeyPointExtent=<PyOleMissing object at 0x0000027B95D89BE0>, pKeyPointObj=<PyOleMissing object at 0x0000027B95D89BE0>, pKeyPointFlags=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddByConstruction
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (ConstructionSolid=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddCopiedPart
+--------------------------------------------------------------------------------
+Parameters: 8
+Signature: (FileName=<PyOleMissing object at 0x0000027B95D89BE0>, XScale=<PyOleMissing object at 0x0000027B95D89BE0>, YScale=<PyOleMissing object at 0x0000027B95D89BE0>, ZScale=<PyOleMissing object at 0x0000027B95D89BE0>, MirrorOrFlattenPlane=<PyOleMissing object at 0x0000027B95D89BE0>, Flatten=<PyOleMissing object at 0x0000027B95D89BE0>, FamilyOfPartsMember=<PyOleMissing object at 0x0000027B95D89BE0>, CoordinateSystem=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddCopiedPartEx
+--------------------------------------------------------------------------------
+Parameters: 11
+Signature: (FileName=<PyOleMissing object at 0x0000027B95D89BE0>, XScale=<PyOleMissing object at 0x0000027B95D89BE0>, YScale=<PyOleMissing object at 0x0000027B95D89BE0>, ZScale=<PyOleMissing object at 0x0000027B95D89BE0>, MirrorOrFlattenPlane=<PyOleMissing object at 0x0000027B95D89BE0>, Flatten=<PyOleMissing object at 0x0000027B95D89BE0>, FamilyOfPartsMember=<PyOleMissing object at 0x0000027B95D89BE0>, CoordinateSystem=<PyOleMissing object at 0x0000027B95D89BE0>, MergeIntoSingleBody=<PyOleMissing object at 0x0000027B95D89BE0>, ConfigName=<PyOleMissing object at 0x0000027B95D89BE0>, DeleteVoids=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddCopiedPartWithMatchedCoordinateSystems
+--------------------------------------------------------------------------------
+Parameters: 12
+Signature: (FileName=<PyOleMissing object at 0x0000027B95D89BE0>, XScale=<PyOleMissing object at 0x0000027B95D89BE0>, YScale=<PyOleMissing object at 0x0000027B95D89BE0>, ZScale=<PyOleMissing object at 0x0000027B95D89BE0>, MirrorOrFlattenPlane=<PyOleMissing object at 0x0000027B95D89BE0>, Flatten=<PyOleMissing object at 0x0000027B95D89BE0>, FamilyOfPartsMember=<PyOleMissing object at 0x0000027B95D89BE0>, SourceCoordinateSystem=<PyOleMissing object at 0x0000027B95D89BE0>, TargetCoordinateSystem=<PyOleMissing object at 0x0000027B95D89BE0>, MergeIntoSingleBody=<PyOleMissing object at 0x0000027B95D89BE0>, ConfigName=<PyOleMissing object at 0x0000027B95D89BE0>, DeleteVoids=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddCylinderByCenterAndRadius
+--------------------------------------------------------------------------------
+Parameters: 10
+Signature: (x=<PyOleMissing object at 0x0000027B95D89BE0>, y=<PyOleMissing object at 0x0000027B95D89BE0>, z=<PyOleMissing object at 0x0000027B95D89BE0>, dRadius=<PyOleMissing object at 0x0000027B95D89BE0>, dDepth=<PyOleMissing object at 0x0000027B95D89BE0>, pPlane=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentSide=<PyOleMissing object at 0x0000027B95D89BE0>, vbKeyPointExtent=<PyOleMissing object at 0x0000027B95D89BE0>, pKeyPointObj=<PyOleMissing object at 0x0000027B95D89BE0>, pKeyPointFlags=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddExtrudedProtrusion
+--------------------------------------------------------------------------------
+Parameters: 35
+Signature: (NumberOfProfiles=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileArray=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileSide=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentType1=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentSide1=<PyOleMissing object at 0x0000027B95D89BE0>, FiniteDepth1=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointOrTangentFace1=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointFlags1=<PyOleMissing object at 0x0000027B95D89BE0>, FromFaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, FromFaceOffsetSide=<PyOleMissing object at 0x0000027B95D89BE0>, FromFaceOffsetDistance=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentType1=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentDraftSide1=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentDraftAngle1=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentCrownType1=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentCrownSide1=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentCrownCurvatureSide1=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentCrownRadiusOrOffset1=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentCrownTakeOffAngle1=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentType2=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentSide2=<PyOleMissing object at 0x0000027B95D89BE0>, FiniteDepth2=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointOrTangentFace2=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointFlags2=<PyOleMissing object at 0x0000027B95D89BE0>, ToFaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, ToFaceOffsetSide=<PyOleMissing object at 0x0000027B95D89BE0>, ToFaceOffsetDistance=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentType2=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentDraftSide2=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentDraftAngle2=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentCrownType2=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentCrownSide2=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentCrownCurvatureSide2=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentCrownRadiusOrOffset2=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentCrownTakeOffAngle2=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddExtrudedProtrusionWithThinWall
+--------------------------------------------------------------------------------
+Parameters: 40
+Signature: (NumberOfProfiles=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileArray=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileSide=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentType1=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentSide1=<PyOleMissing object at 0x0000027B95D89BE0>, FiniteDepth1=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointOrTangentFace1=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointFlags1=<PyOleMissing object at 0x0000027B95D89BE0>, FromFaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, FromFaceOffsetSide=<PyOleMissing object at 0x0000027B95D89BE0>, FromFaceOffsetDistance=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentType1=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentDraftSide1=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentDraftAngle1=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentCrownType1=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentCrownSide1=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentCrownCurvatureSide1=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentCrownRadiusOrOffset1=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentCrownTakeOffAngle1=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentType2=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentSide2=<PyOleMissing object at 0x0000027B95D89BE0>, FiniteDepth2=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointOrTangentFace2=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointFlags2=<PyOleMissing object at 0x0000027B95D89BE0>, ToFaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, ToFaceOffsetSide=<PyOleMissing object at 0x0000027B95D89BE0>, ToFaceOffsetDistance=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentType2=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentDraftSide2=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentDraftAngle2=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentCrownType2=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentCrownSide2=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentCrownCurvatureSide2=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentCrownRadiusOrOffset2=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentCrownTakeOffAngle2=<PyOleMissing object at 0x0000027B95D89BE0>, ThinWall=<PyOleMissing object at 0x0000027B95D89BE0>, AddEndCaps=<PyOleMissing object at 0x0000027B95D89BE0>, RemoveInsideMaterial=<PyOleMissing object at 0x0000027B95D89BE0>, Thickness=<PyOleMissing object at 0x0000027B95D89BE0>, ThicknessSide=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddFiniteBaseHelix
+--------------------------------------------------------------------------------
+Parameters: 17
+Signature: (HelixAxis=<PyOleMissing object at 0x0000027B95D89BE0>, AxisStart=<PyOleMissing object at 0x0000027B95D89BE0>, NumCrossSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSectionArray=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileSide=<PyOleMissing object at 0x0000027B95D89BE0>, Height=<PyOleMissing object at 0x0000027B95D89BE0>, Pitch=<PyOleMissing object at 0x0000027B95D89BE0>, NumberOfTurns=<PyOleMissing object at 0x0000027B95D89BE0>, HelixDir=<PyOleMissing object at 0x0000027B95D89BE0>, TaperAngle=<PyOleMissing object at 0x0000027B95D89BE0>, TaperSide=<PyOleMissing object at 0x0000027B95D89BE0>, EndPitch=<PyOleMissing object at 0x0000027B95D89BE0>, DeltaPitch=<PyOleMissing object at 0x0000027B95D89BE0>, TaperStartRadius=<PyOleMissing object at 0x0000027B95D89BE0>, TaperEndRadius=<PyOleMissing object at 0x0000027B95D89BE0>, FromFaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, ToFaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddFiniteBaseHelixSync
+--------------------------------------------------------------------------------
+Parameters: 17
+Signature: (HelixAxis=<PyOleMissing object at 0x0000027B95D89BE0>, AxisStart=<PyOleMissing object at 0x0000027B95D89BE0>, NumCrossSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSectionArray=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileSide=<PyOleMissing object at 0x0000027B95D89BE0>, Height=<PyOleMissing object at 0x0000027B95D89BE0>, Pitch=<PyOleMissing object at 0x0000027B95D89BE0>, NumberOfTurns=<PyOleMissing object at 0x0000027B95D89BE0>, HelixDir=<PyOleMissing object at 0x0000027B95D89BE0>, TaperAngle=<PyOleMissing object at 0x0000027B95D89BE0>, TaperSide=<PyOleMissing object at 0x0000027B95D89BE0>, EndPitch=<PyOleMissing object at 0x0000027B95D89BE0>, DeltaPitch=<PyOleMissing object at 0x0000027B95D89BE0>, TaperStartRadius=<PyOleMissing object at 0x0000027B95D89BE0>, TaperEndRadius=<PyOleMissing object at 0x0000027B95D89BE0>, FromFaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, ToFaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddFiniteBaseHelixSyncWithThinWall
+--------------------------------------------------------------------------------
+Parameters: 22
+Signature: (HelixAxis=<PyOleMissing object at 0x0000027B95D89BE0>, AxisStart=<PyOleMissing object at 0x0000027B95D89BE0>, NumCrossSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSectionArray=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileSide=<PyOleMissing object at 0x0000027B95D89BE0>, Height=<PyOleMissing object at 0x0000027B95D89BE0>, Pitch=<PyOleMissing object at 0x0000027B95D89BE0>, NumberOfTurns=<PyOleMissing object at 0x0000027B95D89BE0>, HelixDir=<PyOleMissing object at 0x0000027B95D89BE0>, ThinWall=<PyOleMissing object at 0x0000027B95D89BE0>, AddEndCaps=<PyOleMissing object at 0x0000027B95D89BE0>, RemoveInsideMaterial=<PyOleMissing object at 0x0000027B95D89BE0>, Thickness=<PyOleMissing object at 0x0000027B95D89BE0>, ThicknessSide=<PyOleMissing object at 0x0000027B95D89BE0>, TaperAngle=<PyOleMissing object at 0x0000027B95D89BE0>, TaperSide=<PyOleMissing object at 0x0000027B95D89BE0>, EndPitch=<PyOleMissing object at 0x0000027B95D89BE0>, DeltaPitch=<PyOleMissing object at 0x0000027B95D89BE0>, TaperStartRadius=<PyOleMissing object at 0x0000027B95D89BE0>, TaperEndRadius=<PyOleMissing object at 0x0000027B95D89BE0>, FromFaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, ToFaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddFiniteBaseHelixWithThinWall
+--------------------------------------------------------------------------------
+Parameters: 22
+Signature: (HelixAxis=<PyOleMissing object at 0x0000027B95D89BE0>, AxisStart=<PyOleMissing object at 0x0000027B95D89BE0>, NumCrossSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSectionArray=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileSide=<PyOleMissing object at 0x0000027B95D89BE0>, Height=<PyOleMissing object at 0x0000027B95D89BE0>, Pitch=<PyOleMissing object at 0x0000027B95D89BE0>, NumberOfTurns=<PyOleMissing object at 0x0000027B95D89BE0>, HelixDir=<PyOleMissing object at 0x0000027B95D89BE0>, ThinWall=<PyOleMissing object at 0x0000027B95D89BE0>, AddEndCaps=<PyOleMissing object at 0x0000027B95D89BE0>, RemoveInsideMaterial=<PyOleMissing object at 0x0000027B95D89BE0>, Thickness=<PyOleMissing object at 0x0000027B95D89BE0>, ThicknessSide=<PyOleMissing object at 0x0000027B95D89BE0>, TaperAngle=<PyOleMissing object at 0x0000027B95D89BE0>, TaperSide=<PyOleMissing object at 0x0000027B95D89BE0>, EndPitch=<PyOleMissing object at 0x0000027B95D89BE0>, DeltaPitch=<PyOleMissing object at 0x0000027B95D89BE0>, TaperStartRadius=<PyOleMissing object at 0x0000027B95D89BE0>, TaperEndRadius=<PyOleMissing object at 0x0000027B95D89BE0>, FromFaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, ToFaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddFiniteExtrudedProtrusion
+--------------------------------------------------------------------------------
+Parameters: 8
+Signature: (NumberOfProfiles=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileArray=<PyOleMissing object at 0x0000027B95D89BE0>, ProfilePlaneSide=<PyOleMissing object at 0x0000027B95D89BE0>, ExtrusionDistance=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointOrTangentFace=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointFlags=<PyOleMissing object at 0x0000027B95D89BE0>, FromSurfOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, ToSurfOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddFiniteRevolvedProtrusion
+--------------------------------------------------------------------------------
+Parameters: 7
+Signature: (NumberOfProfiles=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileArray=<PyOleMissing object at 0x0000027B95D89BE0>, ReferenceAxis=<PyOleMissing object at 0x0000027B95D89BE0>, ProfilePlaneSide=<PyOleMissing object at 0x0000027B95D89BE0>, AngleofRevolution=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointOrTangentFace=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointFlags=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddFiniteRevolvedProtrusionSync
+--------------------------------------------------------------------------------
+Parameters: 7
+Signature: (NumberOfProfiles=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileArray=<PyOleMissing object at 0x0000027B95D89BE0>, ReferenceAxis=<PyOleMissing object at 0x0000027B95D89BE0>, ProfilePlaneSide=<PyOleMissing object at 0x0000027B95D89BE0>, AngleofRevolution=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointOrTangentFace=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointFlags=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddLocalSimplifyEnclosure
+--------------------------------------------------------------------------------
+Parameters: 6
+Signature: (numInputs=<PyOleMissing object at 0x0000027B95D89BE0>, TopologyProxies=<PyOleMissing object at 0x0000027B95D89BE0>, RefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, EncloseType=<PyOleMissing object at 0x0000027B95D89BE0>, BodyName=<PyOleMissing object at 0x0000027B95D89BE0>, Enclosure=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddLoftedFlange
+--------------------------------------------------------------------------------
+Parameters: 9
+Signature: (NumSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSectionTypes=<PyOleMissing object at 0x0000027B95D89BE0>, Origins=<PyOleMissing object at 0x0000027B95D89BE0>, OriginRefs=<PyOleMissing object at 0x0000027B95D89BE0>, ThicknessSide=<PyOleMissing object at 0x0000027B95D89BE0>, varRadius=<PyOleMissing object at 0x0000027B95D89BE0>, varNeutralFactor=<PyOleMissing object at 0x0000027B95D89BE0>, varBnParamType=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddLoftedFlangeByBendDeductionOrBendAllowance
+--------------------------------------------------------------------------------
+Parameters: 27
+Signature: (NumSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSectionTypes=<PyOleMissing object at 0x0000027B95D89BE0>, Origins=<PyOleMissing object at 0x0000027B95D89BE0>, OriginRefs=<PyOleMissing object at 0x0000027B95D89BE0>, ThicknessSide=<PyOleMissing object at 0x0000027B95D89BE0>, dRadius=<PyOleMissing object at 0x0000027B95D89BE0>, dNeutralFactor=<PyOleMissing object at 0x0000027B95D89BE0>, BnParamType=<PyOleMissing object at 0x0000027B95D89BE0>, BRType=<PyOleMissing object at 0x0000027B95D89BE0>, dBRWidth=<PyOleMissing object at 0x0000027B95D89BE0>, dBRLength=<PyOleMissing object at 0x0000027B95D89BE0>, CRType=<PyOleMissing object at 0x0000027B95D89BE0>, nNumVertexMaps=<PyOleMissing object at 0x0000027B95D89BE0>, MappedVertices1=<PyOleMissing object at 0x0000027B95D89BE0>, MappedVertices2=<PyOleMissing object at 0x0000027B95D89BE0>, BendDivideMethod=<PyOleMissing object at 0x0000027B95D89BE0>, DivideBendCount=<PyOleMissing object at 0x0000027B95D89BE0>, MaximumChordHieghtTolerance=<PyOleMissing object at 0x0000027B95D89BE0>, MaximumSegmentLength=<PyOleMissing object at 0x0000027B95D89BE0>, MaximunSegmentAngle=<PyOleMissing object at 0x0000027B95D89BE0>, IndexMarkLength=<PyOleMissing object at 0x0000027B95D89BE0>, AutoReliefType=<PyOleMissing object at 0x0000027B95D89BE0>, AutoReliefTrimType=<PyOleMissing object at 0x0000027B95D89BE0>, BendingMethod=<PyOleMissing object at 0x0000027B95D89BE0>, BendCalculationMethod=<PyOleMissing object at 0x0000027B95D89BE0>, BendCalculationMethodValue=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddLoftedFlangeEx
+--------------------------------------------------------------------------------
+Parameters: 25
+Signature: (NumSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSectionTypes=<PyOleMissing object at 0x0000027B95D89BE0>, Origins=<PyOleMissing object at 0x0000027B95D89BE0>, OriginRefs=<PyOleMissing object at 0x0000027B95D89BE0>, ThicknessSide=<PyOleMissing object at 0x0000027B95D89BE0>, dRadius=<PyOleMissing object at 0x0000027B95D89BE0>, dNeutralFactor=<PyOleMissing object at 0x0000027B95D89BE0>, BnParamType=<PyOleMissing object at 0x0000027B95D89BE0>, BRType=<PyOleMissing object at 0x0000027B95D89BE0>, dBRWidth=<PyOleMissing object at 0x0000027B95D89BE0>, dBRLength=<PyOleMissing object at 0x0000027B95D89BE0>, CRType=<PyOleMissing object at 0x0000027B95D89BE0>, nNumVertexMaps=<PyOleMissing object at 0x0000027B95D89BE0>, MappedVertices1=<PyOleMissing object at 0x0000027B95D89BE0>, MappedVertices2=<PyOleMissing object at 0x0000027B95D89BE0>, BendDivideMethod=<PyOleMissing object at 0x0000027B95D89BE0>, DivideBendCount=<PyOleMissing object at 0x0000027B95D89BE0>, MaximumChordHieghtTolerance=<PyOleMissing object at 0x0000027B95D89BE0>, MaximumSegmentLength=<PyOleMissing object at 0x0000027B95D89BE0>, MaximunSegmentAngle=<PyOleMissing object at 0x0000027B95D89BE0>, IndexMarkLength=<PyOleMissing object at 0x0000027B95D89BE0>, AutoReliefType=<PyOleMissing object at 0x0000027B95D89BE0>, AutoReliefTrimType=<PyOleMissing object at 0x0000027B95D89BE0>, BendingMethod=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddLoftedProtrusion
+--------------------------------------------------------------------------------
+Parameters: 18
+Signature: (NumSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSectionTypes=<PyOleMissing object at 0x0000027B95D89BE0>, Origins=<PyOleMissing object at 0x0000027B95D89BE0>, SegmentMaps=<PyOleMissing object at 0x0000027B95D89BE0>, MaterialSide=<PyOleMissing object at 0x0000027B95D89BE0>, StartExtentType=<PyOleMissing object at 0x0000027B95D89BE0>, StartExtentDistance=<PyOleMissing object at 0x0000027B95D89BE0>, StartSurfaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, EndExtentType=<PyOleMissing object at 0x0000027B95D89BE0>, EndExtentDistance=<PyOleMissing object at 0x0000027B95D89BE0>, EndSurfaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, StartTangentType=<PyOleMissing object at 0x0000027B95D89BE0>, StartTangentMagnitude=<PyOleMissing object at 0x0000027B95D89BE0>, EndTangentType=<PyOleMissing object at 0x0000027B95D89BE0>, EndTangentMagnitude=<PyOleMissing object at 0x0000027B95D89BE0>, NumGuideCurves=<PyOleMissing object at 0x0000027B95D89BE0>, GuideCurves=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddLoftedProtrusionWithThinWall
+--------------------------------------------------------------------------------
+Parameters: 23
+Signature: (NumSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSectionTypes=<PyOleMissing object at 0x0000027B95D89BE0>, Origins=<PyOleMissing object at 0x0000027B95D89BE0>, SegmentMaps=<PyOleMissing object at 0x0000027B95D89BE0>, MaterialSide=<PyOleMissing object at 0x0000027B95D89BE0>, StartExtentType=<PyOleMissing object at 0x0000027B95D89BE0>, StartExtentDistance=<PyOleMissing object at 0x0000027B95D89BE0>, StartSurfaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, EndExtentType=<PyOleMissing object at 0x0000027B95D89BE0>, EndExtentDistance=<PyOleMissing object at 0x0000027B95D89BE0>, EndSurfaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, StartTangentType=<PyOleMissing object at 0x0000027B95D89BE0>, StartTangentMagnitude=<PyOleMissing object at 0x0000027B95D89BE0>, EndTangentType=<PyOleMissing object at 0x0000027B95D89BE0>, EndTangentMagnitude=<PyOleMissing object at 0x0000027B95D89BE0>, ThinWall=<PyOleMissing object at 0x0000027B95D89BE0>, AddEndCaps=<PyOleMissing object at 0x0000027B95D89BE0>, RemoveInsideMaterial=<PyOleMissing object at 0x0000027B95D89BE0>, Thickness=<PyOleMissing object at 0x0000027B95D89BE0>, ThicknessSide=<PyOleMissing object at 0x0000027B95D89BE0>, NumGuideCurves=<PyOleMissing object at 0x0000027B95D89BE0>, GuideCurves=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddRef
+--------------------------------------------------------------------------------
+Parameters: 0
+Signature: ()
+Docstring: None
+
+AddRevolvedProtrusion
+--------------------------------------------------------------------------------
+Parameters: 14
+Signature: (NumberOfProfiles=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileArray=<PyOleMissing object at 0x0000027B95D89BE0>, RefAxis=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileSide=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentType1=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentSide1=<PyOleMissing object at 0x0000027B95D89BE0>, FiniteAngle1=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointOrTangentFace1=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointFlags1=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentType2=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentSide2=<PyOleMissing object at 0x0000027B95D89BE0>, FiniteAngle2=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointOrTangentFace2=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointFlags2=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddRevolvedProtrusionSync
+--------------------------------------------------------------------------------
+Parameters: 14
+Signature: (NumberOfProfiles=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileArray=<PyOleMissing object at 0x0000027B95D89BE0>, RefAxis=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileSide=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentType1=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentSide1=<PyOleMissing object at 0x0000027B95D89BE0>, FiniteAngle1=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointOrTangentFace1=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointFlags1=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentType2=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentSide2=<PyOleMissing object at 0x0000027B95D89BE0>, FiniteAngle2=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointOrTangentFace2=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointFlags2=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddRevolvedProtrusionWithThinWall
+--------------------------------------------------------------------------------
+Parameters: 19
+Signature: (NumberOfProfiles=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileArray=<PyOleMissing object at 0x0000027B95D89BE0>, RefAxis=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileSide=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentType1=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentSide1=<PyOleMissing object at 0x0000027B95D89BE0>, FiniteAngle1=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointOrTangentFace1=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointFlags1=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentType2=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentSide2=<PyOleMissing object at 0x0000027B95D89BE0>, FiniteAngle2=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointOrTangentFace2=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointFlags2=<PyOleMissing object at 0x0000027B95D89BE0>, ThinWall=<PyOleMissing object at 0x0000027B95D89BE0>, AddEndCaps=<PyOleMissing object at 0x0000027B95D89BE0>, RemoveInsideMaterial=<PyOleMissing object at 0x0000027B95D89BE0>, Thickness=<PyOleMissing object at 0x0000027B95D89BE0>, ThicknessSide=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddSimplifyDuplicate
+--------------------------------------------------------------------------------
+Parameters: 7
+Signature: (NumBodies=<PyOleMissing object at 0x0000027B95D89BE0>, Bodies=<PyOleMissing object at 0x0000027B95D89BE0>, FromOccurrence=<PyOleMissing object at 0x0000027B95D89BE0>, numOccurrences=<PyOleMissing object at 0x0000027B95D89BE0>, ToOccurrences=<PyOleMissing object at 0x0000027B95D89BE0>, Name=<PyOleMissing object at 0x0000027B95D89BE0>, Duplicate=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddSimplifyEnclosure
+--------------------------------------------------------------------------------
+Parameters: 6
+Signature: (numInputs=<PyOleMissing object at 0x0000027B95D89BE0>, Occurrences=<PyOleMissing object at 0x0000027B95D89BE0>, RefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, EncloseType=<PyOleMissing object at 0x0000027B95D89BE0>, BodyName=<PyOleMissing object at 0x0000027B95D89BE0>, Enclosure=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddSphereByCenterAndRadius
+--------------------------------------------------------------------------------
+Parameters: 10
+Signature: (x=<PyOleMissing object at 0x0000027B95D89BE0>, y=<PyOleMissing object at 0x0000027B95D89BE0>, z=<PyOleMissing object at 0x0000027B95D89BE0>, dRadius=<PyOleMissing object at 0x0000027B95D89BE0>, pPlane=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentSide=<PyOleMissing object at 0x0000027B95D89BE0>, vbKeyPointExtent=<PyOleMissing object at 0x0000027B95D89BE0>, vbCreateLiveSection=<PyOleMissing object at 0x0000027B95D89BE0>, pKeyPointObj=<PyOleMissing object at 0x0000027B95D89BE0>, pKeyPointFlags=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddSweptProtrusion
+--------------------------------------------------------------------------------
+Parameters: 15
+Signature: (NumCurves=<PyOleMissing object at 0x0000027B95D89BE0>, TraceCurves=<PyOleMissing object at 0x0000027B95D89BE0>, TraceCurveTypes=<PyOleMissing object at 0x0000027B95D89BE0>, NumSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSectionTypes=<PyOleMissing object at 0x0000027B95D89BE0>, Origins=<PyOleMissing object at 0x0000027B95D89BE0>, SegmentMaps=<PyOleMissing object at 0x0000027B95D89BE0>, MaterialSide=<PyOleMissing object at 0x0000027B95D89BE0>, StartExtentType=<PyOleMissing object at 0x0000027B95D89BE0>, StartExtentDistance=<PyOleMissing object at 0x0000027B95D89BE0>, StartSurfaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, EndExtentType=<PyOleMissing object at 0x0000027B95D89BE0>, EndExtentDistance=<PyOleMissing object at 0x0000027B95D89BE0>, EndSurfaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddSweptProtrusionWithThinWall
+--------------------------------------------------------------------------------
+Parameters: 20
+Signature: (NumCurves=<PyOleMissing object at 0x0000027B95D89BE0>, TraceCurves=<PyOleMissing object at 0x0000027B95D89BE0>, TraceCurveTypes=<PyOleMissing object at 0x0000027B95D89BE0>, NumSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSectionTypes=<PyOleMissing object at 0x0000027B95D89BE0>, Origins=<PyOleMissing object at 0x0000027B95D89BE0>, SegmentMaps=<PyOleMissing object at 0x0000027B95D89BE0>, MaterialSide=<PyOleMissing object at 0x0000027B95D89BE0>, StartExtentType=<PyOleMissing object at 0x0000027B95D89BE0>, StartExtentDistance=<PyOleMissing object at 0x0000027B95D89BE0>, StartSurfaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, EndExtentType=<PyOleMissing object at 0x0000027B95D89BE0>, EndExtentDistance=<PyOleMissing object at 0x0000027B95D89BE0>, EndSurfaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, ThinWall=<PyOleMissing object at 0x0000027B95D89BE0>, AddEndCaps=<PyOleMissing object at 0x0000027B95D89BE0>, RemoveInsideMaterial=<PyOleMissing object at 0x0000027B95D89BE0>, Thickness=<PyOleMissing object at 0x0000027B95D89BE0>, ThicknessSide=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddThickenFeature
+--------------------------------------------------------------------------------
+Parameters: 4
+Signature: (Side=<PyOleMissing object at 0x0000027B95D89BE0>, offsetDistance=<PyOleMissing object at 0x0000027B95D89BE0>, NumberOfFaces=<PyOleMissing object at 0x0000027B95D89BE0>, Faces=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+AddWebNetwork
+--------------------------------------------------------------------------------
+Parameters: 6
+Signature: (nNumProfiles=<PyOleMissing object at 0x0000027B95D89BE0>, aProfiles=<PyOleMissing object at 0x0000027B95D89BE0>, dThickness=<PyOleMissing object at 0x0000027B95D89BE0>, WebDirection=<PyOleMissing object at 0x0000027B95D89BE0>, dFiniteDepth=<PyOleMissing object at 0x0000027B95D89BE0>, TreatmentType=<PyOleMissing object at 0x0000027B95D89BE0>)
+Docstring: None
+
+================================================================================
+  MODELS COLLECTION - OTHER METHODS
+================================================================================
+
+Found 16 other methods/properties
+
+
+AlignBodyByBestFit            AlignBodyByCustomFit          AlignBodyByPrincipalAxis      Application                   ConvertToMeshes               
+Count                         DoRemesh                      Item                          Parent                        QueryInterface                
+Release                       SaveAsFlatDXF                 SaveAsFlatDXFEx               SaveAsFlatDXF_BIDM            SaveAsMirrorPart              
+ToggleToDesigns               
+
+
+================================================================================
+  WINDOW OBJECT - ALL METHODS
+================================================================================
+
+Found 36 methods/properties
+
+
+Key view-related methods (1):
+
+View
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (*args)
+
+Parameter Details:
+  - args: kind=VAR_POSITIONAL, default=type
+Docstring: 
+The dynamic class used as a last resort.
+The purpose of this overriding of dynamic.CDispatch is to perpetuate the policy
+of using the makepy generated wrapper Python class instead of dynamic.CDispatc
+
+
+All window methods/properties:
+
+Activate                           ActivateNext                       ActivatePrevious                   AddRef                             
+Application                        AttributeSets                      Caption                            Close                              
+DockWindow                         DrawHwnd                           Environment                        FloatWindow                        
+Floating                           Height                             HeightEx                           Icon                               
+Index                              IsAttributeSetPresent              Left                               Parent                             
+Paste                              PrintOut                           QueryInterface                     Release                            
+SelectSet                          Top                                Type                               UsableHeight                       
+UsableWidth                        View                               Visible                            Width                              
+WidthEx                            WindowNumber                       WindowState                        hWnd                               
+
+
+================================================================================
+  VIEW OBJECT - ALL METHODS
+================================================================================
+
+Found 96 methods/properties
+
+
+AddFrameToMovie
+--------------------------------------------------------------------------------
+Parameters: 2
+Signature: (KeyFrame=<PyOleMissing object at 0x0000027B95D89BE0>, pNewFrameCount=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - KeyFrame: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pNewFrameCount: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+AddRef
+--------------------------------------------------------------------------------
+Parameters: 0
+Signature: ()
+Docstring: None
+
+ApplyNamedView
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (Name=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - Name: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+AreaZoomCamera
+--------------------------------------------------------------------------------
+Parameters: 4
+Signature: (X1=<PyOleMissing object at 0x0000027B95D89BE0>, Y1=<PyOleMissing object at 0x0000027B95D89BE0>, X2=<PyOleMissing object at 0x0000027B95D89BE0>, Y2=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - X1: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Y1: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - X2: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Y2: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+BeginCameraDynamics
+--------------------------------------------------------------------------------
+Parameters: 0
+Signature: ()
+Docstring: None
+
+BeginMovieRecording
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (Filename=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - Filename: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+ClearRotationFocus
+--------------------------------------------------------------------------------
+Parameters: 0
+Signature: ()
+Docstring: None
+
+CreateMovieRecorder
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (Format=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - Format: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+CreateUserRange
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (pidUserRange=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - pidUserRange: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+DeleteUserRange
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (idUserRange=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - idUserRange: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+DestroyMovieRecorder
+--------------------------------------------------------------------------------
+Parameters: 0
+Signature: ()
+Docstring: None
+
+EndCameraDynamics
+--------------------------------------------------------------------------------
+Parameters: 0
+Signature: ()
+Docstring: None
+
+EndMovieRecording
+--------------------------------------------------------------------------------
+Parameters: 0
+Signature: ()
+Docstring: None
+
+Fit
+--------------------------------------------------------------------------------
+Parameters: 0
+Signature: ()
+Docstring: None
+
+GetAttribute
+--------------------------------------------------------------------------------
+Parameters: 2
+Signature: (Attribute=<PyOleMissing object at 0x0000027B95D89BE0>, AttributeData=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - Attribute: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - AttributeData: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+GetAvailableMovieCodecs
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (AvailableCodecs=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - AvailableCodecs: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+GetCamera
+--------------------------------------------------------------------------------
+Parameters: 11
+Signature: (EyeX=<PyOleMissing object at 0x0000027B95D89BE0>, EyeY=<PyOleMissing object at 0x0000027B95D89BE0>, EyeZ=<PyOleMissing object at 0x0000027B95D89BE0>, TargetX=<PyOleMissing object at 0x0000027B95D89BE0>, TargetY=<PyOleMissing object at 0x0000027B95D89BE0>, TargetZ=<PyOleMissing object at 0x0000027B95D89BE0>, UpX=<PyOleMissing object at 0x0000027B95D89BE0>, UpY=<PyOleMissing object at 0x0000027B95D89BE0>, UpZ=<PyOleMissing object at 0x0000027B95D89BE0>, Perspective=<PyOleMissing object at 0x0000027B95D89BE0>, ScaleOrAngle=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - EyeX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - EyeY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - EyeZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - TargetX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - TargetY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - TargetZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - UpX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - UpY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - UpZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Perspective: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ScaleOrAngle: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+GetCameraEx
+--------------------------------------------------------------------------------
+Parameters: 17
+Signature: (lFlags=<PyOleMissing object at 0x0000027B95D89BE0>, dEyeX=<PyOleMissing object at 0x0000027B95D89BE0>, dEyeY=<PyOleMissing object at 0x0000027B95D89BE0>, dEyeZ=<PyOleMissing object at 0x0000027B95D89BE0>, dTargetX=<PyOleMissing object at 0x0000027B95D89BE0>, dTargetY=<PyOleMissing object at 0x0000027B95D89BE0>, dTargetZ=<PyOleMissing object at 0x0000027B95D89BE0>, dUpX=<PyOleMissing object at 0x0000027B95D89BE0>, dUpY=<PyOleMissing object at 0x0000027B95D89BE0>, dUpZ=<PyOleMissing object at 0x0000027B95D89BE0>, dNearClip=<PyOleMissing object at 0x0000027B95D89BE0>, dFarClip=<PyOleMissing object at 0x0000027B95D89BE0>, dFrameWidth=<PyOleMissing object at 0x0000027B95D89BE0>, dFrameHeight=<PyOleMissing object at 0x0000027B95D89BE0>, dFrameEyeX=<PyOleMissing object at 0x0000027B95D89BE0>, dFrameEyeY=<PyOleMissing object at 0x0000027B95D89BE0>, dFrameScale=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - lFlags: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dEyeX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dEyeY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dEyeZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dTargetX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dTargetY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dTargetZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dUpX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dUpY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dUpZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dNearClip: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dFarClip: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dFrameWidth: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dFrameHeight: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dFrameEyeX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dFrameEyeY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dFrameScale: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+GetCounter
+--------------------------------------------------------------------------------
+Parameters: 3
+Signature: (Type=<PyOleMissing object at 0x0000027B95D89BE0>, bReset=<PyOleMissing object at 0x0000027B95D89BE0>, dCounter=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - Type: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - bReset: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dCounter: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+GetDisplayDepths
+--------------------------------------------------------------------------------
+Parameters: 5
+Signature: (pdFront=<PyOleMissing object at 0x0000027B95D89BE0>, pdBack=<PyOleMissing object at 0x0000027B95D89BE0>, FrontFaceStyle=<PyOleMissing object at 0x0000027B95D89BE0>, BackFaceStyle=<PyOleMissing object at 0x0000027B95D89BE0>, Monument=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - pdFront: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdBack: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - FrontFaceStyle: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - BackFaceStyle: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Monument: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+GetModelRange
+--------------------------------------------------------------------------------
+Parameters: 6
+Signature: (pdLowX=<PyOleMissing object at 0x0000027B95D89BE0>, pdLowY=<PyOleMissing object at 0x0000027B95D89BE0>, pdLowZ=<PyOleMissing object at 0x0000027B95D89BE0>, pdHighX=<PyOleMissing object at 0x0000027B95D89BE0>, pdHighY=<PyOleMissing object at 0x0000027B95D89BE0>, pdHighZ=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - pdLowX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdLowY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdLowZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdHighX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdHighY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdHighZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+GetRotationFocus
+--------------------------------------------------------------------------------
+Parameters: 10
+Signature: (pdPointX=<PyOleMissing object at 0x0000027B95D89BE0>, pdPointY=<PyOleMissing object at 0x0000027B95D89BE0>, pdPointZ=<PyOleMissing object at 0x0000027B95D89BE0>, pdDirectionX=<PyOleMissing object at 0x0000027B95D89BE0>, pdDirectionZ=<PyOleMissing object at 0x0000027B95D89BE0>, pdDirectionY=<PyOleMissing object at 0x0000027B95D89BE0>, pdFront=<PyOleMissing object at 0x0000027B95D89BE0>, pdBack=<PyOleMissing object at 0x0000027B95D89BE0>, pdRadius=<PyOleMissing object at 0x0000027B95D89BE0>, puOptions=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - pdPointX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdPointY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdPointZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdDirectionX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdDirectionZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdDirectionY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdFront: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdBack: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdRadius: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - puOptions: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+GetSectionPlanes
+--------------------------------------------------------------------------------
+Parameters: 4
+Signature: (pnPlanes=<PyOleMissing object at 0x0000027B95D89BE0>, Positions=<PyOleMissing object at 0x0000027B95D89BE0>, Normals=<PyOleMissing object at 0x0000027B95D89BE0>, FaceStyles=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - pnPlanes: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Positions: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Normals: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - FaceStyles: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+GetSectionPlanesParams
+--------------------------------------------------------------------------------
+Parameters: 5
+Signature: (Options=<PyOleMissing object at 0x0000027B95D89BE0>, PlaneCount=<PyOleMissing object at 0x0000027B95D89BE0>, Positions=<PyOleMissing object at 0x0000027B95D89BE0>, Normals=<PyOleMissing object at 0x0000027B95D89BE0>, Colors=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - Options: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - PlaneCount: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Positions: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Normals: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Colors: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+GetUserRange
+--------------------------------------------------------------------------------
+Parameters: 7
+Signature: (idUserRange=<PyOleMissing object at 0x0000027B95D89BE0>, pdLowX=<PyOleMissing object at 0x0000027B95D89BE0>, pdLowY=<PyOleMissing object at 0x0000027B95D89BE0>, pdLowZ=<PyOleMissing object at 0x0000027B95D89BE0>, pdHighX=<PyOleMissing object at 0x0000027B95D89BE0>, pdHighY=<PyOleMissing object at 0x0000027B95D89BE0>, pdHighZ=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - idUserRange: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdLowX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdLowY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdLowZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdHighX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdHighY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdHighZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+Locate
+--------------------------------------------------------------------------------
+Parameters: 6
+Signature: (lPointX=<PyOleMissing object at 0x0000027B95D89BE0>, lPointY=<PyOleMissing object at 0x0000027B95D89BE0>, lRadius=<PyOleMissing object at 0x0000027B95D89BE0>, pdHitPointX=<PyOleMissing object at 0x0000027B95D89BE0>, pdHitPointY=<PyOleMissing object at 0x0000027B95D89BE0>, pdHitPointZ=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - lPointX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - lPointY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - lRadius: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdHitPointX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdHitPointY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pdHitPointZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+ModelToDC
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (Matrix=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - Matrix: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+ModelToView
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (Matrix=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - Matrix: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+OrientCamera
+--------------------------------------------------------------------------------
+Parameters: 7
+Signature: (cmdtype=<PyOleMissing object at 0x0000027B95D89BE0>, X1=<PyOleMissing object at 0x0000027B95D89BE0>, Y1=<PyOleMissing object at 0x0000027B95D89BE0>, X2=<PyOleMissing object at 0x0000027B95D89BE0>, Y2=<PyOleMissing object at 0x0000027B95D89BE0>, X3=<PyOleMissing object at 0x0000027B95D89BE0>, Y3=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - cmdtype: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - X1: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Y1: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - X2: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Y2: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - X3: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Y3: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+OrientCameraEx
+--------------------------------------------------------------------------------
+Parameters: 8
+Signature: (lFlags=<PyOleMissing object at 0x0000027B95D89BE0>, lButtons=<PyOleMissing object at 0x0000027B95D89BE0>, dX=<PyOleMissing object at 0x0000027B95D89BE0>, dY=<PyOleMissing object at 0x0000027B95D89BE0>, dZ=<PyOleMissing object at 0x0000027B95D89BE0>, dYaw=<PyOleMissing object at 0x0000027B95D89BE0>, dPitch=<PyOleMissing object at 0x0000027B95D89BE0>, dRoll=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - lFlags: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - lButtons: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dYaw: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dPitch: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dRoll: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+PanCamera
+--------------------------------------------------------------------------------
+Parameters: 2
+Signature: (dX=<PyOleMissing object at 0x0000027B95D89BE0>, dY=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - dX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+QueryInterface
+--------------------------------------------------------------------------------
+Parameters: 2
+Signature: (riid=<PyOleMissing object at 0x0000027B95D89BE0>, ppvObj=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - riid: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ppvObj: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+RangeZoomCamera
+--------------------------------------------------------------------------------
+Parameters: 6
+Signature: (dLowX=<PyOleMissing object at 0x0000027B95D89BE0>, dLowY=<PyOleMissing object at 0x0000027B95D89BE0>, dLowZ=<PyOleMissing object at 0x0000027B95D89BE0>, dHighX=<PyOleMissing object at 0x0000027B95D89BE0>, dHighY=<PyOleMissing object at 0x0000027B95D89BE0>, dHighZ=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - dLowX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dLowY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dLowZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dHighX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dHighY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dHighZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+RefreshView
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (nOptions=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - nOptions: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+Release
+--------------------------------------------------------------------------------
+Parameters: 0
+Signature: ()
+Docstring: None
+
+RotateCamera
+--------------------------------------------------------------------------------
+Parameters: 7
+Signature: (Angle=<PyOleMissing object at 0x0000027B95D89BE0>, CenterX=<PyOleMissing object at 0x0000027B95D89BE0>, CenterY=<PyOleMissing object at 0x0000027B95D89BE0>, CenterZ=<PyOleMissing object at 0x0000027B95D89BE0>, AxisX=<PyOleMissing object at 0x0000027B95D89BE0>, AxisY=<PyOleMissing object at 0x0000027B95D89BE0>, AxisZ=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - Angle: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - CenterX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - CenterY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - CenterZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - AxisX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - AxisY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - AxisZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+SaveAsImage
+--------------------------------------------------------------------------------
+Parameters: 8
+Signature: (Filename=<PyOleMissing object at 0x0000027B95D89BE0>, Width=<PyOleMissing object at 0x0000027B95D89BE0>, Height=<PyOleMissing object at 0x0000027B95D89BE0>, AltViewStyle=<PyOleMissing object at 0x0000027B95D89BE0>, Resolution=<PyOleMissing object at 0x0000027B95D89BE0>, ColorDepth=<PyOleMissing object at 0x0000027B95D89BE0>, ImageQuality=<PyOleMissing object at 0x0000027B95D89BE0>, Invert=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - Filename: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Width: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Height: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - AltViewStyle: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Resolution: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ColorDepth: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ImageQuality: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Invert: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+SaveCurrentView
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (Name=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - Name: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+SetAttribute
+--------------------------------------------------------------------------------
+Parameters: 2
+Signature: (Attribute=<PyOleMissing object at 0x0000027B95D89BE0>, AttributeData=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - Attribute: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - AttributeData: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+SetCamera
+--------------------------------------------------------------------------------
+Parameters: 11
+Signature: (EyeX=<PyOleMissing object at 0x0000027B95D89BE0>, EyeY=<PyOleMissing object at 0x0000027B95D89BE0>, EyeZ=<PyOleMissing object at 0x0000027B95D89BE0>, TargetX=<PyOleMissing object at 0x0000027B95D89BE0>, TargetY=<PyOleMissing object at 0x0000027B95D89BE0>, TargetZ=<PyOleMissing object at 0x0000027B95D89BE0>, UpX=<PyOleMissing object at 0x0000027B95D89BE0>, UpY=<PyOleMissing object at 0x0000027B95D89BE0>, UpZ=<PyOleMissing object at 0x0000027B95D89BE0>, Perspective=<PyOleMissing object at 0x0000027B95D89BE0>, ScaleOrAngle=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - EyeX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - EyeY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - EyeZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - TargetX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - TargetY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - TargetZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - UpX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - UpY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - UpZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Perspective: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ScaleOrAngle: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+SetCameraEx
+--------------------------------------------------------------------------------
+Parameters: 17
+Signature: (lFlags=<PyOleMissing object at 0x0000027B95D89BE0>, dEyeX=<PyOleMissing object at 0x0000027B95D89BE0>, dEyeY=<PyOleMissing object at 0x0000027B95D89BE0>, dEyeZ=<PyOleMissing object at 0x0000027B95D89BE0>, dTargetX=<PyOleMissing object at 0x0000027B95D89BE0>, dTargetY=<PyOleMissing object at 0x0000027B95D89BE0>, dTargetZ=<PyOleMissing object at 0x0000027B95D89BE0>, dUpX=<PyOleMissing object at 0x0000027B95D89BE0>, dUpY=<PyOleMissing object at 0x0000027B95D89BE0>, dUpZ=<PyOleMissing object at 0x0000027B95D89BE0>, dNearClip=<PyOleMissing object at 0x0000027B95D89BE0>, dFarClip=<PyOleMissing object at 0x0000027B95D89BE0>, dFrameWidth=<PyOleMissing object at 0x0000027B95D89BE0>, dFrameHeight=<PyOleMissing object at 0x0000027B95D89BE0>, dFrameEyeX=<PyOleMissing object at 0x0000027B95D89BE0>, dFrameEyeY=<PyOleMissing object at 0x0000027B95D89BE0>, dFrameScale=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - lFlags: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dEyeX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dEyeY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dEyeZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dTargetX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dTargetY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dTargetZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dUpX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dUpY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dUpZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dNearClip: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dFarClip: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dFrameWidth: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dFrameHeight: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dFrameEyeX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dFrameEyeY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dFrameScale: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+SetCustomMovieResolution
+--------------------------------------------------------------------------------
+Parameters: 2
+Signature: (nWidth=<PyOleMissing object at 0x0000027B95D89BE0>, nHeight=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - nWidth: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - nHeight: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+SetDisplayDepths
+--------------------------------------------------------------------------------
+Parameters: 5
+Signature: (dFront=<PyOleMissing object at 0x0000027B95D89BE0>, dBack=<PyOleMissing object at 0x0000027B95D89BE0>, FrontFaceStyle=<PyOleMissing object at 0x0000027B95D89BE0>, BackFaceStyle=<PyOleMissing object at 0x0000027B95D89BE0>, Monument=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - dFront: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dBack: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - FrontFaceStyle: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - BackFaceStyle: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Monument: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+SetMovieResolution
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (StandardMovieResolution=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - StandardMovieResolution: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+SetRenderMode
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (mode=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - mode: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+SetRotationAxis
+--------------------------------------------------------------------------------
+Parameters: 6
+Signature: (dPointX=<PyOleMissing object at 0x0000027B95D89BE0>, dPointY=<PyOleMissing object at 0x0000027B95D89BE0>, dPointZ=<PyOleMissing object at 0x0000027B95D89BE0>, dDirectionX=<PyOleMissing object at 0x0000027B95D89BE0>, dDirectionY=<PyOleMissing object at 0x0000027B95D89BE0>, dDirectionZ=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - dPointX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dPointY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dPointZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dDirectionX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dDirectionY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dDirectionZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+SetRotationFocus
+--------------------------------------------------------------------------------
+Parameters: 10
+Signature: (dPointX=<PyOleMissing object at 0x0000027B95D89BE0>, dPointY=<PyOleMissing object at 0x0000027B95D89BE0>, dPointZ=<PyOleMissing object at 0x0000027B95D89BE0>, dDirectionX=<PyOleMissing object at 0x0000027B95D89BE0>, dDirectionZ=<PyOleMissing object at 0x0000027B95D89BE0>, dDirectionY=<PyOleMissing object at 0x0000027B95D89BE0>, dFront=<PyOleMissing object at 0x0000027B95D89BE0>, dBack=<PyOleMissing object at 0x0000027B95D89BE0>, dRadius=<PyOleMissing object at 0x0000027B95D89BE0>, uOptions=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - dPointX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dPointY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dPointZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dDirectionX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dDirectionZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dDirectionY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dFront: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dBack: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dRadius: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - uOptions: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+SetRotationPoint
+--------------------------------------------------------------------------------
+Parameters: 3
+Signature: (dPointX=<PyOleMissing object at 0x0000027B95D89BE0>, dPointY=<PyOleMissing object at 0x0000027B95D89BE0>, dPointZ=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - dPointX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dPointY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dPointZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+SetSectionPlanes
+--------------------------------------------------------------------------------
+Parameters: 4
+Signature: (nPlanes=<PyOleMissing object at 0x0000027B95D89BE0>, Positions=<PyOleMissing object at 0x0000027B95D89BE0>, Normals=<PyOleMissing object at 0x0000027B95D89BE0>, FaceStyles=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - nPlanes: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Positions: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Normals: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - FaceStyles: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+SetSectionPlanesParams
+--------------------------------------------------------------------------------
+Parameters: 5
+Signature: (Options=<PyOleMissing object at 0x0000027B95D89BE0>, PlaneCount=<PyOleMissing object at 0x0000027B95D89BE0>, Positions=<PyOleMissing object at 0x0000027B95D89BE0>, Normals=<PyOleMissing object at 0x0000027B95D89BE0>, Colors=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - Options: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - PlaneCount: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Positions: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Normals: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Colors: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+SetUserRange
+--------------------------------------------------------------------------------
+Parameters: 7
+Signature: (idUserRange=<PyOleMissing object at 0x0000027B95D89BE0>, dLowX=<PyOleMissing object at 0x0000027B95D89BE0>, dLowY=<PyOleMissing object at 0x0000027B95D89BE0>, dLowZ=<PyOleMissing object at 0x0000027B95D89BE0>, dHighX=<PyOleMissing object at 0x0000027B95D89BE0>, dHighY=<PyOleMissing object at 0x0000027B95D89BE0>, dHighZ=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - idUserRange: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dLowX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dLowY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dLowZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dHighX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dHighY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dHighZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+ShowDrawDC
+--------------------------------------------------------------------------------
+Parameters: 0
+Signature: ()
+Docstring: None
+
+SwapBuffers
+--------------------------------------------------------------------------------
+Parameters: 0
+Signature: ()
+Docstring: None
+
+TransformDCToModel
+--------------------------------------------------------------------------------
+Parameters: 5
+Signature: (DeviceX=<PyOleMissing object at 0x0000027B95D89BE0>, DeviceY=<PyOleMissing object at 0x0000027B95D89BE0>, ModelX=<PyOleMissing object at 0x0000027B95D89BE0>, ModelY=<PyOleMissing object at 0x0000027B95D89BE0>, ModelZ=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - DeviceX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - DeviceY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ModelX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ModelY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ModelZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+TransformGLProjectionToView
+--------------------------------------------------------------------------------
+Parameters: 6
+Signature: (GLX=<PyOleMissing object at 0x0000027B95D89BE0>, GLY=<PyOleMissing object at 0x0000027B95D89BE0>, GLlZ=<PyOleMissing object at 0x0000027B95D89BE0>, ViewX=<PyOleMissing object at 0x0000027B95D89BE0>, ViewY=<PyOleMissing object at 0x0000027B95D89BE0>, ViewZ=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - GLX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - GLY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - GLlZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ViewX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ViewY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ViewZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+TransformModelToDC
+--------------------------------------------------------------------------------
+Parameters: 5
+Signature: (ModelX=<PyOleMissing object at 0x0000027B95D89BE0>, ModelY=<PyOleMissing object at 0x0000027B95D89BE0>, ModelZ=<PyOleMissing object at 0x0000027B95D89BE0>, DeviceX=<PyOleMissing object at 0x0000027B95D89BE0>, DeviceY=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - ModelX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ModelY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ModelZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - DeviceX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - DeviceY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+TransformModelToView
+--------------------------------------------------------------------------------
+Parameters: 6
+Signature: (ModelX=<PyOleMissing object at 0x0000027B95D89BE0>, ModelY=<PyOleMissing object at 0x0000027B95D89BE0>, ModelZ=<PyOleMissing object at 0x0000027B95D89BE0>, ViewX=<PyOleMissing object at 0x0000027B95D89BE0>, ViewY=<PyOleMissing object at 0x0000027B95D89BE0>, ViewZ=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - ModelX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ModelY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ModelZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ViewX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ViewY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ViewZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+TransformViewToGLProjection
+--------------------------------------------------------------------------------
+Parameters: 6
+Signature: (ViewX=<PyOleMissing object at 0x0000027B95D89BE0>, ViewY=<PyOleMissing object at 0x0000027B95D89BE0>, ViewZ=<PyOleMissing object at 0x0000027B95D89BE0>, GLX=<PyOleMissing object at 0x0000027B95D89BE0>, GLY=<PyOleMissing object at 0x0000027B95D89BE0>, GLZ=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - ViewX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ViewY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ViewZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - GLX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - GLY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - GLZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+TransformViewToModel
+--------------------------------------------------------------------------------
+Parameters: 6
+Signature: (ViewX=<PyOleMissing object at 0x0000027B95D89BE0>, ViewY=<PyOleMissing object at 0x0000027B95D89BE0>, ViewZ=<PyOleMissing object at 0x0000027B95D89BE0>, ModelX=<PyOleMissing object at 0x0000027B95D89BE0>, ModelY=<PyOleMissing object at 0x0000027B95D89BE0>, ModelZ=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - ViewX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ViewY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ViewZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ModelX: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ModelY: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ModelZ: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+Update
+--------------------------------------------------------------------------------
+Parameters: 0
+Signature: ()
+Docstring: None
+
+UserRangeZoomCamera
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (idUserRange=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - idUserRange: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+ViewStyle
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (*args)
+
+Parameter Details:
+  - args: kind=VAR_POSITIONAL, default=type
+Docstring: 
+The dynamic class used as a last resort.
+The purpose of this overriding of dynamic.CDispatch is to perpetuate the policy
+of using the makepy generated wrapper Python class instead of dynamic.CDispatc
+
+ViewToGLProjection
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (Matrix=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - Matrix: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+Window
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (*args)
+
+Parameter Details:
+  - args: kind=VAR_POSITIONAL, default=type
+Docstring: 
+The dynamic class used as a last resort.
+The purpose of this overriding of dynamic.CDispatch is to perpetuate the policy
+of using the makepy generated wrapper Python class instead of dynamic.CDispatc
+
+ZoomCamera
+--------------------------------------------------------------------------------
+Parameters: 1
+Signature: (_MIDL___IViewAuto0000_=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - _MIDL___IViewAuto0000_: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+
+All view methods/properties:
+
+AddFrameToMovie                    AddRef                             AnimationEvents                    ApplyNamedView                     
+AreaZoomCamera                     BeginCameraDynamics                BeginMovieRecording                ClearRotationFocus                 
+CreateMovieRecorder                CreateUserRange                    CullingEnabled                     DeleteUserRange                    
+DestroyMovieRecorder               DisplayEnabled                     DisplayEvents                      DrawDC                             
+EndCameraDynamics                  EndMovieRecording                  Fit                                GDIBufferModified                  
+GLDisplayEvents                    GetAttribute                       GetAvailableMovieCodecs            GetCamera                          
+GetCameraEx                        GetCounter                         GetDisplayDepths                   GetModelRange                      
+GetRotationFocus                   GetSectionPlanes                   GetSectionPlanesParams             GetUserRange                       
+Locate                             ModelToDC                          ModelToView                        MovieAuthor                        
+MovieAuthorURL                     MovieBitRate                       MovieCodec                         MovieCopyright                     
+MovieDescription                   MovieFrameRate                     MovieQuality                       MovieSubTitle                      
+MovieTitle                         OrientCamera                       OrientCameraEx                     PanCamera                          
+QueryInterface                     RangeZoomCamera                    RefreshView                        Release                            
+RenderEvents                       RenderModeType                     RotateCamera                       SaveAsImage                        
+SaveCurrentView                    SectionPlanesEnabled               SectionPlanesOptions               SetAttribute                       
+SetCamera                          SetCameraEx                        SetCustomMovieResolution           SetDisplayDepths                   
+SetMovieResolution                 SetRenderMode                      SetRotationAxis                    SetRotationFocus                   
+SetRotationPoint                   SetSectionPlanes                   SetSectionPlanesParams             SetUserRange                       
+SharpenLevel                       SharpnessLevel                     SharpnessLevelCount                ShowDrawDC                         
+SilhouettesEnabled                 StereoAngle                        StereoDeviation                    StereoEnabled                      
+Style                              StyleFallbackEnabled               SwapBuffers                        TransformDCToModel                 
+TransformGLProjectionToView        TransformModelToDC                 TransformModelToView               TransformViewToGLProjection        
+TransformViewToModel               Update                             UserRangeZoomCamera                ViewEvents                         
+ViewStyle                          ViewToGLProjection                 Window                             ZoomCamera                         
+
+
+================================================================================
+  DOCUMENT OBJECT - ALL METHODS
+================================================================================
+
+Found 203 methods/properties
+
+Key document methods (23):
+
+AttachedPropertyTables             Close                              FlatPatternModels                  LastSavedVersion                   
+ModelingMode                       Models                             PMI_ByModelState                   ProfileSets                        
+ProfileUndoSteps                   PropertyTableDefinitions           QueryByProperty                    Save                               
+SaveAs                             SaveAsBIDM                         SaveAsJT                           SaveAsPRC                          
+SaveAsWithCustomPropertiesBIDM     SaveBody                           SaveCopyAs                         SaveMultiBodyPublish               
+SaveMultiBodyPublishMembers        SimplifiedModels                   UpdateOnFileSave                   
+
+
+================================================================================
+  PROFILE COLLECTION - METHODS
+================================================================================
+
+Found 78 methods/properties on Profile
+
+
+AddRef                             Application                        Arcs2d                             AreaPropertiesCollection           
+AttributeSets                      BSplineCurves2d                    Balloons                           BlockLabels                        
+BlockOccurrences                   Boundaries2d                       ChainLocate                        Circles2d                          
+CircularPatterns2d                 CleanGeometry2d                    ComponentImages2d                  Conics2d                           
+Convert2DCoordinate                Convert3DCoordinate                ConvertToCurve                     CornerAnnotations                  
+CurveBody                          DatumFrames                        DatumPoints                        DatumTargets                       
+Delete                             Dimensions                         DisplayName                        DrawingObjects                     
+EdgebarName                        Ellipses2d                         EllipticalArcs2d                   End                                
+FeatureControlFrames               Form                               GetElementHasAutomaticLinearStyle  GetElementSegmentID                
+GetMatrix                          GetRegionBody                      GostWeldSymbols                    Holes2d                            
+Images2d                           IncludeEdge                        IncludeRegionFaces                 IsAttributeSetPresent              
+IsConstructionElement              Leaders                            Lines2d                            MapGeometryToCurves                
+MapPoint2dToCurveVertex            MountingBoss2dCollection           Nail                               Name                               
+Offset2d                           OrderedGeometry                    Parent                             Paste                              
+Plane                              Points2d                           ProjectEdge                        ProjectRefPlane                    
+ProjectSilhouetteEdges             ProjectSilhoutteEdges              QueryInterface                     RectangularPatterns2d              
+Relations2d                        Release                            RolledBack                         SetAxisOfRevolution                
+SetElementToAutomaticLinearStyle   Size                               SurfaceFinishSymbols               SystemName                         
+TextBoxes                          TextProfiles                       ToggleConstruction                 Type                               
+Visible                            WeldSymbols                        
+
+
+2D GEOMETRY COLLECTIONS:
+
+Lines2d: ['AddAsChamfer', 'AddBy2Points', 'AddByPointAngleLength', 'AddRef']
+
+AddAsChamfer
+--------------------------------------------------------------------------------
+Parameters: 6
+Signature: (Obj1=<PyOleMissing object at 0x0000027B95D89BE0>, Obj2=<PyOleMissing object at 0x0000027B95D89BE0>, xDirection=<PyOleMissing object at 0x0000027B95D89BE0>, yDirection=<PyOleMissing object at 0x0000027B95D89BE0>, SetBackA=<PyOleMissing object at 0x0000027B95D89BE0>, SetBackB=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - Obj1: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Obj2: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - xDirection: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - yDirection: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - SetBackA: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - SetBackB: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+AddBy2Points
+--------------------------------------------------------------------------------
+Parameters: 4
+Signature: (x1=<PyOleMissing object at 0x0000027B95D89BE0>, y1=<PyOleMissing object at 0x0000027B95D89BE0>, x2=<PyOleMissing object at 0x0000027B95D89BE0>, y2=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - x1: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - y1: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - x2: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - y2: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+AddByPointAngleLength
+--------------------------------------------------------------------------------
+Parameters: 4
+Signature: (x=<PyOleMissing object at 0x0000027B95D89BE0>, y=<PyOleMissing object at 0x0000027B95D89BE0>, Angle=<PyOleMissing object at 0x0000027B95D89BE0>, Length=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - x: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - y: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Angle: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Length: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+AddRef
+--------------------------------------------------------------------------------
+Parameters: 0
+Signature: ()
+Docstring: None
+
+Circles2d: ['AddBy3Points', 'AddByCenterRadius', 'AddRef']
+
+AddBy3Points
+--------------------------------------------------------------------------------
+Parameters: 6
+Signature: (x1=<PyOleMissing object at 0x0000027B95D89BE0>, y1=<PyOleMissing object at 0x0000027B95D89BE0>, x2=<PyOleMissing object at 0x0000027B95D89BE0>, y2=<PyOleMissing object at 0x0000027B95D89BE0>, x3=<PyOleMissing object at 0x0000027B95D89BE0>, y3=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - x1: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - y1: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - x2: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - y2: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - x3: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - y3: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+AddByCenterRadius
+--------------------------------------------------------------------------------
+Parameters: 3
+Signature: (x=<PyOleMissing object at 0x0000027B95D89BE0>, y=<PyOleMissing object at 0x0000027B95D89BE0>, Radius=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - x: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - y: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Radius: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+AddRef
+--------------------------------------------------------------------------------
+Parameters: 0
+Signature: ()
+Docstring: None
+
+Arcs2d: ['AddAsFillet', 'AddAsFilletNoTrim', 'AddByCenterStartEnd', 'AddByStartAlongEnd', 'AddRef']
+
+AddAsFillet
+--------------------------------------------------------------------------------
+Parameters: 5
+Signature: (Obj1=<PyOleMissing object at 0x0000027B95D89BE0>, Obj2=<PyOleMissing object at 0x0000027B95D89BE0>, Radius=<PyOleMissing object at 0x0000027B95D89BE0>, xDirection=<PyOleMissing object at 0x0000027B95D89BE0>, yDirection=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - Obj1: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Obj2: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Radius: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - xDirection: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - yDirection: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+AddAsFilletNoTrim
+--------------------------------------------------------------------------------
+Parameters: 5
+Signature: (Obj1=<PyOleMissing object at 0x0000027B95D89BE0>, Obj2=<PyOleMissing object at 0x0000027B95D89BE0>, Radius=<PyOleMissing object at 0x0000027B95D89BE0>, xDirection=<PyOleMissing object at 0x0000027B95D89BE0>, yDirection=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - Obj1: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Obj2: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Radius: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - xDirection: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - yDirection: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+AddByCenterStartEnd
+--------------------------------------------------------------------------------
+Parameters: 6
+Signature: (xCenter=<PyOleMissing object at 0x0000027B95D89BE0>, yCenter=<PyOleMissing object at 0x0000027B95D89BE0>, xStart=<PyOleMissing object at 0x0000027B95D89BE0>, yStart=<PyOleMissing object at 0x0000027B95D89BE0>, xEnd=<PyOleMissing object at 0x0000027B95D89BE0>, yEnd=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - xCenter: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - yCenter: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - xStart: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - yStart: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - xEnd: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - yEnd: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+AddByStartAlongEnd
+--------------------------------------------------------------------------------
+Parameters: 6
+Signature: (xStart=<PyOleMissing object at 0x0000027B95D89BE0>, yStart=<PyOleMissing object at 0x0000027B95D89BE0>, xAlong=<PyOleMissing object at 0x0000027B95D89BE0>, yAlong=<PyOleMissing object at 0x0000027B95D89BE0>, xEnd=<PyOleMissing object at 0x0000027B95D89BE0>, yEnd=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - xStart: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - yStart: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - xAlong: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - yAlong: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - xEnd: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - yEnd: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+AddRef
+--------------------------------------------------------------------------------
+Parameters: 0
+Signature: ()
+Docstring: None
+
+Ellipses2d: ['AddByCenter', 'AddRef']
+
+AddByCenter
+--------------------------------------------------------------------------------
+Parameters: 6
+Signature: (xCenter=<PyOleMissing object at 0x0000027B95D89BE0>, yCenter=<PyOleMissing object at 0x0000027B95D89BE0>, xMajor=<PyOleMissing object at 0x0000027B95D89BE0>, yMajor=<PyOleMissing object at 0x0000027B95D89BE0>, Ratio=<PyOleMissing object at 0x0000027B95D89BE0>, Orientation=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - xCenter: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - yCenter: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - xMajor: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - yMajor: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Ratio: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Orientation: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+AddRef
+--------------------------------------------------------------------------------
+Parameters: 0
+Signature: ()
+Docstring: None
+Error accessing Splines2d: Add.Splines2d
+
+================================================================================
+  CONSTANTS - AVAILABLE ENUMS
+================================================================================
+
+Found 0 constants
+
+Constants by prefix:
+
+
+Key constant groups:
+
+================================================================================
+  SPECIFIC FEATURE METHODS - DETAILED
+================================================================================
+
+AddFiniteRevolvedProtrusion:
+
+AddFiniteRevolvedProtrusion
+--------------------------------------------------------------------------------
+Parameters: 7
+Signature: (NumberOfProfiles=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileArray=<PyOleMissing object at 0x0000027B95D89BE0>, ReferenceAxis=<PyOleMissing object at 0x0000027B95D89BE0>, ProfilePlaneSide=<PyOleMissing object at 0x0000027B95D89BE0>, AngleofRevolution=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointOrTangentFace=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointFlags=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - NumberOfProfiles: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ProfileArray: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ReferenceAxis: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ProfilePlaneSide: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - AngleofRevolution: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - KeyPointOrTangentFace: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - KeyPointFlags: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+AddBoxByTwoPoints:
+
+AddBoxByTwoPoints
+--------------------------------------------------------------------------------
+Parameters: 13
+Signature: (x1=<PyOleMissing object at 0x0000027B95D89BE0>, y1=<PyOleMissing object at 0x0000027B95D89BE0>, Z1=<PyOleMissing object at 0x0000027B95D89BE0>, x2=<PyOleMissing object at 0x0000027B95D89BE0>, y2=<PyOleMissing object at 0x0000027B95D89BE0>, Z2=<PyOleMissing object at 0x0000027B95D89BE0>, dAngle=<PyOleMissing object at 0x0000027B95D89BE0>, dDepth=<PyOleMissing object at 0x0000027B95D89BE0>, pPlane=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentSide=<PyOleMissing object at 0x0000027B95D89BE0>, vbKeyPointExtent=<PyOleMissing object at 0x0000027B95D89BE0>, pKeyPointObj=<PyOleMissing object at 0x0000027B95D89BE0>, pKeyPointFlags=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - x1: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - y1: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Z1: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - x2: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - y2: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Z2: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dAngle: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - dDepth: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pPlane: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ExtentSide: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - vbKeyPointExtent: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pKeyPointObj: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - pKeyPointFlags: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+AddRevolvedProtrusionSync:
+
+AddRevolvedProtrusionSync
+--------------------------------------------------------------------------------
+Parameters: 14
+Signature: (NumberOfProfiles=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileArray=<PyOleMissing object at 0x0000027B95D89BE0>, RefAxis=<PyOleMissing object at 0x0000027B95D89BE0>, ProfileSide=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentType1=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentSide1=<PyOleMissing object at 0x0000027B95D89BE0>, FiniteAngle1=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointOrTangentFace1=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointFlags1=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentType2=<PyOleMissing object at 0x0000027B95D89BE0>, ExtentSide2=<PyOleMissing object at 0x0000027B95D89BE0>, FiniteAngle2=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointOrTangentFace2=<PyOleMissing object at 0x0000027B95D89BE0>, KeyPointFlags2=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - NumberOfProfiles: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ProfileArray: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - RefAxis: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ProfileSide: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ExtentType1: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ExtentSide1: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - FiniteAngle1: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - KeyPointOrTangentFace1: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - KeyPointFlags1: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ExtentType2: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - ExtentSide2: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - FiniteAngle2: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - KeyPointOrTangentFace2: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - KeyPointFlags2: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+AddLoftedProtrusion:
+
+AddLoftedProtrusion
+--------------------------------------------------------------------------------
+Parameters: 18
+Signature: (NumSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSectionTypes=<PyOleMissing object at 0x0000027B95D89BE0>, Origins=<PyOleMissing object at 0x0000027B95D89BE0>, SegmentMaps=<PyOleMissing object at 0x0000027B95D89BE0>, MaterialSide=<PyOleMissing object at 0x0000027B95D89BE0>, StartExtentType=<PyOleMissing object at 0x0000027B95D89BE0>, StartExtentDistance=<PyOleMissing object at 0x0000027B95D89BE0>, StartSurfaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, EndExtentType=<PyOleMissing object at 0x0000027B95D89BE0>, EndExtentDistance=<PyOleMissing object at 0x0000027B95D89BE0>, EndSurfaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, StartTangentType=<PyOleMissing object at 0x0000027B95D89BE0>, StartTangentMagnitude=<PyOleMissing object at 0x0000027B95D89BE0>, EndTangentType=<PyOleMissing object at 0x0000027B95D89BE0>, EndTangentMagnitude=<PyOleMissing object at 0x0000027B95D89BE0>, NumGuideCurves=<PyOleMissing object at 0x0000027B95D89BE0>, GuideCurves=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - NumSections: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - CrossSections: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - CrossSectionTypes: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Origins: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - SegmentMaps: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - MaterialSide: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - StartExtentType: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - StartExtentDistance: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - StartSurfaceOrRefPlane: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - EndExtentType: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - EndExtentDistance: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - EndSurfaceOrRefPlane: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - StartTangentType: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - StartTangentMagnitude: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - EndTangentType: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - EndTangentMagnitude: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - NumGuideCurves: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - GuideCurves: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+AddSweptProtrusion:
+
+AddSweptProtrusion
+--------------------------------------------------------------------------------
+Parameters: 15
+Signature: (NumCurves=<PyOleMissing object at 0x0000027B95D89BE0>, TraceCurves=<PyOleMissing object at 0x0000027B95D89BE0>, TraceCurveTypes=<PyOleMissing object at 0x0000027B95D89BE0>, NumSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSections=<PyOleMissing object at 0x0000027B95D89BE0>, CrossSectionTypes=<PyOleMissing object at 0x0000027B95D89BE0>, Origins=<PyOleMissing object at 0x0000027B95D89BE0>, SegmentMaps=<PyOleMissing object at 0x0000027B95D89BE0>, MaterialSide=<PyOleMissing object at 0x0000027B95D89BE0>, StartExtentType=<PyOleMissing object at 0x0000027B95D89BE0>, StartExtentDistance=<PyOleMissing object at 0x0000027B95D89BE0>, StartSurfaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>, EndExtentType=<PyOleMissing object at 0x0000027B95D89BE0>, EndExtentDistance=<PyOleMissing object at 0x0000027B95D89BE0>, EndSurfaceOrRefPlane=<PyOleMissing object at 0x0000027B95D89BE0>)
+
+Parameter Details:
+  - NumCurves: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - TraceCurves: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - TraceCurveTypes: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - NumSections: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - CrossSections: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - CrossSectionTypes: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - Origins: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - SegmentMaps: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - MaterialSide: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - StartExtentType: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - StartExtentDistance: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - StartSurfaceOrRefPlane: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - EndExtentType: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - EndExtentDistance: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+  - EndSurfaceOrRefPlane: kind=POSITIONAL_OR_KEYWORD, default=PyOleMissing
+Docstring: None
+
+================================================================================
+INTROSPECTION COMPLETE
+================================================================================
+
+Output saved to console. Review the signatures and parameter details above.
+================================================================================

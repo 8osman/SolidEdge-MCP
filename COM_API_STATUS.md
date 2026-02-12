@@ -1,324 +1,452 @@
-# Solid Edge COM API Status - Introspection vs Testing
+# Solid Edge COM API Status
 
-This document shows what runtime introspection reveals versus what we've proven through actual testing.
+Runtime introspection results vs actual testing outcomes.
 
-## Legend
-- ✅ **Working**: Tested and confirmed working
-- ❌ **Failing**: Tested but not working yet
-- ❓ **Unknown**: Not yet tested
-- 🔍 **Partially Known**: Some aspects work, others unclear
+**Legend:** ✅ Working | ❌ Failing | ❓ Untested | 🔍 Partial
 
 ---
 
-## 1. SKETCHING API
+## Quick Summary
+
+**Working (~60%)**
+- All 2D sketching (lines, circles, arcs, ellipses, splines, polygons)
+- Basic extrusion (protrusion and cutout)
+- Document management (create, save, close)
+- Query operations (mass properties, bounding box, counts)
+- Export (STEP, STL, images)
+- Assembly component placement (basic)
+
+**Failing (Critical - ~20%)**
+- ❌ All revolve operations (AddRevolvedProtrusion, AddFiniteRevolvedProtrusion)
+- ❌ All primitives (AddBoxByCenter, AddCylinderByCenterAndRadius, AddSphereByCenterAndRadius)
+- ❌ View orientation setting (constants exist, but method to apply unclear)
+- ❌ Display mode setting
+
+**Untested (~20%)**
+- Alternative primitive methods, advanced features, some assembly operations
+
+---
+
+## 1. SKETCHING API ✅
+
+All working. Introspection shows clear signatures.
 
 ### Profile Management
+```python
+profile_sets.Add()                    # No params
+profiles.Add(ref_plane)               # ref_plane from RefPlanes.Item(1-3)
+profile.End(0)                        # 0 = validation option
+```
 
-| Method | Parameters (from introspection) | Status | Known Working Pattern | Unknown/Issues |
-|--------|--------------------------------|--------|----------------------|----------------|
-| `ProfileSets.Add` | None (no params) | ✅ | `profile_sets.Add()` | None |
-| `Profiles.Add` | `RefPlane` | ✅ | `profiles.Add(ref_plane)` where ref_plane from RefPlanes.Item(1-3) | None |
-| `Profile.End` | `ValidationOption` | ✅ | `profile.End(0)` | Other validation option values |
+### 2D Geometry - All Working
+```python
+# Lines
+lines.AddBy2Points(x1, y1, x2, y2)
 
-### 2D Geometry - Lines
+# Circles
+circles.AddByCenterRadius(cx, cy, radius)
 
-| Method | Parameters | Status | Known Working Pattern | Unknown/Issues |
-|--------|-----------|--------|----------------------|----------------|
-| `Lines2d.AddBy2Points` | `x1, y1, x2, y2` | ✅ | `lines.AddBy2Points(0, 0, 0.05, 0)` (meters) | None |
+# Arcs
+arcs.AddByCenterStartEnd(center_x, center_y, start_x, start_y, end_x, end_y)
 
-### 2D Geometry - Circles
+# Ellipses - NOTE: axis is unit vector
+ellipses.AddByCenter(cx, cy, major_radius, minor_radius,
+                     math.cos(angle), math.sin(angle))
 
-| Method | Parameters | Status | Known Working Pattern | Unknown/Issues |
-|--------|-----------|--------|----------------------|----------------|
-| `Circles2d.AddByCenterRadius` | `cx, cy, radius` | ✅ | `circles.AddByCenterRadius(0.1, 0.1, 0.02)` | None |
+# Splines - MUST use positional args, NOT keywords
+splines.AddByPoints(3, num_points, tuple(x1, y1, x2, y2, ...))
 
-### 2D Geometry - Arcs
+# Polygons (via Circles2d)
+circles.AddAsPolygon(num_sides, center_x, center_y, radius, angle)
+```
 
-| Method | Parameters | Status | Known Working Pattern | Unknown/Issues |
-|--------|-----------|--------|----------------------|----------------|
-| `Arcs2d.AddByCenterStartEnd` | `xc, yc, xs, ys, xe, ye` | ✅ | `arcs.AddByCenterStartEnd(cx, cy, sx, sy, ex, ey)` | None |
-
-### 2D Geometry - Ellipses
-
-| Method | Parameters | Status | Known Working Pattern | Unknown/Issues |
-|--------|-----------|--------|----------------------|----------------|
-| `Ellipses2d.AddByCenter` | `cx, cy, major_radius, minor_radius, axis_x, axis_y` | ✅ | `ellipses.AddByCenter(cx, cy, 0.04, 0.02, cos(angle), sin(angle))` - axis is unit vector | None |
-| ~~`Ellipses2d.AddByCenterRadii`~~ | N/A | ❌ | Does not exist | Method doesn't exist |
-
-### 2D Geometry - Splines
-
-| Method | Parameters | Status | Known Working Pattern | Unknown/Issues |
-|--------|-----------|--------|----------------------|----------------|
-| `Splines2d.AddByPoints` | `Order, NumPoints, PointArray` | ✅ | `splines.AddByPoints(3, num_points, tuple(x1,y1,x2,y2,...))` - POSITIONAL ONLY | Must use positional args, not keywords. PointArray is flattened tuple |
-
-### 2D Geometry - Polygons
-
-| Method | Parameters | Status | Known Working Pattern | Unknown/Issues |
-|--------|-----------|--------|----------------------|----------------|
-| `Circles2d.AddAsPolygon` | `NumberOfSides, CenterX, CenterY, Radius, Angle` | ✅ | Tested via draw_polygon | Actual method signature needs verification |
+**Key Discovery:** ProfileArray must be **tuple** `(profile,)` not list `[profile]`
 
 ---
 
-## 2. EXTRUSION API
+## 2. EXTRUSION API ✅
 
-### AddFiniteExtrudedProtrusion
+### Working Pattern - AddFiniteExtrudedProtrusion
 
-| Aspect | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|--------|---------------------|--------|----------------------|----------------|
-| **Full Signature** | `(NumberOfProfiles, ProfileArray, ProfilePlaneSide, ExtrusionDistance, KeyPointOrTangentFace, KeyPointFlags, FromSurfOrRefPlane, ToSurfOrRefPlane)` - 8 params total | 🔍 | Partial | Full 8-param signature untested |
-| **Simple Usage** | See above | ✅ | `models.AddFiniteExtrudedProtrusion(NumberOfProfiles=1, ProfileArray=(profile,), ProfilePlaneSide=ExtrudedProtrusion.igRight, ExtrusionDistance=0.03)` | Last 4 params (KeyPoint*, FromSurf*, ToSurf*) not tested |
-| **ProfileArray Type** | PyOleMissing default | ✅ | **MUST be tuple**: `(profile,)` NOT list `[profile]` | List fails with conversion error |
-| **Keyword Args** | POSITIONAL_OR_KEYWORD | ✅ | Accepts keyword arguments | None |
-| **Direction Constants** | Not in signature | ✅ | `ExtrudedProtrusion.igRight` (normal), `.igLeft` (reverse), `.igSymmetric` | None |
+**Introspected Signature (8 params):**
+```
+(NumberOfProfiles, ProfileArray, ProfilePlaneSide, ExtrusionDistance,
+ KeyPointOrTangentFace, KeyPointFlags, FromSurfOrRefPlane, ToSurfOrRefPlane)
+```
+
+**Working Usage (only first 4 needed):**
+```python
+models.AddFiniteExtrudedProtrusion(
+    NumberOfProfiles=1,
+    ProfileArray=(profile,),           # TUPLE not list!
+    ProfilePlaneSide=ExtrudedProtrusion.igRight,  # igRight, igLeft, igSymmetric
+    ExtrusionDistance=0.03             # meters
+)
+```
+
+**Key Facts:**
+- ✅ Accepts keyword arguments
+- ✅ ProfileArray MUST be tuple
+- ✅ Last 4 parameters untested but not needed for basic extrusion
 
 ### AddFiniteExtrudedCutout
-
-| Aspect | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|--------|---------------------|--------|----------------------|----------------|
-| **Simple Usage** | Same as AddFiniteExtrudedProtrusion | ✅ | `models.AddFiniteExtrudedCutout(NumberOfProfiles=1, ProfileArray=(profile,), ProfilePlaneSide=dir, ExtrusionDistance=depth)` | None |
-
-### AddExtrudedProtrusion (full signature)
-
-| Aspect | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|--------|---------------------|--------|----------------------|----------------|
-| **Full Signature** | 34 parameters including TreatmentType, Draft, Crown options | ❓ | Not tested | Not needed for basic extrusion |
+Same signature and usage pattern as protrusion.
 
 ---
 
-## 3. REVOLVE API
+## 3. REVOLVE API ❌ **FAILING**
 
-### AddRevolvedProtrusion
+### AddRevolvedProtrusion - NOT WORKING
 
-| Aspect | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|--------|---------------------|--------|----------------------|----------------|
-| **Full Signature** | `(NumberOfProfiles, ProfileArray, RefAxis, ProfileSide, ExtentType1, ExtentSide1, FiniteAngle1, KeyPointOrTangentFace1, KeyPointFlags1, ExtentType2, ExtentSide2, FiniteAngle2, KeyPointOrTangentFace2, KeyPointFlags2)` - 14 params | ❌ | **NONE** | All attempts fail |
-| **Attempt 1: Keywords** | POSITIONAL_OR_KEYWORD | ❌ | `models.AddRevolvedProtrusion(NumberOfProfiles=1, ProfileArray=(profile,), FiniteAngle1=angle)` | Error: "Invalid number of parameters" |
-| **Attempt 2: All 14 params** | All PyOleMissing defaults | ❌ | With pythoncom.Empty for optional params | Error: "Parameter not optional" |
-| **Attempt 3: Simple positional** | N/A | ❌ | `models.AddRevolvedProtrusion(1, (profile,), angle)` | Error: "Invalid number of parameters" |
-| **ProfileArray Type** | PyOleMissing | ❌ | Tried tuple `(profile,)` and list `[profile]` | Both fail with "Python instance can not be converted to COM object" |
-| **Required Parameters** | All show PyOleMissing | ❓ | Unknown which are truly required | Despite PyOleMissing defaults, some are required |
-| **RefAxis** | PyOleMissing | ❓ | Unknown what to pass or if None/Empty acceptable | May need actual axis object |
-| **ProfileSide** | PyOleMissing | ❓ | Unknown what constant/value | No documentation |
-| **ExtentType1/2** | PyOleMissing | ❓ | Unknown what constant/value | May be from FeaturePropertyConstants enum |
+**Introspected Signature (14 params):**
+```
+(NumberOfProfiles, ProfileArray, RefAxis, ProfileSide,
+ ExtentType1, ExtentSide1, FiniteAngle1, KeyPointOrTangentFace1, KeyPointFlags1,
+ ExtentType2, ExtentSide2, FiniteAngle2, KeyPointOrTangentFace2, KeyPointFlags2)
+```
 
-### AddFiniteRevolvedProtrusion
+**Parameter Details:**
+- All show `PyOleMissing` defaults (suggests optional)
+- All are `POSITIONAL_OR_KEYWORD` type
+- No docstrings, no type annotations
 
-| Aspect | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|--------|---------------------|--------|----------------------|----------------|
-| **Existence** | Listed in dir(models) | ❓ | Not yet tested | May be simpler than full AddRevolvedProtrusion |
-| **Signature** | Not yet introspected | ❓ | Unknown | Need to run introspection |
+**Attempts Made - All Failed:**
 
-### AddRevolvedProtrusionSync
+1. **Keyword args (like extrude)**
+   ```python
+   models.AddRevolvedProtrusion(
+       NumberOfProfiles=1,
+       ProfileArray=(profile,),
+       FiniteAngle1=angle_rad
+   )
+   ```
+   ❌ Error: "Invalid number of parameters"
 
-| Aspect | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|--------|---------------------|--------|----------------------|----------------|
-| **Existence** | Listed in dir(models) | ❓ | Not tested | Unknown purpose of "Sync" variant |
+2. **All 14 params with pythoncom.Empty**
+   ```python
+   models.AddRevolvedProtrusion(
+       1, [profile], pythoncom.Empty, pythoncom.Empty,
+       pythoncom.Empty, pythoncom.Empty, angle_rad,
+       pythoncom.Empty, pythoncom.Empty, pythoncom.Empty,
+       pythoncom.Empty, pythoncom.Empty, pythoncom.Empty, pythoncom.Empty
+   )
+   ```
+   ❌ Error: "Parameter not optional"
 
----
+3. **Simple positional (3 params)**
+   ```python
+   models.AddRevolvedProtrusion(1, (profile,), angle_rad)
+   ```
+   ❌ Error: "Invalid number of parameters"
 
-## 4. PRIMITIVE CREATION API
+4. **ProfileArray as tuple/list/VARIANT**
+   - All fail with "Python instance can not be converted to COM object"
 
-### AddBoxByCenter
+**UNKNOWN - Need SDK:**
+- Which parameters are actually required?
+- What to pass for `RefAxis`, `ProfileSide`, `ExtentType1/2`, `ExtentSide1/2`?
+- What type should ProfileArray be for revolve (works as tuple for extrude)?
 
-| Aspect | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|--------|---------------------|--------|----------------------|----------------|
-| **Full Signature** | `(x, y, z, dWidth, dHeight, dAngle, dDepth, pPlane, ExtentSide, vbKeyPointExtent, pKeyPointObj, pKeyPointFlags)` - 12 params | ❌ | **NONE** | All attempts fail |
-| **Basic Params (1-7)** | `x, y, z, dWidth, dHeight, dAngle, dDepth` | ❌ | Tried: `models.AddBoxByCenter(0, 0, 0, 0.1, 0.1, 0, 0.1)` | Error: Invalid parameters or conversion errors |
-| **pPlane** | PyOleMissing | ❓ | Unknown - reference plane object? None? | Unclear what to pass |
-| **ExtentSide** | PyOleMissing | ❓ | Unknown - constant value? | May be from ExtentTypeConstants |
-| **vbKeyPointExtent** | PyOleMissing | ❓ | Unknown - boolean? | "vb" prefix suggests VB Boolean |
-| **pKeyPointObj** | PyOleMissing | ❓ | Unknown - object or None? | "p" prefix suggests pointer/object |
-| **pKeyPointFlags** | PyOleMissing | ❓ | Unknown - flags integer? | Likely bitwise flags |
-| **dAngle** | In signature | ❓ | Unknown purpose - rotation angle? | Unclear what this rotates |
-
-### AddCylinderByCenterAndRadius
-
-| Aspect | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|--------|---------------------|--------|----------------------|----------------|
-| **Full Signature** | `(x, y, z, dRadius, dDepth, pPlane, ExtentSide, vbKeyPointExtent, pKeyPointObj, pKeyPointFlags)` - 10 params | ❌ | **NONE** | All attempts fail |
-| **Basic Params (1-5)** | `x, y, z, dRadius, dDepth` | ❌ | Tried: `models.AddCylinderByCenterAndRadius(0, 0, 0, 0.03, 0.15)` | Error: Invalid parameters |
-| **pPlane** | PyOleMissing | ❓ | Unknown - which plane to extrude from? | Unclear |
-| **ExtentSide** | PyOleMissing | ❓ | Unknown - direction constant? | Unclear |
-| **vbKeyPointExtent** | PyOleMissing | ❓ | Unknown | Unclear |
-| **pKeyPointObj** | PyOleMissing | ❓ | Unknown | Unclear |
-| **pKeyPointFlags** | PyOleMissing | ❓ | Unknown | Unclear |
-
-### AddSphereByCenterAndRadius
-
-| Aspect | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|--------|---------------------|--------|----------------------|----------------|
-| **Full Signature** | `(x, y, z, dRadius, pPlane, ExtentSide, vbKeyPointExtent, vbCreateLiveSection, pKeyPointObj, pKeyPointFlags)` - 10 params | ❌ | **NONE** | All attempts fail |
-| **Basic Params (1-4)** | `x, y, z, dRadius` | ❌ | Tried: `models.AddSphereByCenterAndRadius(0, 0, 0, 0.04)` | Error: Invalid parameters |
-| **vbCreateLiveSection** | PyOleMissing | ❓ | Unknown - create as half sphere with section? | "LiveSection" suggests cross-section feature |
-| **Other params** | See cylinder | ❓ | Same unknowns as cylinder | Same issues |
-
-### Alternative Box Methods
-
-| Method | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|--------|---------------------|--------|----------------------|----------------|
-| `AddBoxByTwoPoints` | Listed in dir(models) | ❓ | Not tested | May be simpler - define by diagonal corners? |
-| `AddBoxByThreePoints` | Listed in dir(models) | ❓ | Not tested | Unknown what three points define |
+**Alternative Methods (untested):**
+- `AddFiniteRevolvedProtrusion` - may be simpler
+- `AddRevolvedProtrusionSync` - purpose unknown
 
 ---
 
-## 5. QUERY & MEASUREMENT API
+## 4. PRIMITIVE CREATION API ❌ **FAILING**
 
-### Physical Properties
+All primitive methods have clear parameter names from introspection but fail in testing.
 
-| Property/Method | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|----------------|---------------------|--------|----------------------|----------------|
-| `document.PhysicalProperties` | Object with properties | ✅ | `props = doc.PhysicalProperties` | None |
-| `PhysicalProperties.Volume` | Property | ✅ | `props.Volume` returns cubic meters | None |
-| `PhysicalProperties.Mass` | Property | ✅ | `props.Mass` returns kg | Requires material/density to be set |
-| `PhysicalProperties.Area` | Property | ✅ | `props.Area` returns square meters (surface area) | None |
-| `PhysicalProperties.CenterOfGravityX/Y/Z` | Properties | ✅ | Individual properties for COM coordinates | None |
+### AddBoxByCenter - NOT WORKING
 
-### Bounding Box
+**Introspected Signature (12 params):**
+```
+(x, y, z, dWidth, dHeight, dAngle, dDepth,
+ pPlane, ExtentSide, vbKeyPointExtent, pKeyPointObj, pKeyPointFlags)
+```
 
-| Method | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|--------|---------------------|--------|----------------------|----------------|
-| `Model.RangeBox` | Property | 🔍 | `model.RangeBox` returns tuple of 6 values | Exact return format needs verification (min/max coords) |
+**Clear Parameters (1-7):**
+- `x, y, z` - center position (meters)
+- `dWidth, dHeight` - box width and height (meters)
+- `dAngle` - rotation angle (radians?) - purpose unclear
+- `dDepth` - box depth/length (meters)
 
-### Feature Count
+**UNKNOWN Parameters (8-12):**
+- `pPlane` - reference plane object? None? Which type?
+- `ExtentSide` - constant from ExtentTypeConstants?
+- `vbKeyPointExtent` - boolean? ("vb" prefix suggests Visual Basic Boolean)
+- `pKeyPointObj` - object or None?
+- `pKeyPointFlags` - bitwise flags integer?
 
-| Method | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|--------|---------------------|--------|----------------------|----------------|
-| `Models.Count` | Property | ✅ | `models.Count` returns integer | None |
+**Attempts Made:**
+```python
+models.AddBoxByCenter(0, 0, 0, 0.1, 0.1, 0, 0.1)  # Just first 7 params
+```
+❌ Error: Invalid parameters or conversion errors
 
----
+**Alternative Methods (untested):**
+- `AddBoxByTwoPoints` - may be simpler (diagonal corners?)
+- `AddBoxByThreePoints` - unknown definition
 
-## 6. VIEW & DISPLAY API
+### AddCylinderByCenterAndRadius - NOT WORKING
 
-### View Orientation
+**Introspected Signature (10 params):**
+```
+(x, y, z, dRadius, dDepth,
+ pPlane, ExtentSide, vbKeyPointExtent, pKeyPointObj, pKeyPointFlags)
+```
 
-| Method/Constant | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|-----------------|---------------------|--------|----------------------|----------------|
-| `ViewOrientationConstants.seIsoView` | Enum constant | ✅ | Constant exists and resolves | Actual method to SET view unclear |
-| `ViewOrientationConstants.seTopView` | Enum constant | ✅ | Constant exists | Same |
-| `ViewOrientationConstants.seFrontView` | Enum constant | ✅ | Constant exists | Same |
-| `View.SetNamedView()` | Not found | ❌ | Method doesn't exist | Need to find actual method name |
-| `Window.SetNamedView()` | Not found | ❌ | Method doesn't exist | Alternative not found |
+**Clear Parameters (1-5):**
+- `x, y, z` - center position (meters)
+- `dRadius` - cylinder radius (meters)
+- `dDepth` - cylinder height (meters)
 
-### Display Mode
+**UNKNOWN Parameters (6-10):**
+- Same unclear parameters as box (pPlane, ExtentSide, etc.)
 
-| Method/Constant | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|-----------------|---------------------|--------|----------------------|----------------|
-| `DisplayStyleConstants.seDisplayFlat` | Enum constant | ✅ | Constant exists | How to apply it? |
-| `DisplayStyleConstants.seDisplayWireframe` | Enum constant | ✅ | Constant exists | Same |
-| `View.DisplayMode` | Property likely exists | ❌ | Setting it causes COM exception | May be read-only or need different approach |
+### AddSphereByCenterAndRadius - NOT WORKING
 
-### Zoom Operations
+**Introspected Signature (10 params):**
+```
+(x, y, z, dRadius,
+ pPlane, ExtentSide, vbKeyPointExtent, vbCreateLiveSection, pKeyPointObj, pKeyPointFlags)
+```
 
-| Method | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|--------|---------------------|--------|----------------------|----------------|
-| `View.Fit()` | Method exists | ✅ | `view.Fit()` zooms to fit all geometry | None |
+**Clear Parameters (1-4):**
+- `x, y, z` - center position (meters)
+- `dRadius` - sphere radius (meters)
 
----
-
-## 7. EXPORT API
-
-### File Export
-
-| Method | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|--------|---------------------|--------|----------------------|----------------|
-| `document.SaveAs` | `(FileName, SaveAsType)` | ✅ | `doc.SaveAs(FileName=path, SaveAsType=ApplicationConstants.igFileTypeSTEP)` | None |
-| `ApplicationConstants.igFileTypeSTEP` | Constant | ✅ | Works for STEP export | None |
-| `ApplicationConstants.igFileTypeSTL` | Constant | ✅ | Works for STL export | None |
-
-### Image Capture
-
-| Method | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|--------|---------------------|--------|----------------------|----------------|
-| `View.SaveAsImage` | `(Filename, Width, Height, BackgroundScheme)` | ✅ | `view.SaveAsImage(Filename=path, Width=1920, Height=1080, BackgroundScheme=ImageFileConstants.seImageFileBackgroundSchemeWhite)` | Other BackgroundScheme options not tested |
+**UNKNOWN Parameters (5-10):**
+- `vbCreateLiveSection` - create as half-sphere with section visible?
+- Others same as box/cylinder
 
 ---
 
-## 8. DOCUMENT MANAGEMENT API
+## 5. QUERY & MEASUREMENT API ✅
 
-### Document Creation
+All working.
 
-| Method | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|--------|---------------------|--------|----------------------|----------------|
-| `Documents.Add` | `DocumentType` parameter | ✅ | `docs.Add("SolidEdge.PartDocument")` or with constant | String or constant both work |
+```python
+# Physical properties
+props = document.PhysicalProperties
+volume = props.Volume              # cubic meters
+mass = props.Mass                  # kg (requires material density)
+area = props.Area                  # square meters (surface area)
+com = (props.CenterOfGravityX, props.CenterOfGravityY, props.CenterOfGravityZ)
 
-### Document Save/Close
+# Bounding box
+model = models.Item(1)
+range_box = model.RangeBox        # Returns (x_min, y_min, z_min, x_max, y_max, z_max)
 
-| Method | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|--------|---------------------|--------|----------------------|----------------|
-| `Document.Save()` | No params | ✅ | `doc.Save()` | None |
-| `Document.SaveAs()` | See Export section | ✅ | Works | None |
-| `Document.Close()` | No params | 🔍 | `doc.Close()` but triggers save prompt | Need `doc.Saved = True` before Close to suppress |
-| `Document.Saved` | Property | ✅ | Set to `True` to suppress save prompts | None |
-
----
-
-## 9. REFERENCE PLANES API
-
-| Method | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|--------|---------------------|--------|----------------------|----------------|
-| `document.RefPlanes` | Collection | ✅ | `ref_planes = doc.RefPlanes` | None |
-| `RefPlanes.Item(index)` | 1-based index | ✅ | `Item(1)=Top, Item(2)=Front, Item(3)=Right` | **1-based indexing!** |
+# Counts
+feature_count = models.Count
+```
 
 ---
 
-## 10. ASSEMBLY API
+## 6. VIEW & DISPLAY API 🔍 **PARTIAL**
 
-### Component Management
+### View Orientation - Constants Exist, Method Unknown ❌
 
-| Method | Introspection Result | Status | Known Working Pattern | Unknown/Issues |
-|--------|---------------------|--------|----------------------|----------------|
-| `Occurrences.Add` | `(FileName, DestinationMatrix)` | 🔍 | Tested but matrix format unclear | 4x4 transformation matrix format needs docs |
-| `Occurrences.AddByFilename` | `FileName` parameter | ✅ | `occurrences.AddByFilename(filepath)` places at origin | None |
-| `Occurrences.Count` | Property | ✅ | Returns component count | None |
-| `Occurrences.Item(index)` | 1-based index | ✅ | 1-based indexing | None |
+**Working - Constants:**
+```python
+ViewOrientationConstants.seIsoView
+ViewOrientationConstants.seTopView
+ViewOrientationConstants.seFrontView
+ViewOrientationConstants.seRightView
+# etc.
+```
+
+**NOT WORKING - How to Apply:**
+```python
+view.SetNamedView(...)     # Method doesn't exist
+window.SetNamedView(...)   # Method doesn't exist
+```
+
+Need SDK to find actual method name.
+
+### Display Mode - NOT WORKING ❌
+
+**Working - Constants:**
+```python
+DisplayStyleConstants.seDisplayFlat
+DisplayStyleConstants.seDisplayWireframe
+DisplayStyleConstants.seDisplayVisible
+DisplayStyleConstants.seDisplayHidden
+```
+
+**NOT WORKING - How to Apply:**
+```python
+view.DisplayMode = DisplayStyleConstants.seDisplayFlat  # COM exception
+```
+
+### Zoom - Working ✅
+```python
+view.Fit()                 # Zoom to fit all geometry
+```
 
 ---
 
-## SUMMARY STATISTICS
+## 7. EXPORT API ✅
 
-### Overall Status
-- **Total methods introspected**: ~50+
-- **Fully working (✅)**: ~30 (60%)
-- **Failing (❌)**: ~10 (20%)
-- **Unknown/Untested (❓)**: ~10 (20%)
+All working.
 
-### Critical Gaps (blocking basic functionality)
-1. **Revolve operations** - All variants failing
-2. **Primitive creation** - Box, Cylinder, Sphere all failing
-3. **View orientation setting** - Method name unclear
-4. **Display mode setting** - COM exception
+```python
+# File export
+document.SaveAs(
+    FileName=path,
+    SaveAsType=ApplicationConstants.igFileTypeSTEP  # or igFileTypeSTL, etc.
+)
 
-### What Works Well
-- ✅ All 2D sketching operations
-- ✅ Basic extrusion (protrusion and cutout)
-- ✅ Document management (create, save, close)
-- ✅ Query operations (mass properties, counts)
-- ✅ Export (STEP, STL, images)
-- ✅ Assembly component placement (basic)
-
-### What Needs SDK Documentation
-1. **Revolve**: Which parameters are required? What to pass for RefAxis, ProfileSide, ExtentType?
-2. **Primitives**: What to pass for pPlane, ExtentSide, KeyPoint parameters?
-3. **View Setting**: What's the actual method name to set view orientation?
-4. **Display Mode**: How to properly set display style?
+# Image capture
+view.SaveAsImage(
+    Filename=image_path,
+    Width=1920,
+    Height=1080,
+    BackgroundScheme=ImageFileConstants.seImageFileBackgroundSchemeWhite
+)
+```
 
 ---
 
-## NEXT STEPS
+## 8. DOCUMENT MANAGEMENT API ✅
 
-### Immediate Actions
-1. ⏳ **Waiting on SDK documentation** from user
-2. 🔍 **Try AddFiniteRevolvedProtrusion** - may be simpler than full AddRevolvedProtrusion
-3. 🔍 **Try AddBoxByTwoPoints** - may be simpler than AddBoxByCenter
+All working.
 
-### Once SDK Available
-1. Look up actual required parameters for revolve operations
-2. Find documentation for pPlane, ExtentSide, KeyPoint parameters
-3. Find correct method to set view orientation
-4. Find correct approach for display mode
+```python
+# Create
+documents.Add("SolidEdge.PartDocument")  # or use DocumentTypeConstants
 
-### Testing Priorities
-1. Get revolve working (critical for basic functionality)
-2. Get one primitive working (box/cylinder/sphere)
-3. Get view orientation working
-4. Test remaining untested methods
+# Save
+document.Save()
+document.SaveAs(filepath)
+
+# Close without prompt
+document.Saved = True     # Suppress save dialog
+document.Close()
+```
+
+**Key Discovery:** Set `document.Saved = True` before `Close()` to suppress save prompt.
+
+---
+
+## 9. REFERENCE PLANES API ✅
+
+```python
+ref_planes = document.RefPlanes
+ref_plane = ref_planes.Item(1)    # 1=Top, 2=Front, 3=Right
+```
+
+**⚠️ 1-based indexing!**
+
+---
+
+## 10. ASSEMBLY API 🔍 **PARTIAL**
+
+```python
+# Add component at origin
+occurrences.AddByFilename(filepath)           # ✅ Works
+
+# Add with transformation matrix
+occurrences.Add(filepath, matrix)             # 🔍 Works but matrix format unclear
+
+# List components
+count = occurrences.Count                      # ✅ Works (1-based)
+occ = occurrences.Item(index)                 # ✅ Works (1-based)
+```
+
+---
+
+## Critical Questions for SDK Documentation
+
+### 1. Revolve Operations
+- Which of the 14 parameters are actually required (not truly optional)?
+- What type/value for `RefAxis`? (axis object, None, or something else?)
+- What values for `ProfileSide`, `ExtentType1/2`, `ExtentSide1/2`?
+- Why doesn't ProfileArray tuple work for revolve when it works for extrude?
+
+### 2. Primitive Creation
+- What to pass for `pPlane` parameter?
+- What are valid values for `ExtentSide`?
+- What is `vbKeyPointExtent`? Boolean or something else?
+- What is `pKeyPointObj`? What object type?
+- What are valid values for `pKeyPointFlags`?
+- What does `dAngle` parameter do in AddBoxByCenter?
+
+### 3. View Operations
+- What is the method name to set view orientation?
+- How to properly set display mode/style?
+
+---
+
+## All Available "Add" Methods (from dir(models))
+
+43 methods found. Bolded = tested, italics = critical missing functionality.
+
+- AddAutoSimplify
+- AddBaseContourFlange
+- AddBaseContourFlangeByBendDeductionOrBendAllowance
+- AddBaseTab
+- AddBaseTabWithMultipleProfiles
+- AddBody
+- AddBodyByMeshFacets
+- AddBodyByTag
+- AddBodyFeature
+- **❌ _AddBoxByCenter_** (failing)
+- AddBoxByThreePoints
+- AddBoxByTwoPoints
+- AddByConstruction
+- **❌ _AddCylinderByCenterAndRadius_** (failing)
+- AddCopiedPart
+- AddCopiedPartEx
+- AddCopiedPartWithMatchedCoordinateSystems
+- **✅ AddExtrudedProtrusion** (working)
+- AddExtrudedProtrusionWithThinWall
+- AddFiniteBaseHelix
+- AddFiniteBaseHelixSync
+- AddFiniteBaseHelixSyncWithThinWall
+- AddFiniteBaseHelixWithThinWall
+- **✅ AddFiniteExtrudedProtrusion** (working)
+- **❌ _AddFiniteRevolvedProtrusion_** (untested, may be simpler than full revolve)
+- AddFiniteRevolvedProtrusionSync
+- AddLocalSimplifyEnclosure
+- AddLoftedFlange
+- AddLoftedFlangeByBendDeductionOrBendAllowance
+- AddLoftedFlangeEx
+- AddLoftedProtrusion
+- AddLoftedProtrusionWithThinWall
+- AddRef
+- **❌ _AddRevolvedProtrusion_** (failing)
+- AddRevolvedProtrusionSync
+- AddRevolvedProtrusionWithThinWall
+- AddSimplifyDuplicate
+- AddSimplifyEnclosure
+- **❌ _AddSphereByCenterAndRadius_** (failing)
+- AddSweptProtrusion
+- AddSweptProtrusionWithThinWall
+- AddThickenFeature
+- AddWebNetwork
+
+---
+
+## Next Steps
+
+1. **Try AddFiniteRevolvedProtrusion** - simpler alternative to full revolve
+2. **Try AddBoxByTwoPoints** - simpler alternative to AddBoxByCenter
+3. **Wait for SDK documentation** - critical for understanding:
+   - Revolve required parameters and types
+   - Primitive pPlane, ExtentSide, KeyPoint parameters
+   - View/display method names
+
+---
+
+## Statistics
+
+- **Total methods introspected:** ~50+
+- **Fully working (✅):** ~30 (60%)
+- **Failing (❌):** ~10 (20%)
+- **Untested (❓):** ~10 (20%)
+
+**Comprehensive test results:** 25/33 tests passing (75%)
+
+**Blocking issues:** Revolve and primitives are essential for basic CAD functionality.

@@ -363,31 +363,23 @@ class ViewModel:
             if not view_obj:
                 return {"error": "Cannot access view object"}
 
-            # Map view names to constants
-            view_map = {
-                "Iso": ViewOrientationConstants.seIsoView,
-                "Top": ViewOrientationConstants.seTopView,
-                "Bottom": ViewOrientationConstants.seBottomView,
-                "Front": ViewOrientationConstants.seFrontView,
-                "Back": ViewOrientationConstants.seBackView,
-                "Right": ViewOrientationConstants.seRightView,
-                "Left": ViewOrientationConstants.seLeftView
-            }
+            # Valid view names (discovered via introspection)
+            # Note: Bottom, Back, Left may not work in all contexts
+            valid_views = ["Iso", "Top", "Front", "Right", "Bottom", "Back", "Left"]
 
-            view_const = view_map.get(view)
-            if view_const is None:
-                return {"error": f"Invalid view: {view}"}
+            if view not in valid_views:
+                return {"error": f"Invalid view: {view}. Valid: {', '.join(valid_views)}"}
 
-            # Set the view
-            if hasattr(view_obj, 'SetNamedView'):
-                view_obj.SetNamedView(view_const)
+            # Use ApplyNamedView with string name (discovered method!)
+            if hasattr(view_obj, 'ApplyNamedView'):
+                view_obj.ApplyNamedView(view)
                 return {
                     "status": "view_set",
                     "view": view
                 }
             else:
                 return {
-                    "error": "SetNamedView not available",
+                    "error": "ApplyNamedView not available",
                     "note": "Use View menu in Solid Edge UI"
                 }
         except Exception as e:
