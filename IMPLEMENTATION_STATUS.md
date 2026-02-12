@@ -4,7 +4,7 @@ Last Updated: 2026-02-12
 
 ## MCP Server Status: **OPERATIONAL**
 
-**118 MCP tools** are now registered and ready to use!
+**124 MCP tools** are now registered and ready to use!
 
 ## Quick Summary
 
@@ -30,12 +30,14 @@ Last Updated: 2026-02-12
 | **Custom Properties** | 3 | Get all, set/create, delete |
 | **Body Topology** | 3 | Body faces, body edges, face info |
 | **Performance** | 2 | Set performance mode, recompute |
-| **Query/Analysis** | 6 | Mass properties, bounding box, features, measurements |
+| **Query/Analysis** | 10 | Mass properties, bounding box, features, measurements, facet data, solid bodies |
+| **Modeling Mode** | 2 | Get/set ordered vs synchronous |
+| **Feature Management** | 2 | Suppress, unsuppress features |
 | **Export** | 9 | STEP, STL, IGES, PDF, DXF, Parasolid, JT, drawing, screenshot |
 | **Assembly** | 14 | Place, list, constraints, patterns, suppress, BOM, interference, bbox |
 | **Draft/Drawing** | 2 | Add sheet, assembly drawing view |
 | **Diagnostics** | 2 | API and feature inspection |
-| **TOTAL** | **118** | |
+| **TOTAL** | **124** | |
 
 ---
 
@@ -178,7 +180,7 @@ Last Updated: 2026-02-12
 | zoom_to_selection | View.Fit | Working |
 | set_display_mode | View.SetRenderMode | Working |
 
-### 16. Query & Analysis (6)
+### 16. Query & Analysis (10)
 | Tool | API Method | Status |
 |------|-----------|--------|
 | get_mass_properties | Model.ComputePhysicalProperties... | Working |
@@ -187,6 +189,10 @@ Last Updated: 2026-02-12
 | get_feature_count | Models.Count | Working |
 | get_document_properties | Document properties | Working |
 | measure_distance | Math calculation | Working |
+| get_body_facet_data | Body.GetFacetData | Implemented |
+| get_solid_bodies | Models + Constructions iteration | Implemented |
+| get_modeling_mode | Document.ModelingMode | Implemented |
+| set_modeling_mode | Document.ModelingMode = value | Implemented |
 
 ### 17. Export (9)
 | Tool | API Method | Status |
@@ -252,7 +258,13 @@ Last Updated: 2026-02-12
 | get_body_edges | Face.Edges iteration | Implemented |
 | get_face_info | Face properties (Type, Area, Edges) | Implemented |
 
-### 23. Performance (2)
+### 23. Feature Management (2)
+| Tool | API Method | Status |
+|------|-----------|--------|
+| suppress_feature | Feature.Suppress | Implemented |
+| unsuppress_feature | Feature.Unsuppress | Implemented |
+
+### 24. Performance (2)
 | Tool | API Method | Status |
 |------|-----------|--------|
 | set_performance_mode | App.DelayCompute/ScreenUpdating/etc | Implemented |

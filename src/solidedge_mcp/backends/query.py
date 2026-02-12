@@ -715,6 +715,294 @@ class QueryManager:
     # PERFORMANCE & RECOMPUTE
     # =================================================================
 
+    def get_body_facet_data(self, tolerance: float = 0.0) -> Dict[str, Any]:
+        """
+        Get tessellation/mesh data from the model body.
+
+        Returns triangulated facet data (vertices, normals, face IDs).
+        Useful for 3D printing previews and mesh export.
+
+        Args:
+            tolerance: Mesh tolerance in meters. If <= 0, returns cached data.
+                       If > 0, recomputes from Parasolid (slower but more accurate).
+
+        Returns:
+            Dict with facet count, point count, and sample data
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+            if models.Count == 0:
+                return {"error": "No geometry in document"}
+
+            model = models.Item(1)
+            body = model.Body
+
+            import array as arr_mod
+
+            # Prepare out parameters for COM call
+            # GetFacetData(Tolerance, FacetCount, Points, Normals, TextureCoords, StyleIDs, FaceIDs, bHonourPrefs)
+            points = arr_mod.array('d', [])
+            normals = arr_mod.array('d', [])
+            texture_coords = arr_mod.array('d', [])
+            style_ids = arr_mod.array('i', [])
+            face_ids = arr_mod.array('i', [])
+
+            try:
+                result_data = body.GetFacetData(
+                    tolerance,     # Tolerance
+                )
+
+                # GetFacetData returns a tuple of (facetCount, points, normals, textureCoords, styleIds, faceIds)
+                if isinstance(result_data, tuple) and len(result_data) >= 2:
+                    facet_count = result_data[0] if isinstance(result_data[0], int) else 0
+                    pts = result_data[1] if len(result_data) > 1 else []
+
+                    return {
+                        "facet_count": facet_count,
+                        "point_count": len(pts) // 3 if pts else 0,
+                        "tolerance": tolerance,
+                        "has_data": facet_count > 0
+                    }
+            except Exception:
+                pass
+
+            # Alternative: try with explicit out params
+            try:
+                facet_count = 0
+                body.GetFacetData(tolerance, facet_count, points, normals, texture_coords, style_ids, face_ids, False)
+
+                return {
+                    "facet_count": facet_count,
+                    "point_count": len(points) // 3 if points else 0,
+                    "tolerance": tolerance,
+                    "has_data": len(points) > 0
+                }
+            except Exception as e2:
+                return {
+                    "error": f"GetFacetData failed: {e2}",
+                    "note": "Body facet data may require specific COM marshaling. Try export_stl() instead.",
+                    "traceback": traceback.format_exc()
+                }
+
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def get_solid_bodies(self) -> Dict[str, Any]:
+        """
+        Report all solid bodies in the active part document.
+
+        Lists design bodies and construction bodies with their properties.
+
+        Returns:
+            Dict with body info (is_solid, shell count, etc.)
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            bodies = []
+
+            # Check design bodies (Models collection)
+            models = doc.Models
+            for i in range(1, models.Count + 1):
+                model = models.Item(i)
+                try:
+                    body = model.Body
+                    body_info = {
+                        "index": i - 1,
+                        "type": "design",
+                        "name": model.Name if hasattr(model, 'Name') else f"Model_{i}",
+                    }
+
+                    try:
+                        body_info["is_solid"] = body.IsSolid
+                    except Exception:
+                        body_info["is_solid"] = True  # Default assumption
+
+                    try:
+                        body_info["volume"] = body.Volume
+                    except Exception:
+                        pass
+
+                    # Count shells
+                    try:
+                        shells = body.Shells
+                        body_info["shell_count"] = shells.Count
+                    except Exception:
+                        pass
+
+                    bodies.append(body_info)
+                except Exception:
+                    pass
+
+            # Check construction bodies
+            try:
+                constructions = doc.Constructions
+                for i in range(1, constructions.Count + 1):
+                    try:
+                        cm = constructions.Item(i)
+                        body = cm.Body
+                        body_info = {
+                            "index": len(bodies),
+                            "type": "construction",
+                            "name": cm.Name if hasattr(cm, 'Name') else f"Construction_{i}",
+                        }
+                        try:
+                            body_info["is_solid"] = body.IsSolid
+                        except Exception:
+                            pass
+                        bodies.append(body_info)
+                    except Exception:
+                        pass
+            except Exception:
+                pass  # No Constructions collection
+
+            return {
+                "total_bodies": len(bodies),
+                "bodies": bodies
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def get_modeling_mode(self) -> Dict[str, Any]:
+        """
+        Get the current modeling mode (Ordered vs Synchronous).
+
+        Returns:
+            Dict with current mode
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            try:
+                mode = doc.ModelingMode
+                # seModelingModeOrdered = 1, seModelingModeSynchronous = 2
+                mode_name = "ordered" if mode == 1 else "synchronous" if mode == 2 else f"unknown ({mode})"
+                return {
+                    "mode": mode_name,
+                    "mode_value": mode
+                }
+            except Exception:
+                return {"error": "ModelingMode not available on this document type"}
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def set_modeling_mode(self, mode: str) -> Dict[str, Any]:
+        """
+        Set the modeling mode (Ordered vs Synchronous).
+
+        Args:
+            mode: 'ordered' or 'synchronous'
+
+        Returns:
+            Dict with status and new mode
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            mode_map = {
+                "ordered": 1,      # seModelingModeOrdered
+                "synchronous": 2,  # seModelingModeSynchronous
+            }
+
+            mode_value = mode_map.get(mode.lower())
+            if mode_value is None:
+                return {"error": f"Invalid mode: {mode}. Use 'ordered' or 'synchronous'"}
+
+            try:
+                old_mode = doc.ModelingMode
+                doc.ModelingMode = mode_value
+                new_mode = doc.ModelingMode
+                return {
+                    "status": "changed",
+                    "old_mode": "ordered" if old_mode == 1 else "synchronous",
+                    "new_mode": "ordered" if new_mode == 1 else "synchronous"
+                }
+            except Exception as e:
+                return {"error": f"Cannot change modeling mode: {e}"}
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def suppress_feature(self, feature_name: str) -> Dict[str, Any]:
+        """
+        Suppress a feature by name.
+
+        Suppressed features are hidden and excluded from computation.
+
+        Args:
+            feature_name: Name of the feature to suppress
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            features = doc.DesignEdgebarFeatures
+
+            for i in range(1, features.Count + 1):
+                feat = features.Item(i)
+                try:
+                    if feat.Name == feature_name:
+                        feat.Suppress()
+                        return {
+                            "status": "suppressed",
+                            "feature": feature_name
+                        }
+                except Exception:
+                    continue
+
+            return {"error": f"Feature '{feature_name}' not found"}
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def unsuppress_feature(self, feature_name: str) -> Dict[str, Any]:
+        """
+        Unsuppress a feature by name.
+
+        Args:
+            feature_name: Name of the feature to unsuppress
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            features = doc.DesignEdgebarFeatures
+
+            for i in range(1, features.Count + 1):
+                feat = features.Item(i)
+                try:
+                    if feat.Name == feature_name:
+                        feat.Unsuppress()
+                        return {
+                            "status": "unsuppressed",
+                            "feature": feature_name
+                        }
+                except Exception:
+                    continue
+
+            return {"error": f"Feature '{feature_name}' not found"}
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     def recompute(self) -> Dict[str, Any]:
         """
         Recompute the active document and model.

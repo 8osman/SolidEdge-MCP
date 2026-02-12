@@ -368,6 +368,130 @@ class TestRecompute:
 # PERFORMANCE FLAGS
 # ============================================================================
 
+# ============================================================================
+# SOLID BODIES
+# ============================================================================
+
+class TestGetSolidBodies:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+
+        model = MagicMock()
+        model.Name = "Model_1"
+        body = MagicMock()
+        body.IsSolid = True
+        body.Volume = 0.001
+        shells = MagicMock()
+        shells.Count = 1
+        body.Shells = shells
+        model.Body = body
+
+        models = MagicMock()
+        models.Count = 1
+        models.Item.return_value = model
+        doc.Models = models
+
+        # No constructions
+        doc.Constructions = MagicMock()
+        doc.Constructions.Count = 0
+
+        result = qm.get_solid_bodies()
+        assert result["total_bodies"] == 1
+        assert result["bodies"][0]["type"] == "design"
+        assert result["bodies"][0]["is_solid"] is True
+
+
+# ============================================================================
+# MODELING MODE
+# ============================================================================
+
+class TestGetModelingMode:
+    def test_ordered(self, query_mgr):
+        qm, doc = query_mgr
+        doc.ModelingMode = 1
+
+        result = qm.get_modeling_mode()
+        assert result["mode"] == "ordered"
+
+    def test_synchronous(self, query_mgr):
+        qm, doc = query_mgr
+        doc.ModelingMode = 2
+
+        result = qm.get_modeling_mode()
+        assert result["mode"] == "synchronous"
+
+
+class TestSetModelingMode:
+    def test_to_synchronous(self, query_mgr):
+        qm, doc = query_mgr
+        doc.ModelingMode = 1
+
+        result = qm.set_modeling_mode("synchronous")
+        assert result["status"] == "changed"
+
+    def test_invalid_mode(self, query_mgr):
+        qm, doc = query_mgr
+
+        result = qm.set_modeling_mode("invalid")
+        assert "error" in result
+
+
+# ============================================================================
+# FEATURE SUPPRESS/UNSUPPRESS
+# ============================================================================
+
+class TestSuppressFeature:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+
+        feat = MagicMock()
+        feat.Name = "ExtrudedProtrusion_1"
+
+        features = MagicMock()
+        features.Count = 1
+        features.Item.return_value = feat
+        doc.DesignEdgebarFeatures = features
+
+        result = qm.suppress_feature("ExtrudedProtrusion_1")
+        assert result["status"] == "suppressed"
+        feat.Suppress.assert_called_once()
+
+    def test_not_found(self, query_mgr):
+        qm, doc = query_mgr
+
+        feat = MagicMock()
+        feat.Name = "OtherFeature"
+
+        features = MagicMock()
+        features.Count = 1
+        features.Item.return_value = feat
+        doc.DesignEdgebarFeatures = features
+
+        result = qm.suppress_feature("Nonexistent")
+        assert "error" in result
+
+
+class TestUnsuppressFeature:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+
+        feat = MagicMock()
+        feat.Name = "ExtrudedProtrusion_1"
+
+        features = MagicMock()
+        features.Count = 1
+        features.Item.return_value = feat
+        doc.DesignEdgebarFeatures = features
+
+        result = qm.unsuppress_feature("ExtrudedProtrusion_1")
+        assert result["status"] == "unsuppressed"
+        feat.Unsuppress.assert_called_once()
+
+
+# ============================================================================
+# PERFORMANCE FLAGS
+# ============================================================================
+
 class TestSetPerformanceMode:
     def test_success(self):
         from solidedge_mcp.backends.connection import SolidEdgeConnection

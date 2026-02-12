@@ -1474,6 +1474,93 @@ def set_performance_mode(
 
 
 @mcp.tool()
+def get_body_facet_data(tolerance: float = 0.0) -> dict:
+    """
+    Get tessellation/mesh data from the model body.
+
+    Returns triangulated facet data for the body. Useful for mesh export
+    and 3D printing previews.
+
+    Args:
+        tolerance: Mesh tolerance in meters (0 = cached data, >0 = recompute)
+
+    Returns:
+        Facet count and point data
+    """
+    return query_manager.get_body_facet_data(tolerance)
+
+
+@mcp.tool()
+def get_solid_bodies() -> dict:
+    """
+    Report all solid bodies in the active part document.
+
+    Lists design bodies and construction bodies with properties
+    like volume and shell count.
+
+    Returns:
+        List of bodies with their properties
+    """
+    return query_manager.get_solid_bodies()
+
+
+@mcp.tool()
+def get_modeling_mode() -> dict:
+    """
+    Get the current modeling mode (Ordered vs Synchronous).
+
+    Returns:
+        Current modeling mode
+    """
+    return query_manager.get_modeling_mode()
+
+
+@mcp.tool()
+def set_modeling_mode(mode: str) -> dict:
+    """
+    Set the modeling mode (Ordered vs Synchronous).
+
+    Args:
+        mode: 'ordered' (traditional feature tree) or 'synchronous' (direct editing)
+
+    Returns:
+        Mode change status
+    """
+    return query_manager.set_modeling_mode(mode)
+
+
+@mcp.tool()
+def suppress_feature(feature_name: str) -> dict:
+    """
+    Suppress a feature by name.
+
+    Suppressed features are hidden and excluded from model computation.
+    Use list_features() to get available feature names.
+
+    Args:
+        feature_name: Name of the feature to suppress
+
+    Returns:
+        Suppression status
+    """
+    return query_manager.suppress_feature(feature_name)
+
+
+@mcp.tool()
+def unsuppress_feature(feature_name: str) -> dict:
+    """
+    Unsuppress a previously suppressed feature.
+
+    Args:
+        feature_name: Name of the feature to unsuppress
+
+    Returns:
+        Unsuppression status
+    """
+    return query_manager.unsuppress_feature(feature_name)
+
+
+@mcp.tool()
 def recompute() -> dict:
     """
     Recompute the active document and model.
