@@ -213,6 +213,127 @@ class TestPlaceComponent:
         assert "error" in result
 
 
+# ============================================================================
+# ASSEMBLY RELATIONS
+# ============================================================================
+
+class TestGetAssemblyRelations:
+    def test_success(self, asm_mgr):
+        am, doc = asm_mgr
+
+        rel1 = MagicMock()
+        rel1.Type = 0
+        rel1.Status = 1
+        rel1.Suppressed = False
+        rel1.Name = "Ground_1"
+
+        rel2 = MagicMock()
+        rel2.Type = 2
+        rel2.Status = 1
+        rel2.Suppressed = False
+        rel2.Name = "Planar_1"
+
+        relations = MagicMock()
+        relations.Count = 2
+        relations.Item.side_effect = lambda i: [None, rel1, rel2][i]
+        doc.Relations3d = relations
+
+        result = am.get_assembly_relations()
+        assert result["count"] == 2
+        assert result["relations"][0]["type_name"] == "Ground"
+        assert result["relations"][1]["type_name"] == "Planar"
+
+    def test_not_assembly(self, asm_mgr):
+        am, doc = asm_mgr
+        del doc.Relations3d
+
+        result = am.get_assembly_relations()
+        assert "error" in result
+
+    def test_empty(self, asm_mgr):
+        am, doc = asm_mgr
+        relations = MagicMock()
+        relations.Count = 0
+        doc.Relations3d = relations
+
+        result = am.get_assembly_relations()
+        assert result["count"] == 0
+        assert result["relations"] == []
+
+
+# ============================================================================
+# DOCUMENT TREE
+# ============================================================================
+
+class TestGetDocumentTree:
+    def test_flat_assembly(self, asm_mgr):
+        am, doc = asm_mgr
+
+        occ1 = MagicMock()
+        occ1.Name = "Part_1"
+        occ1.OccurrenceFileName = "C:/parts/part1.par"
+        occ1.Visible = True
+        occ1.SubOccurrences.Count = 0
+
+        occ2 = MagicMock()
+        occ2.Name = "Part_2"
+        occ2.OccurrenceFileName = "C:/parts/part2.par"
+        occ2.Visible = True
+        occ2.SubOccurrences.Count = 0
+
+        occurrences = MagicMock()
+        occurrences.Count = 2
+        occurrences.Item.side_effect = lambda i: [None, occ1, occ2][i]
+        doc.Occurrences = occurrences
+        doc.Name = "Assembly.asm"
+
+        result = am.get_document_tree()
+        assert result["top_level_count"] == 2
+        assert result["tree"][0]["name"] == "Part_1"
+        assert result["tree"][1]["file"] == "C:/parts/part2.par"
+
+    def test_nested_assembly(self, asm_mgr):
+        am, doc = asm_mgr
+
+        # Sub-occurrence
+        sub_occ = MagicMock()
+        sub_occ.Name = "SubPart_1"
+        sub_occ.OccurrenceFileName = "C:/parts/sub.par"
+        sub_occ.Visible = True
+        sub_occs = MagicMock()
+        sub_occs.Count = 0
+        sub_occ.SubOccurrences = sub_occs
+
+        # Top-level occurrence with children
+        occ1 = MagicMock()
+        occ1.Name = "SubAsm_1"
+        occ1.OccurrenceFileName = "C:/asm/sub.asm"
+        occ1.Visible = True
+        sub_occs_parent = MagicMock()
+        sub_occs_parent.Count = 1
+        sub_occs_parent.Item.return_value = sub_occ
+        occ1.SubOccurrences = sub_occs_parent
+
+        occurrences = MagicMock()
+        occurrences.Count = 1
+        occurrences.Item.return_value = occ1
+        doc.Occurrences = occurrences
+        doc.Name = "TopAsm.asm"
+
+        result = am.get_document_tree()
+        assert result["top_level_count"] == 1
+        assert result["tree"][0]["name"] == "SubAsm_1"
+        assert len(result["tree"][0]["children"]) == 1
+        assert result["tree"][0]["children"][0]["name"] == "SubPart_1"
+
+    def test_not_assembly(self, asm_mgr):
+        am, doc = asm_mgr
+        del doc.Occurrences
+
+        result = am.get_document_tree()
+        assert "error" in result
+
+
 class TestSuppressComponent:
     def test_suppress(self, asm_mgr):
         am, doc = asm_mgr

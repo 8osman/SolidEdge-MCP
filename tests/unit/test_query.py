@@ -346,6 +346,64 @@ class TestGetFaceInfo:
 
 
 # ============================================================================
+# SELECT SET
+# ============================================================================
+
+class TestGetSelectSet:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+
+        item1 = MagicMock()
+        item1.Name = "Face_1"
+
+        item2 = MagicMock()
+        item2.Name = "Edge_1"
+
+        select_set = MagicMock()
+        select_set.Count = 2
+        select_set.Item.side_effect = lambda i: [None, item1, item2][i]
+        doc.SelectSet = select_set
+
+        result = qm.get_select_set()
+        assert result["count"] == 2
+        assert result["items"][0]["name"] == "Face_1"
+        assert result["items"][1]["name"] == "Edge_1"
+
+    def test_empty(self, query_mgr):
+        qm, doc = query_mgr
+        select_set = MagicMock()
+        select_set.Count = 0
+        doc.SelectSet = select_set
+
+        result = qm.get_select_set()
+        assert result["count"] == 0
+        assert result["items"] == []
+
+
+class TestClearSelectSet:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+        select_set = MagicMock()
+        select_set.Count = 3
+        doc.SelectSet = select_set
+
+        result = qm.clear_select_set()
+        assert result["status"] == "cleared"
+        assert result["items_removed"] == 3
+        select_set.RemoveAll.assert_called_once()
+
+    def test_already_empty(self, query_mgr):
+        qm, doc = query_mgr
+        select_set = MagicMock()
+        select_set.Count = 0
+        doc.SelectSet = select_set
+
+        result = qm.clear_select_set()
+        assert result["status"] == "cleared"
+        assert result["items_removed"] == 0
+
+
+# ============================================================================
 # RECOMPUTE
 # ============================================================================
 
@@ -491,6 +549,30 @@ class TestUnsuppressFeature:
 # ============================================================================
 # PERFORMANCE FLAGS
 # ============================================================================
+
+# ============================================================================
+# QUIT APPLICATION
+# ============================================================================
+
+class TestQuitApplication:
+    def test_success(self):
+        from solidedge_mcp.backends.connection import SolidEdgeConnection
+        conn = SolidEdgeConnection()
+        conn.application = MagicMock()
+        conn._is_connected = True
+
+        result = conn.quit_application()
+        assert result["status"] == "quit"
+        assert conn.application is None
+        assert conn._is_connected is False
+
+    def test_not_connected(self):
+        from solidedge_mcp.backends.connection import SolidEdgeConnection
+        conn = SolidEdgeConnection()
+
+        result = conn.quit_application()
+        assert "error" in result
+
 
 class TestSetPerformanceMode:
     def test_success(self):

@@ -4,13 +4,13 @@ Last Updated: 2026-02-12
 
 ## MCP Server Status: **OPERATIONAL**
 
-**124 MCP tools** are now registered and ready to use!
+**129 MCP tools** are now registered and ready to use!
 
 ## Quick Summary
 
 | Category | Implemented | Notes |
 |----------|-------------|-------|
-| **Connection** | 2 | Connect, app info |
+| **Connection** | 3 | Connect, app info, quit |
 | **Document Management** | 8 | Create (part, assembly, sheet metal), open, save, close, list |
 | **Sketching** | 11 | Lines, circles, arcs, rects, polygons, ellipses, splines, constraints, axis |
 | **Basic Primitives** | 5 | Box (3 variants), cylinder, sphere |
@@ -30,24 +30,26 @@ Last Updated: 2026-02-12
 | **Custom Properties** | 3 | Get all, set/create, delete |
 | **Body Topology** | 3 | Body faces, body edges, face info |
 | **Performance** | 2 | Set performance mode, recompute |
-| **Query/Analysis** | 10 | Mass properties, bounding box, features, measurements, facet data, solid bodies |
+| **Query/Analysis** | 12 | Mass properties, bounding box, features, measurements, facet data, solid bodies, select set |
 | **Modeling Mode** | 2 | Get/set ordered vs synchronous |
 | **Feature Management** | 2 | Suppress, unsuppress features |
 | **Export** | 9 | STEP, STL, IGES, PDF, DXF, Parasolid, JT, drawing, screenshot |
-| **Assembly** | 14 | Place, list, constraints, patterns, suppress, BOM, interference, bbox |
+| **Assembly** | 16 | Place, list, constraints, patterns, suppress, BOM, interference, bbox, relations, doc tree |
 | **Draft/Drawing** | 2 | Add sheet, assembly drawing view |
 | **Diagnostics** | 2 | API and feature inspection |
-| **TOTAL** | **124** | |
+| **Select Set** | 2 | Get selection, clear selection |
+| **TOTAL** | **129** | |
 
 ---
 
 ## Tool Categories
 
-### 1. Connection & Application (2)
+### 1. Connection & Application (3)
 | Tool | API Method | Status |
 |------|-----------|--------|
 | connect_to_solidedge | GetActiveObject/Dispatch | Working |
 | get_application_info | Application properties | Working |
+| quit_application | Application.Quit | **Working** |
 
 ### 2. Document Management (8)
 | Tool | API Method | Status |
@@ -213,7 +215,7 @@ Last Updated: 2026-02-12
 | add_draft_sheet | Sheets.AddSheet | Implemented |
 | add_assembly_drawing_view | DrawingViews.AddAssemblyView | Implemented |
 
-### 18. Assembly (14)
+### 18. Assembly (16)
 | Tool | API Method | Status |
 |------|-----------|--------|
 | place_component | Occurrences.AddByFilename/AddWithMatrix | Working |
@@ -225,6 +227,8 @@ Last Updated: 2026-02-12
 | get_occurrence_bounding_box | Occurrence.GetRangeBox | Implemented |
 | get_bom | Occurrences iteration + dedup | Implemented |
 | check_interference | AssemblyDocument.CheckInterference | Implemented |
+| get_assembly_relations | Relations3d iteration | **Implemented** |
+| get_document_tree | Occurrences + SubOccurrences recursion | **Implemented** |
 | create_mate | Relations3d | Stub (needs face selection) |
 | add_align_constraint | Relations3d | Stub (needs face selection) |
 | add_angle_constraint | Relations3d | Stub (needs face selection) |
@@ -269,6 +273,12 @@ Last Updated: 2026-02-12
 |------|-----------|--------|
 | set_performance_mode | App.DelayCompute/ScreenUpdating/etc | Implemented |
 | recompute | Model.Recompute + Document.Recompute | Implemented |
+
+### 25. Select Set (2)
+| Tool | API Method | Status |
+|------|-----------|--------|
+| get_select_set | Document.SelectSet iteration | **Implemented** |
+| clear_select_set | SelectSet.RemoveAll | **Implemented** |
 
 ---
 

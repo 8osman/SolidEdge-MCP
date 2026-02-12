@@ -46,6 +46,20 @@ def connect_to_solidedge(start_if_needed: bool = True) -> dict:
 
 
 @mcp.tool()
+def quit_application() -> dict:
+    """
+    Quit the Solid Edge application.
+
+    Closes all documents and shuts down Solid Edge completely.
+    Use with caution - any unsaved work will be lost.
+
+    Returns:
+        Quit status
+    """
+    return connection.quit_application()
+
+
+@mcp.tool()
 def get_application_info() -> dict:
     """
     Get Solid Edge application information.
@@ -1575,6 +1589,38 @@ def recompute() -> dict:
 
 
 # ============================================================================
+# SELECT SET
+# ============================================================================
+
+@mcp.tool()
+def get_select_set() -> dict:
+    """
+    Get the current selection set.
+
+    Returns information about all currently selected objects in the
+    active document (faces, edges, features, etc.).
+
+    Returns:
+        List of selected items with type and name
+    """
+    return query_manager.get_select_set()
+
+
+@mcp.tool()
+def clear_select_set() -> dict:
+    """
+    Clear the current selection set.
+
+    Removes all objects from the selection. Useful before
+    programmatically selecting new objects.
+
+    Returns:
+        Clear status with count of items removed
+    """
+    return query_manager.clear_select_set()
+
+
+# ============================================================================
 # EXPORT TOOLS
 # ============================================================================
 
@@ -2002,6 +2048,34 @@ def get_bom() -> dict:
         BOM with unique parts and quantities
     """
     return assembly_manager.get_bom()
+
+
+@mcp.tool()
+def get_assembly_relations() -> dict:
+    """
+    Get all assembly relations (constraints) in the active assembly.
+
+    Lists all 3D constraints with their type (Ground, Axial, Planar, etc.),
+    status, and suppression state.
+
+    Returns:
+        List of relations with type, status, and properties
+    """
+    return assembly_manager.get_assembly_relations()
+
+
+@mcp.tool()
+def get_document_tree() -> dict:
+    """
+    Get the hierarchical document tree of the active assembly.
+
+    Recursively traverses all occurrences and sub-occurrences to build
+    a nested tree showing sub-assemblies and parts.
+
+    Returns:
+        Nested tree structure of the assembly
+    """
+    return assembly_manager.get_document_tree()
 
 
 @mcp.tool()

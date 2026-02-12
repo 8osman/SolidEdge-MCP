@@ -519,6 +519,159 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
+    def get_assembly_relations(self) -> Dict[str, Any]:
+        """
+        Get all assembly relations (constraints) in the active assembly.
+
+        Iterates the Relations3d collection to report constraint types,
+        status, and connected occurrences.
+
+        Returns:
+            Dict with list of relations and their properties
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Relations3d'):
+                return {"error": "Active document is not an assembly"}
+
+            relations = doc.Relations3d
+            relation_list = []
+
+            # Relation type constants
+            type_names = {
+                0: "Ground",
+                1: "Axial",
+                2: "Planar",
+                3: "Connect",
+                4: "Angle",
+                5: "Tangent",
+                6: "Cam",
+                7: "Gear",
+                8: "ParallelAxis",
+                9: "Center",
+            }
+
+            for i in range(1, relations.Count + 1):
+                try:
+                    rel = relations.Item(i)
+                    rel_info = {"index": i - 1}
+
+                    try:
+                        rel_info["type"] = rel.Type
+                        rel_info["type_name"] = type_names.get(rel.Type, f"Unknown({rel.Type})")
+                    except Exception:
+                        pass
+
+                    try:
+                        rel_info["status"] = rel.Status
+                    except Exception:
+                        pass
+
+                    try:
+                        rel_info["suppressed"] = rel.Suppressed
+                    except Exception:
+                        pass
+
+                    try:
+                        rel_info["name"] = rel.Name
+                    except Exception:
+                        pass
+
+                    relation_list.append(rel_info)
+                except Exception:
+                    relation_list.append({"index": i - 1})
+
+            return {
+                "relations": relation_list,
+                "count": len(relation_list)
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def get_document_tree(self) -> Dict[str, Any]:
+        """
+        Get the hierarchical document tree of the active assembly.
+
+        Recursively traverses occurrences and sub-occurrences to build
+        a nested tree structure showing the full assembly hierarchy.
+
+        Returns:
+            Dict with nested tree of components
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Occurrences'):
+                return {"error": "Active document is not an assembly"}
+
+            def traverse_occurrence(occ, depth=0):
+                """Recursively build tree from an occurrence."""
+                node = {}
+
+                try:
+                    node["name"] = occ.Name
+                except Exception:
+                    node["name"] = "Unknown"
+
+                try:
+                    node["file"] = occ.OccurrenceFileName
+                except Exception:
+                    node["file"] = "Unknown"
+
+                try:
+                    node["visible"] = occ.Visible
+                except Exception:
+                    pass
+
+                try:
+                    node["suppressed"] = occ.IsSuppressed if hasattr(occ, 'IsSuppressed') else False
+                except Exception:
+                    pass
+
+                # Recurse into sub-occurrences
+                children = []
+                try:
+                    sub_occs = occ.SubOccurrences
+                    if sub_occs and hasattr(sub_occs, 'Count'):
+                        for j in range(1, sub_occs.Count + 1):
+                            try:
+                                child = sub_occs.Item(j)
+                                children.append(traverse_occurrence(child, depth + 1))
+                            except Exception:
+                                children.append({"name": f"SubOcc_{j}", "error": "could not read"})
+                except Exception:
+                    pass
+
+                if children:
+                    node["children"] = children
+
+                return node
+
+            occurrences = doc.Occurrences
+            tree = []
+
+            for i in range(1, occurrences.Count + 1):
+                try:
+                    occ = occurrences.Item(i)
+                    tree.append(traverse_occurrence(occ))
+                except Exception:
+                    tree.append({"name": f"Occurrence_{i}", "error": "could not read"})
+
+            return {
+                "tree": tree,
+                "top_level_count": len(tree),
+                "document": doc.Name if hasattr(doc, 'Name') else "Unknown"
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     def check_interference(self, component_index: Optional[int] = None) -> Dict[str, Any]:
         """
         Run interference check on the active assembly.

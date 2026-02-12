@@ -118,6 +118,32 @@ class SolidEdgeConnection:
         self.ensure_connected()
         return self.application
 
+    def quit_application(self) -> Dict[str, Any]:
+        """
+        Quit the Solid Edge application.
+
+        Closes all documents and shuts down Solid Edge.
+
+        Returns:
+            Dict with quit status
+        """
+        try:
+            if not self._is_connected or self.application is None:
+                return {"error": "Not connected to Solid Edge"}
+
+            self.application.Quit()
+            self.application = None
+            self._is_connected = False
+
+            return {"status": "quit", "message": "Solid Edge has been closed"}
+        except Exception as e:
+            self.application = None
+            self._is_connected = False
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     def set_performance_mode(
         self,
         delay_compute: bool = None,

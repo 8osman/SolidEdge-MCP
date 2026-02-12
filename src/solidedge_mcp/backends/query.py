@@ -1003,6 +1003,78 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
+    def get_select_set(self) -> Dict[str, Any]:
+        """
+        Get the current selection set.
+
+        Returns information about all currently selected objects.
+
+        Returns:
+            Dict with selected objects and count
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            select_set = doc.SelectSet
+            count = select_set.Count
+
+            items = []
+            for i in range(1, count + 1):
+                try:
+                    item = select_set.Item(i)
+                    item_info = {"index": i - 1}
+
+                    try:
+                        item_info["type"] = str(type(item).__name__)
+                    except Exception:
+                        pass
+
+                    try:
+                        if hasattr(item, 'Name'):
+                            item_info["name"] = item.Name
+                    except Exception:
+                        pass
+
+                    items.append(item_info)
+                except Exception:
+                    items.append({"index": i - 1, "error": "could not read"})
+
+            return {
+                "count": count,
+                "items": items
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def clear_select_set(self) -> Dict[str, Any]:
+        """
+        Clear the current selection set.
+
+        Removes all objects from the selection.
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            select_set = doc.SelectSet
+            old_count = select_set.Count
+            select_set.RemoveAll()
+
+            return {
+                "status": "cleared",
+                "items_removed": old_count
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     def recompute(self) -> Dict[str, Any]:
         """
         Recompute the active document and model.
