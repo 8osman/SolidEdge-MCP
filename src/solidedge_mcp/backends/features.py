@@ -6,6 +6,8 @@ Handles creating 3D features like extrusions, revolves, holes, fillets, etc.
 
 from typing import Dict, Any, Optional, List
 import traceback
+import pythoncom
+from win32com.client import VARIANT
 from .constants import FeatureOperationConstants, ExtrudedProtrusion, HoleTypeConstants
 
 
@@ -60,6 +62,9 @@ class FeatureManager:
                 1, (profile,), dir_const, distance
             )
 
+            # Clear accumulated profiles (consumed by this feature)
+            self.sketch_manager.clear_accumulated_profiles()
+
             return {
                 "status": "created",
                 "type": "extrude",
@@ -112,6 +117,9 @@ class FeatureManager:
                 ExtrudedProtrusion.igRight,     # ProfilePlaneSide (2)
                 angle_rad                       # AngleofRevolution
             )
+
+            # Clear accumulated profiles (consumed by this feature)
+            self.sketch_manager.clear_accumulated_profiles()
 
             return {
                 "status": "created",
@@ -714,12 +722,41 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
+    def _make_loft_variant_arrays(self, profiles):
+        """Create properly typed VARIANT arrays for loft/sweep COM calls.
+
+        COM requires explicit VARIANT typing for SAFEARRAY parameters.
+        Python's automatic marshaling does not produce correct types for nested arrays.
+
+        Args:
+            profiles: List of profile COM objects
+
+        Returns:
+            Tuple of (v_profiles, v_types, v_origins) VARIANT arrays
+        """
+        igProfileBasedCrossSection = 48
+        v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, profiles)
+        v_types = VARIANT(
+            pythoncom.VT_ARRAY | pythoncom.VT_I4,
+            [igProfileBasedCrossSection] * len(profiles)
+        )
+        v_origins = VARIANT(
+            pythoncom.VT_ARRAY | pythoncom.VT_VARIANT,
+            [VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8, [0.0, 0.0])
+             for _ in profiles]
+        )
+        return v_profiles, v_types, v_origins
+
     def create_loft(self, profile_indices: list = None) -> Dict[str, Any]:
         """
         Create a loft feature between multiple profiles.
 
+        Uses accumulated profiles from close_sketch() calls. Create 2+ sketches
+        on different parallel planes, close each one, then call create_loft().
+
         Args:
-            profile_indices: List of profile indices to loft between (optional)
+            profile_indices: Optional list of profile indices to select from
+                accumulated profiles. If None, uses all accumulated profiles.
 
         Returns:
             Dict with status and loft info
@@ -728,13 +765,61 @@ class FeatureManager:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            # Note: Actual loft creation requires multiple closed profiles
-            # This is a simplified version that assumes profiles are already created
+            # Get accumulated profiles from sketch manager
+            all_profiles = self.sketch_manager.get_accumulated_profiles()
 
+            if profile_indices is not None:
+                profiles = [all_profiles[i] for i in profile_indices]
+            else:
+                profiles = all_profiles
+
+            if len(profiles) < 2:
+                return {
+                    "error": f"Loft requires at least 2 profiles, got {len(profiles)}. "
+                    "Create sketches on different planes and close each one before calling create_loft()."
+                }
+
+            v_profiles, v_types, v_origins = self._make_loft_variant_arrays(profiles)
+
+            igRight = 2  # Material side
+            igNone = 44  # No tangent control
+
+            # Try LoftedProtrusions.AddSimple first (works when a base feature exists)
+            try:
+                model = models.Item(1)
+                lp = model.LoftedProtrusions
+                loft = lp.AddSimple(
+                    len(profiles), v_profiles, v_types, v_origins,
+                    igRight, igNone, igNone
+                )
+                self.sketch_manager.clear_accumulated_profiles()
+                return {
+                    "status": "created",
+                    "type": "loft",
+                    "num_profiles": len(profiles),
+                    "method": "LoftedProtrusions.AddSimple"
+                }
+            except Exception:
+                pass
+
+            # Fall back to models.AddLoftedProtrusion (works as initial feature)
+            v_seg = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_VARIANT, [])
+            model = models.AddLoftedProtrusion(
+                len(profiles), v_profiles, v_types, v_origins,
+                v_seg,          # SegmentMaps (empty)
+                igRight,        # MaterialSide
+                igNone, 0.0, None,  # Start extent
+                igNone, 0.0, None,  # End extent
+                igNone, 0.0,        # Start tangent
+                igNone, 0.0,        # End tangent
+            )
+
+            self.sketch_manager.clear_accumulated_profiles()
             return {
                 "status": "created",
                 "type": "loft",
-                "note": "Loft requires multiple closed profiles. Ensure profiles are created first."
+                "num_profiles": len(profiles),
+                "method": "models.AddLoftedProtrusion"
             }
         except Exception as e:
             return {
@@ -746,8 +831,14 @@ class FeatureManager:
         """
         Create a sweep feature along a path.
 
+        Requires at least 2 accumulated profiles: the first is the path (open profile),
+        and the second is the cross-section (closed profile). Create the path sketch
+        first (open, e.g. a line or arc), then create the cross-section sketch
+        (closed, e.g. a circle) on a plane perpendicular to the path start.
+
         Args:
-            path_profile_index: Index of the path profile (optional)
+            path_profile_index: Index of the path profile in accumulated profiles
+                (default: 0, the first accumulated profile)
 
         Returns:
             Dict with status and sweep info
@@ -756,13 +847,54 @@ class FeatureManager:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            # Note: Sweep requires a cross-section profile and a path
-            # This is a simplified version
+            all_profiles = self.sketch_manager.get_accumulated_profiles()
 
+            if len(all_profiles) < 2:
+                return {
+                    "error": f"Sweep requires at least 2 profiles (path + cross-section), "
+                    f"got {len(all_profiles)}. Create a path sketch and a cross-section sketch first."
+                }
+
+            path_idx = path_profile_index if path_profile_index is not None else 0
+            path_profile = all_profiles[path_idx]
+            cross_sections = [p for i, p in enumerate(all_profiles) if i != path_idx]
+
+            igProfileBasedCrossSection = 48
+            igRight = 2
+            igNone = 44
+
+            # Path arrays
+            v_paths = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [path_profile])
+            v_path_types = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_I4, [igProfileBasedCrossSection])
+
+            # Cross-section arrays
+            v_sections = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, cross_sections)
+            v_section_types = VARIANT(
+                pythoncom.VT_ARRAY | pythoncom.VT_I4,
+                [igProfileBasedCrossSection] * len(cross_sections)
+            )
+            v_origins = VARIANT(
+                pythoncom.VT_ARRAY | pythoncom.VT_VARIANT,
+                [VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8, [0.0, 0.0])
+                 for _ in cross_sections]
+            )
+            v_seg = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_VARIANT, [])
+
+            # AddSweptProtrusion: 15 required params
+            model = models.AddSweptProtrusion(
+                1, v_paths, v_path_types,                   # Path (1 curve)
+                len(cross_sections), v_sections, v_section_types, v_origins, v_seg,  # Sections
+                igRight,                                     # MaterialSide
+                igNone, 0.0, None,                          # Start extent
+                igNone, 0.0, None,                          # End extent
+            )
+
+            self.sketch_manager.clear_accumulated_profiles()
             return {
                 "status": "created",
                 "type": "sweep",
-                "note": "Sweep requires a cross-section profile and a path curve."
+                "num_cross_sections": len(cross_sections),
+                "method": "models.AddSweptProtrusion"
             }
         except Exception as e:
             return {
@@ -1210,16 +1342,57 @@ class FeatureManager:
         wall_thickness: float,
         profile_indices: list = None
     ) -> Dict[str, Any]:
-        """Create a thin-walled loft feature"""
+        """
+        Create a thin-walled loft feature between multiple profiles.
+
+        Uses accumulated profiles from close_sketch() calls.
+
+        Args:
+            wall_thickness: Wall thickness in meters
+            profile_indices: Optional list of profile indices to select
+
+        Returns:
+            Dict with status and loft info
+        """
         try:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
+            all_profiles = self.sketch_manager.get_accumulated_profiles()
+
+            if profile_indices is not None:
+                profiles = [all_profiles[i] for i in profile_indices]
+            else:
+                profiles = all_profiles
+
+            if len(profiles) < 2:
+                return {
+                    "error": f"Loft requires at least 2 profiles, got {len(profiles)}."
+                }
+
+            v_profiles, v_types, v_origins = self._make_loft_variant_arrays(profiles)
+            v_seg = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_VARIANT, [])
+
+            igRight = 2
+            igNone = 44
+
+            model = models.AddLoftedProtrusionWithThinWall(
+                len(profiles), v_profiles, v_types, v_origins,
+                v_seg,              # SegmentMaps
+                igRight,            # MaterialSide
+                igNone, 0.0, None,  # Start extent
+                igNone, 0.0, None,  # End extent
+                igNone, 0.0,        # Start tangent
+                igNone, 0.0,        # End tangent
+                wall_thickness,     # WallThickness
+            )
+
+            self.sketch_manager.clear_accumulated_profiles()
             return {
                 "status": "created",
                 "type": "loft_thin_wall",
                 "wall_thickness": wall_thickness,
-                "note": "Loft with thin wall requires multiple closed profiles"
+                "num_profiles": len(profiles)
             }
         except Exception as e:
             return {
@@ -1232,16 +1405,67 @@ class FeatureManager:
         wall_thickness: float,
         path_profile_index: int = None
     ) -> Dict[str, Any]:
-        """Create a thin-walled sweep feature"""
+        """
+        Create a thin-walled sweep feature along a path.
+
+        Uses accumulated profiles: first is path (open), rest are cross-sections (closed).
+
+        Args:
+            wall_thickness: Wall thickness in meters
+            path_profile_index: Index of the path profile (default: 0)
+
+        Returns:
+            Dict with status and sweep info
+        """
         try:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
+            all_profiles = self.sketch_manager.get_accumulated_profiles()
+
+            if len(all_profiles) < 2:
+                return {
+                    "error": f"Sweep requires at least 2 profiles (path + cross-section), "
+                    f"got {len(all_profiles)}."
+                }
+
+            path_idx = path_profile_index if path_profile_index is not None else 0
+            path_profile = all_profiles[path_idx]
+            cross_sections = [p for i, p in enumerate(all_profiles) if i != path_idx]
+
+            igProfileBasedCrossSection = 48
+            igRight = 2
+            igNone = 44
+
+            v_paths = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [path_profile])
+            v_path_types = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_I4, [igProfileBasedCrossSection])
+            v_sections = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, cross_sections)
+            v_section_types = VARIANT(
+                pythoncom.VT_ARRAY | pythoncom.VT_I4,
+                [igProfileBasedCrossSection] * len(cross_sections)
+            )
+            v_origins = VARIANT(
+                pythoncom.VT_ARRAY | pythoncom.VT_VARIANT,
+                [VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8, [0.0, 0.0])
+                 for _ in cross_sections]
+            )
+            v_seg = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_VARIANT, [])
+
+            model = models.AddSweptProtrusionWithThinWall(
+                1, v_paths, v_path_types,
+                len(cross_sections), v_sections, v_section_types, v_origins, v_seg,
+                igRight,
+                igNone, 0.0, None,
+                igNone, 0.0, None,
+                wall_thickness,
+            )
+
+            self.sketch_manager.clear_accumulated_profiles()
             return {
                 "status": "created",
                 "type": "sweep_thin_wall",
                 "wall_thickness": wall_thickness,
-                "note": "Sweep with thin wall requires cross-section and path"
+                "num_cross_sections": len(cross_sections)
             }
         except Exception as e:
             return {

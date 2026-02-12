@@ -18,6 +18,7 @@ class SketchManager:
         self.active_sketch = None
         self.active_profile = None
         self.active_refaxis = None  # Reference axis for revolve operations
+        self.accumulated_profiles = []  # For loft/sweep multi-profile operations
 
     def create_sketch(self, plane: str = "Top") -> Dict[str, Any]:
         """
@@ -415,10 +416,14 @@ class SketchManager:
                 # Some versions use different methods
                 pass
 
+            # Add to accumulated profiles for loft/sweep operations
+            self.accumulated_profiles.append(self.active_profile)
+
             result = {
                 "status": "closed",
                 "sketch_id": self.active_sketch.Name if hasattr(self.active_sketch, 'Name') else "sketch",
-                "has_revolution_axis": self.active_refaxis is not None
+                "has_revolution_axis": self.active_refaxis is not None,
+                "accumulated_profiles": len(self.accumulated_profiles)
             }
 
             # NOTE: We keep active_profile valid after closing so it can be used
@@ -440,3 +445,11 @@ class SketchManager:
     def get_active_refaxis(self):
         """Get the active reference axis for revolve operations"""
         return self.active_refaxis
+
+    def get_accumulated_profiles(self):
+        """Get the list of accumulated closed profiles (for loft/sweep)."""
+        return list(self.accumulated_profiles)
+
+    def clear_accumulated_profiles(self):
+        """Clear the accumulated profiles list."""
+        self.accumulated_profiles.clear()

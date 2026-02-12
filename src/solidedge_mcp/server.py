@@ -570,8 +570,12 @@ def create_loft(profile_indices: Optional[list] = None) -> dict:
     """
     Create a loft feature between multiple profiles.
 
+    Workflow: Create 2+ sketches on different parallel planes, close each one,
+    then call create_loft(). Each close_sketch() accumulates the profile.
+
     Args:
-        profile_indices: List of profile indices to loft between (optional)
+        profile_indices: List of profile indices to loft between (optional).
+            If None, uses all accumulated profiles.
 
     Returns:
         Loft creation status
@@ -586,8 +590,13 @@ def create_sweep(path_profile_index: Optional[int] = None) -> dict:
     """
     Create a sweep feature along a path.
 
+    Workflow: Create a path sketch (open profile, e.g. a line) on one plane,
+    close it, then create a cross-section sketch (closed profile, e.g. a circle)
+    on a perpendicular plane, close it, then call create_sweep().
+
     Args:
-        path_profile_index: Index of the path profile (optional)
+        path_profile_index: Index of the path profile in accumulated profiles
+            (default: 0, the first accumulated profile)
 
     Returns:
         Sweep creation status

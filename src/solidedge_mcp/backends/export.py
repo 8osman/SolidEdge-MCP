@@ -156,6 +156,9 @@ class ExportManager:
         """
         Create a 2D drawing from the active 3D model.
 
+        The active document must be a saved Part or Assembly. A new Draft document
+        is created with a model link to the source, then drawing views are placed.
+
         Args:
             template: Drawing template path (optional)
             views: List of views to create - ['Front', 'Top', 'Right', 'Isometric']
@@ -164,11 +167,35 @@ class ExportManager:
             Dict with status and drawing info
         """
         try:
+            import win32com.client.dynamic as dyn
+
             source_doc = self.doc_manager.get_active_document()
             app = self.doc_manager.connection.get_application()
 
+            # Source must be saved to disk for ModelLinks.Add
+            source_path = None
+            try:
+                source_path = source_doc.FullName
+            except Exception:
+                pass
+
+            if not source_path:
+                return {"error": "Active document must be saved before creating a drawing. Use save_document() first."}
+
             if views is None:
-                views = ['Front', 'Top', 'Right']
+                views = ['Front', 'Top', 'Right', 'Isometric']
+
+            # View orientation constants (Solid Edge ViewOrientationConstants)
+            view_orient_map = {
+                'Front': 5,       # igFrontView
+                'Back': 8,        # igBackView
+                'Top': 6,         # igTopView
+                'Bottom': 9,      # igBottomView
+                'Right': 7,       # igRightView
+                'Left': 10,       # igLeftView
+                'Isometric': 12,  # igISOView
+                'Iso': 12,
+            }
 
             # Create a new draft document
             if template and os.path.exists(template):
@@ -176,14 +203,52 @@ class ExportManager:
             else:
                 draft_doc = app.Documents.Add("SolidEdge.DraftDocument")
 
-            # Note: Actual view creation is complex and requires
-            # accessing the drawing views collection and placing views
+            # Add model link to the source part/assembly
+            model_link = draft_doc.ModelLinks.Add(source_path)
+
+            # Get active sheet and DrawingViews
+            sheet = draft_doc.ActiveSheet
+            # DrawingViews may bind to wrong type library (Part instead of Draft)
+            # due to gen_py cache. Force late binding on the DrawingViews object.
+            dvs_early = sheet.DrawingViews
+            dvs = dyn.Dispatch(dvs_early._oleobj_)
+
+            # Place views in a grid layout on the sheet
+            # Standard A-size sheet is ~0.279 x 0.216 m (A4 landscape)
+            positions = [
+                (0.10, 0.15),   # View 1
+                (0.10, 0.06),   # View 2
+                (0.22, 0.15),   # View 3
+                (0.22, 0.06),   # View 4
+            ]
+
+            views_added = []
+            for i, view_name in enumerate(views[:4]):
+                orient = view_orient_map.get(view_name)
+                if orient is None:
+                    continue
+
+                x, y = positions[i] if i < len(positions) else (0.15 + i * 0.08, 0.10)
+
+                try:
+                    dv = dvs.AddPartView(model_link, orient, 1.0, x, y, 0)
+                    views_added.append(view_name)
+                except Exception:
+                    # Try the generic Add method as fallback
+                    try:
+                        dv = dvs.Add(model_link, orient, 1.0, x, y)
+                        views_added.append(view_name)
+                    except Exception:
+                        pass
 
             return {
                 "status": "created",
                 "type": "drawing",
-                "views": views,
-                "note": "Drawing views require manual placement - use Solid Edge UI for detailed control"
+                "draft_name": draft_doc.Name if hasattr(draft_doc, 'Name') else "Draft",
+                "model_link": source_path,
+                "views_requested": views,
+                "views_added": views_added,
+                "total_views": len(views_added)
             }
         except Exception as e:
             return {
