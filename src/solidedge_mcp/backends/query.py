@@ -283,6 +283,64 @@ class QueryManager:
             }
 
     # =================================================================
+    # REFERENCE PLANES
+    # =================================================================
+
+    def get_ref_planes(self) -> Dict[str, Any]:
+        """
+        List all reference planes in the active document.
+
+        Default planes: 1=Top/XZ, 2=Front/XY, 3=Right/YZ.
+        Additional planes are created with create_ref_plane_by_offset.
+
+        Returns:
+            Dict with list of reference planes and their indices
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'RefPlanes'):
+                return {"error": "Document does not have reference planes"}
+
+            ref_planes = doc.RefPlanes
+            planes = []
+
+            default_names = {1: "Top (XZ)", 2: "Front (XY)", 3: "Right (YZ)"}
+
+            for i in range(1, ref_planes.Count + 1):
+                try:
+                    plane = ref_planes.Item(i)
+                    plane_info = {
+                        "index": i,
+                        "is_default": i <= 3,
+                    }
+
+                    try:
+                        plane_info["name"] = plane.Name
+                    except Exception:
+                        plane_info["name"] = default_names.get(i, f"RefPlane_{i}")
+
+                    try:
+                        plane_info["visible"] = plane.Visible
+                    except Exception:
+                        pass
+
+                    planes.append(plane_info)
+                except Exception:
+                    planes.append({"index": i, "name": default_names.get(i, f"RefPlane_{i}")})
+
+            return {
+                "planes": planes,
+                "count": len(planes),
+                "note": "Use plane index (1-based) in create_sketch_on_plane or create_ref_plane_by_offset"
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
     # VARIABLES
     # =================================================================
 

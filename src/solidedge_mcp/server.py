@@ -159,6 +159,45 @@ def close_document(save: bool = True) -> dict:
 
 
 @mcp.tool()
+def activate_document(name_or_index) -> dict:
+    """
+    Activate a specific open document by name or index.
+
+    When multiple documents are open, use this to switch
+    the active document. Use list_documents() to see available documents.
+
+    Args:
+        name_or_index: Document name (string) or 0-based index (int)
+
+    Returns:
+        Activation status with document info
+    """
+    return doc_manager.activate_document(name_or_index)
+
+
+@mcp.tool()
+def undo() -> dict:
+    """
+    Undo the last operation on the active document.
+
+    Returns:
+        Undo status
+    """
+    return doc_manager.undo()
+
+
+@mcp.tool()
+def redo() -> dict:
+    """
+    Redo the last undone operation on the active document.
+
+    Returns:
+        Redo status
+    """
+    return doc_manager.redo()
+
+
+@mcp.tool()
 def list_documents() -> dict:
     """
     List all open documents.
@@ -1239,6 +1278,20 @@ def local_simplify_enclosure() -> dict:
 # ============================================================================
 
 @mcp.tool()
+def get_ref_planes() -> dict:
+    """
+    List all reference planes in the active document.
+
+    Shows default planes (Top/XZ, Front/XY, Right/YZ) and any
+    user-created offset planes with their indices.
+
+    Returns:
+        List of reference planes with 1-based indices
+    """
+    return query_manager.get_ref_planes()
+
+
+@mcp.tool()
 def get_mass_properties() -> dict:
     """
     Get mass properties of the active part.
@@ -1734,6 +1787,23 @@ def add_assembly_drawing_view(
         View creation status
     """
     return export_manager.add_assembly_drawing_view(x, y, orientation, scale)
+
+
+@mcp.tool()
+def export_flat_dxf(file_path: str) -> dict:
+    """
+    Export sheet metal flat pattern to DXF format.
+
+    Only works on sheet metal documents. Exports the flat pattern
+    geometry for CNC/laser cutting.
+
+    Args:
+        file_path: Output DXF file path
+
+    Returns:
+        Export status
+    """
+    return export_manager.export_flat_dxf(file_path)
 
 
 @mcp.tool()

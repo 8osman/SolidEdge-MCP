@@ -241,6 +241,89 @@ class DocumentManager:
                 "traceback": traceback.format_exc()
             }
 
+    def activate_document(self, name_or_index) -> Dict[str, Any]:
+        """
+        Activate a specific open document by name or index.
+
+        Args:
+            name_or_index: Document name (string) or 0-based index (int)
+
+        Returns:
+            Dict with activation status
+        """
+        try:
+            app = self.connection.get_application()
+            docs = app.Documents
+
+            if docs.Count == 0:
+                return {"error": "No documents are open"}
+
+            doc = None
+
+            if isinstance(name_or_index, int):
+                idx = name_or_index
+                if idx < 0 or idx >= docs.Count:
+                    return {"error": f"Invalid index: {idx}. {docs.Count} documents open."}
+                doc = docs.Item(idx + 1)  # COM is 1-indexed
+            else:
+                # Search by name
+                for i in range(1, docs.Count + 1):
+                    d = docs.Item(i)
+                    if d.Name == name_or_index:
+                        doc = d
+                        break
+                if doc is None:
+                    return {"error": f"Document '{name_or_index}' not found"}
+
+            doc.Activate()
+            self.active_document = doc
+
+            return {
+                "status": "activated",
+                "name": doc.Name,
+                "path": doc.FullName if hasattr(doc, 'FullName') else "untitled",
+                "type": self._get_document_type(doc)
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def undo(self) -> Dict[str, Any]:
+        """
+        Undo the last operation on the active document.
+
+        Returns:
+            Dict with undo status
+        """
+        try:
+            doc = self.get_active_document()
+            doc.Undo()
+            return {"status": "undone"}
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def redo(self) -> Dict[str, Any]:
+        """
+        Redo the last undone operation on the active document.
+
+        Returns:
+            Dict with redo status
+        """
+        try:
+            doc = self.get_active_document()
+            doc.Redo()
+            return {"status": "redone"}
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     def get_active_document(self):
         """Get the active document object"""
         if not self.active_document:

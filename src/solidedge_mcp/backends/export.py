@@ -471,6 +471,47 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
+    def export_flat_dxf(self, file_path: str) -> Dict[str, Any]:
+        """
+        Export sheet metal flat pattern to DXF format.
+
+        Only works on sheet metal documents. Exports the flat pattern
+        geometry to DXF for use in CNC/laser cutting.
+
+        Args:
+            file_path: Output DXF file path
+
+        Returns:
+            Dict with export status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not file_path.lower().endswith('.dxf'):
+                file_path += '.dxf'
+
+            # Access FlatPatternModels collection (sheet metal only)
+            if not hasattr(doc, 'FlatPatternModels'):
+                return {"error": "Active document is not a sheet metal document. FlatPatternModels not available."}
+
+            flat_models = doc.FlatPatternModels
+
+            # SaveAsFlatDXFEx(filename, face, edge, vertex, useFlatPattern)
+            # Pass None for face/edge/vertex to export all
+            flat_models.SaveAsFlatDXFEx(file_path, None, None, None, True)
+
+            return {
+                "status": "exported",
+                "format": "Flat DXF",
+                "path": file_path,
+                "size_bytes": os.path.getsize(file_path) if os.path.exists(file_path) else 0
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     # Aliases for consistency with MCP tool names
     def export_step(self, file_path: str) -> Dict[str, Any]:
         """Alias for export_to_step"""

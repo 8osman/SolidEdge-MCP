@@ -101,3 +101,133 @@ class TestAddAssemblyDrawingView:
 
         result = em.add_assembly_drawing_view(orientation="InvalidView")
         assert "error" in result
+
+
+# ============================================================================
+# FLAT DXF EXPORT
+# ============================================================================
+
+class TestExportFlatDxf:
+    def test_success(self, export_mgr):
+        em, doc = export_mgr
+        flat_models = MagicMock()
+        doc.FlatPatternModels = flat_models
+
+        result = em.export_flat_dxf("C:/output/flat.dxf")
+        assert result["status"] == "exported"
+        assert result["format"] == "Flat DXF"
+        flat_models.SaveAsFlatDXFEx.assert_called_once()
+
+    def test_not_sheet_metal(self, export_mgr):
+        em, doc = export_mgr
+        del doc.FlatPatternModels
+
+        result = em.export_flat_dxf("C:/output/flat.dxf")
+        assert "error" in result
+
+    def test_adds_extension(self, export_mgr):
+        em, doc = export_mgr
+        flat_models = MagicMock()
+        doc.FlatPatternModels = flat_models
+
+        result = em.export_flat_dxf("C:/output/flat")
+        assert result["path"] == "C:/output/flat.dxf"
+
+
+# ============================================================================
+# DOCUMENT MANAGEMENT (activate, undo, redo)
+# ============================================================================
+
+@pytest.fixture
+def doc_mgr():
+    """Create DocumentManager with mocked connection."""
+    from solidedge_mcp.backends.documents import DocumentManager
+    conn = MagicMock()
+    app = MagicMock()
+    conn.get_application.return_value = app
+    dm = DocumentManager(conn)
+    return dm, app
+
+
+class TestActivateDocument:
+    def test_by_index(self, doc_mgr):
+        dm, app = doc_mgr
+        doc = MagicMock()
+        doc.Name = "Part1.par"
+        doc.FullName = "C:/parts/Part1.par"
+        doc.Type = 1
+
+        docs = MagicMock()
+        docs.Count = 2
+        docs.Item.return_value = doc
+        app.Documents = docs
+
+        result = dm.activate_document(0)
+        assert result["status"] == "activated"
+        assert result["name"] == "Part1.par"
+        doc.Activate.assert_called_once()
+
+    def test_by_name(self, doc_mgr):
+        dm, app = doc_mgr
+        doc1 = MagicMock()
+        doc1.Name = "Part1.par"
+        doc1.FullName = "C:/Part1.par"
+        doc1.Type = 1
+
+        doc2 = MagicMock()
+        doc2.Name = "Part2.par"
+        doc2.FullName = "C:/Part2.par"
+        doc2.Type = 1
+
+        docs = MagicMock()
+        docs.Count = 2
+        docs.Item.side_effect = lambda i: [None, doc1, doc2][i]
+        app.Documents = docs
+
+        result = dm.activate_document("Part2.par")
+        assert result["status"] == "activated"
+        doc2.Activate.assert_called_once()
+
+    def test_not_found(self, doc_mgr):
+        dm, app = doc_mgr
+        doc1 = MagicMock()
+        doc1.Name = "Part1.par"
+
+        docs = MagicMock()
+        docs.Count = 1
+        docs.Item.return_value = doc1
+        app.Documents = docs
+
+        result = dm.activate_document("Nonexistent.par")
+        assert "error" in result
+
+    def test_invalid_index(self, doc_mgr):
+        dm, app = doc_mgr
+        docs = MagicMock()
+        docs.Count = 1
+        app.Documents = docs
+
+        result = dm.activate_document(5)
+        assert "error" in result
+
+
+class TestUndo:
+    def test_success(self, doc_mgr):
+        dm, app = doc_mgr
+        doc = MagicMock()
+        dm.active_document = doc
+
+        result = dm.undo()
+        assert result["status"] == "undone"
+        doc.Undo.assert_called_once()
+
+
+class TestRedo:
+    def test_success(self, doc_mgr):
+        dm, app = doc_mgr
+        doc = MagicMock()
+        dm.active_document = doc
+
+        result = dm.redo()
+        assert result["status"] == "redone"
+        doc.Redo.assert_called_once()

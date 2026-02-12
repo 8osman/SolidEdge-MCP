@@ -4,21 +4,21 @@ Last Updated: 2026-02-12
 
 ## MCP Server Status: **OPERATIONAL**
 
-**129 MCP tools** are now registered and ready to use!
+**134 MCP tools** are now registered and ready to use!
 
 ## Quick Summary
 
 | Category | Implemented | Notes |
 |----------|-------------|-------|
 | **Connection** | 3 | Connect, app info, quit |
-| **Document Management** | 8 | Create (part, assembly, sheet metal), open, save, close, list |
+| **Document Management** | 11 | Create (part, assembly, sheet metal), open, save, close, list, activate, undo, redo |
 | **Sketching** | 11 | Lines, circles, arcs, rects, polygons, ellipses, splines, constraints, axis |
 | **Basic Primitives** | 5 | Box (3 variants), cylinder, sphere |
 | **Extrusions** | 3 | Finite, infinite, thin-wall |
 | **Revolves** | 5 | Basic, finite, sync, thin-wall |
 | **Cutouts** | 5 | Extruded finite, through-all, revolved, normal, lofted |
 | **Rounds/Chamfers/Holes** | 3 | Round (fillet), chamfer, hole |
-| **Reference Planes** | 1 | Offset parallel plane |
+| **Reference Planes** | 2 | Offset parallel plane, list planes |
 | **Loft** | 2 | Basic, thin-wall |
 | **Sweep** | 2 | Basic, thin-wall |
 | **Helix/Spiral** | 4 | Basic, sync, thin-wall variants |
@@ -33,12 +33,12 @@ Last Updated: 2026-02-12
 | **Query/Analysis** | 12 | Mass properties, bounding box, features, measurements, facet data, solid bodies, select set |
 | **Modeling Mode** | 2 | Get/set ordered vs synchronous |
 | **Feature Management** | 2 | Suppress, unsuppress features |
-| **Export** | 9 | STEP, STL, IGES, PDF, DXF, Parasolid, JT, drawing, screenshot |
+| **Export** | 10 | STEP, STL, IGES, PDF, DXF, flat DXF, Parasolid, JT, drawing, screenshot |
 | **Assembly** | 16 | Place, list, constraints, patterns, suppress, BOM, interference, bbox, relations, doc tree |
 | **Draft/Drawing** | 2 | Add sheet, assembly drawing view |
 | **Diagnostics** | 2 | API and feature inspection |
 | **Select Set** | 2 | Get selection, clear selection |
-| **TOTAL** | **129** | |
+| **TOTAL** | **134** | |
 
 ---
 
@@ -51,7 +51,7 @@ Last Updated: 2026-02-12
 | get_application_info | Application properties | Working |
 | quit_application | Application.Quit | **Working** |
 
-### 2. Document Management (8)
+### 2. Document Management (11)
 | Tool | API Method | Status |
 |------|-----------|--------|
 | create_part_document | Documents.Add | Working |
@@ -61,6 +61,9 @@ Last Updated: 2026-02-12
 | save_document | Document.Save/SaveAs | Working |
 | close_document | Document.Close | Working |
 | list_documents | Documents collection | Working |
+| activate_document | Document.Activate | **Working** |
+| undo | Document.Undo | **Implemented** |
+| redo | Document.Redo | **Implemented** |
 
 ### 3. Sketching & 2D Geometry (11)
 | Tool | API Method | Status |
@@ -119,10 +122,11 @@ Last Updated: 2026-02-12
 | create_chamfer | Chamfers.AddEqualSetback | **Working** |
 | create_hole | ExtrudedCutouts.AddFiniteMulti (circular) | **Working** |
 
-### 8. Reference Planes - NEW! (1)
+### 8. Reference Planes (2)
 | Tool | API Method | Status |
 |------|-----------|--------|
 | create_ref_plane_by_offset | RefPlanes.AddParallelByDistance | **Working** |
+| get_ref_planes | RefPlanes iteration | **Implemented** |
 
 ### 9. Loft (2)
 | Tool | API Method | Status |
@@ -204,6 +208,7 @@ Last Updated: 2026-02-12
 | export_iges | Document.SaveAs | Working |
 | export_pdf | Document.SaveAs | Working |
 | export_dxf | Document.SaveAs | Working |
+| export_flat_dxf | FlatPatternModels.SaveAsFlatDXFEx | **Implemented** |
 | export_parasolid | Document.SaveAs | Working |
 | export_jt | Document.SaveAs | Working |
 | create_drawing | DraftDocument + DrawingViews | Working |

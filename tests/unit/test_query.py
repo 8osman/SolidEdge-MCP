@@ -28,6 +28,57 @@ def query_mgr(doc_mgr):
 
 
 # ============================================================================
+# REFERENCE PLANES
+# ============================================================================
+
+class TestGetRefPlanes:
+    def test_default_planes(self, query_mgr):
+        qm, doc = query_mgr
+
+        plane1 = MagicMock()
+        plane1.Name = "Top"
+        plane1.Visible = True
+
+        plane2 = MagicMock()
+        plane2.Name = "Front"
+        plane2.Visible = True
+
+        plane3 = MagicMock()
+        plane3.Name = "Right"
+        plane3.Visible = True
+
+        ref_planes = MagicMock()
+        ref_planes.Count = 3
+        ref_planes.Item.side_effect = lambda i: [None, plane1, plane2, plane3][i]
+        doc.RefPlanes = ref_planes
+
+        result = qm.get_ref_planes()
+        assert result["count"] == 3
+        assert result["planes"][0]["is_default"] is True
+        assert result["planes"][0]["name"] == "Top"
+
+    def test_with_offset_planes(self, query_mgr):
+        qm, doc = query_mgr
+
+        planes = []
+        for i in range(5):
+            p = MagicMock()
+            p.Name = f"Plane_{i+1}"
+            p.Visible = True
+            planes.append(p)
+
+        ref_planes = MagicMock()
+        ref_planes.Count = 5
+        ref_planes.Item.side_effect = lambda i: planes[i - 1]
+        doc.RefPlanes = ref_planes
+
+        result = qm.get_ref_planes()
+        assert result["count"] == 5
+        assert result["planes"][2]["is_default"] is True
+        assert result["planes"][3]["is_default"] is False
+
+
+# ============================================================================
 # VARIABLES
 # ============================================================================
 
