@@ -1103,3 +1103,23 @@ class AssemblyManager:
                 "error": str(e),
                 "traceback": traceback.format_exc()
             }
+
+    def get_occurrence_count(self) -> Dict[str, Any]:
+        """
+        Get the count of top-level occurrences in the assembly.
+
+        Returns:
+            Dict with occurrence count
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Occurrences'):
+                return {"error": "Active document is not an assembly"}
+
+            return {"count": doc.Occurrences.Count}
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }

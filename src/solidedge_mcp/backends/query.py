@@ -1729,3 +1729,187 @@ class QueryManager:
                 "error": str(e),
                 "traceback": traceback.format_exc()
             }
+
+    def delete_feature(self, feature_name: str) -> Dict[str, Any]:
+        """
+        Delete a feature by name.
+
+        Finds the feature in the DesignEdgebarFeatures collection and deletes it.
+
+        Args:
+            feature_name: Name of the feature to delete
+
+        Returns:
+            Dict with deletion status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'DesignEdgebarFeatures'):
+                return {"error": "Document does not support feature deletion"}
+
+            debf = doc.DesignEdgebarFeatures
+            for i in range(1, debf.Count + 1):
+                try:
+                    feat = debf.Item(i)
+                    if hasattr(feat, 'Name') and feat.Name == feature_name:
+                        feat.Delete()
+                        return {
+                            "status": "deleted",
+                            "feature_name": feature_name
+                        }
+                except Exception:
+                    continue
+
+            return {"error": f"Feature '{feature_name}' not found"}
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def get_body_color(self) -> Dict[str, Any]:
+        """
+        Get the current body color.
+
+        Returns:
+            Dict with RGB color values
+        """
+        try:
+            doc, model = self._get_first_model()
+            body = model.Body
+
+            try:
+                color = body.Style.ForegroundColor
+                # Decompose OLE color
+                red = color & 0xFF
+                green = (color >> 8) & 0xFF
+                blue = (color >> 16) & 0xFF
+                return {
+                    "red": red,
+                    "green": green,
+                    "blue": blue,
+                    "ole_color": color
+                }
+            except Exception:
+                # Try alternative
+                try:
+                    r, g, b = body.GetColor()
+                    return {"red": r, "green": g, "blue": b}
+                except Exception:
+                    return {"error": "Could not determine body color"}
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def measure_angle(self, x1: float, y1: float, z1: float,
+                      x2: float, y2: float, z2: float,
+                      x3: float, y3: float, z3: float) -> Dict[str, Any]:
+        """
+        Measure the angle between three points (vertex at point 2).
+
+        Calculates the angle formed by vectors P2->P1 and P2->P3.
+
+        Args:
+            x1, y1, z1: First point coordinates
+            x2, y2, z2: Vertex point coordinates
+            x3, y3, z3: Third point coordinates
+
+        Returns:
+            Dict with angle in degrees and radians
+        """
+        try:
+            # Vector from P2 to P1
+            v1 = (x1 - x2, y1 - y2, z1 - z2)
+            # Vector from P2 to P3
+            v2 = (x3 - x2, y3 - y2, z3 - z2)
+
+            # Dot product
+            dot = v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2]
+
+            # Magnitudes
+            mag1 = math.sqrt(v1[0]**2 + v1[1]**2 + v1[2]**2)
+            mag2 = math.sqrt(v2[0]**2 + v2[1]**2 + v2[2]**2)
+
+            if mag1 == 0 or mag2 == 0:
+                return {"error": "One or more vectors have zero length"}
+
+            # Clamp for numerical stability
+            cos_angle = max(-1.0, min(1.0, dot / (mag1 * mag2)))
+            angle_rad = math.acos(cos_angle)
+            angle_deg = math.degrees(angle_rad)
+
+            return {
+                "angle_degrees": angle_deg,
+                "angle_radians": angle_rad,
+                "vertex": [x2, y2, z2]
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def get_material_table(self) -> Dict[str, Any]:
+        """
+        Get the available material properties from the document variables.
+
+        Returns material-related variables from the active document.
+
+        Returns:
+            Dict with material properties
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            material_vars = {}
+            material_names = ["Density", "Mass", "Volume", "Surface_Area",
+                             "YoungsModulus", "PoissonsRatio", "ThermalExpansionCoefficient",
+                             "ThermalConductivity", "Material"]
+
+            try:
+                variables = doc.Variables
+                for i in range(1, variables.Count + 1):
+                    try:
+                        var = variables.Item(i)
+                        name = var.Name
+                        if name in material_names or name.startswith("Material"):
+                            try:
+                                material_vars[name] = var.Value
+                            except Exception:
+                                material_vars[name] = str(var.Formula) if hasattr(var, 'Formula') else "N/A"
+                    except Exception:
+                        continue
+            except Exception:
+                pass
+
+            # Also try to get material name from properties
+            try:
+                if hasattr(doc, 'Properties'):
+                    props = doc.Properties
+                    for i in range(1, props.Count + 1):
+                        try:
+                            prop_set = props.Item(i)
+                            for j in range(1, prop_set.Count + 1):
+                                try:
+                                    prop = prop_set.Item(j)
+                                    if "material" in prop.Name.lower():
+                                        material_vars[prop.Name] = prop.Value
+                                except Exception:
+                                    continue
+                        except Exception:
+                            continue
+            except Exception:
+                pass
+
+            return {
+                "material_properties": material_vars,
+                "property_count": len(material_vars)
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }

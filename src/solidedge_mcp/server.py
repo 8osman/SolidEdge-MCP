@@ -599,6 +599,35 @@ def sketch_mirror(axis: str = "X") -> dict:
     return sketch_manager.sketch_mirror(axis)
 
 
+@mcp.tool()
+def draw_construction_line(x1: float, y1: float, x2: float, y2: float) -> dict:
+    """
+    Draw a construction line in the active sketch.
+
+    Construction lines are reference geometry that don't form part of the profile.
+    Useful for symmetry axes, alignment references, etc.
+
+    Args:
+        x1, y1: Start point coordinates (meters)
+        x2, y2: End point coordinates (meters)
+
+    Returns:
+        Creation status
+    """
+    return sketch_manager.draw_construction_line(x1, y1, x2, y2)
+
+
+@mcp.tool()
+def get_sketch_constraints() -> dict:
+    """
+    Get information about constraints in the active sketch.
+
+    Returns:
+        List of constraints with types and count
+    """
+    return sketch_manager.get_sketch_constraints()
+
+
 # ============================================================================
 # 3D FEATURE TOOLS
 # ============================================================================
@@ -2015,6 +2044,67 @@ def get_moments_of_inertia() -> dict:
     return query_manager.get_moments_of_inertia()
 
 
+@mcp.tool()
+def delete_feature(feature_name: str) -> dict:
+    """
+    Delete a feature by name.
+
+    Finds the feature in the design tree and deletes it.
+
+    Args:
+        feature_name: Name of the feature to delete
+
+    Returns:
+        Deletion status
+    """
+    return query_manager.delete_feature(feature_name)
+
+
+@mcp.tool()
+def get_body_color() -> dict:
+    """
+    Get the current body color.
+
+    Returns:
+        RGB color values of the body
+    """
+    return query_manager.get_body_color()
+
+
+@mcp.tool()
+def measure_angle(x1: float, y1: float, z1: float,
+                  x2: float, y2: float, z2: float,
+                  x3: float, y3: float, z3: float) -> dict:
+    """
+    Measure the angle between three points (vertex at point 2).
+
+    Calculates the angle formed by vectors P2->P1 and P2->P3.
+
+    Args:
+        x1, y1, z1: First point coordinates
+        x2, y2, z2: Vertex point coordinates
+        x3, y3, z3: Third point coordinates
+
+    Returns:
+        Angle in degrees and radians
+    """
+    return query_manager.measure_angle(x1, y1, z1, x2, y2, z2, x3, y3, z3)
+
+
+@mcp.tool()
+def get_material_table() -> dict:
+    """
+    Get material-related properties from the document.
+
+    Returns material name, density, and other material properties
+    if available.
+
+    Returns:
+        Material properties and count
+    """
+    return query_manager.get_material_table()
+
+
 # ============================================================================
 # VARIABLES
 # ============================================================================
@@ -2580,6 +2670,37 @@ def activate_sheet(sheet_index: int) -> dict:
 
 
 @mcp.tool()
+def rename_sheet(sheet_index: int, new_name: str) -> dict:
+    """
+    Rename a draft sheet.
+
+    Args:
+        sheet_index: 0-based sheet index
+        new_name: New name for the sheet
+
+    Returns:
+        Rename status with old and new names
+    """
+    return export_manager.rename_sheet(sheet_index, new_name)
+
+
+@mcp.tool()
+def delete_sheet(sheet_index: int) -> dict:
+    """
+    Delete a draft sheet.
+
+    Cannot delete the last remaining sheet.
+
+    Args:
+        sheet_index: 0-based sheet index
+
+    Returns:
+        Deletion status
+    """
+    return export_manager.delete_sheet(sheet_index)
+
+
+@mcp.tool()
 def capture_screenshot(file_path: str, width: int = 1920, height: int = 1080) -> dict:
     """
     Capture a screenshot of the current view.
@@ -3051,6 +3172,37 @@ def set_component_color(component_index: int, red: int, green: int, blue: int) -
         Color update status
     """
     return assembly_manager.set_component_color(component_index, red, green, blue)
+
+
+@mcp.tool()
+def get_occurrence_count() -> dict:
+    """
+    Get the count of top-level components in the assembly.
+
+    Returns:
+        Component count
+    """
+    return assembly_manager.get_occurrence_count()
+
+
+# ============================================================================
+# VIEW TOOLS (ADDITIONAL)
+# ============================================================================
+
+@mcp.tool()
+def set_view_background(red: int, green: int, blue: int) -> dict:
+    """
+    Set the view background color.
+
+    Args:
+        red: Red component (0-255)
+        green: Green component (0-255)
+        blue: Blue component (0-255)
+
+    Returns:
+        Color update status
+    """
+    return view_manager.set_view_background(red, green, blue)
 
 
 # ============================================================================

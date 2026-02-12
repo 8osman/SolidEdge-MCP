@@ -1161,3 +1161,81 @@ class TestGetMomentsOfInertia:
         result = qm.get_moments_of_inertia()
         assert result["moments_of_inertia"] == [1.0, 2.0, 3.0]
         assert result["principal_moments"] == [1.5, 2.5, 3.5]
+
+
+# ============================================================================
+# DELETE FEATURE
+# ============================================================================
+
+class TestDeleteFeature:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+
+        feat = MagicMock()
+        feat.Name = "Extrude1"
+        debf = MagicMock()
+        debf.Count = 1
+        debf.Item.return_value = feat
+        doc.DesignEdgebarFeatures = debf
+
+        result = qm.delete_feature("Extrude1")
+        assert result["status"] == "deleted"
+        feat.Delete.assert_called_once()
+
+    def test_not_found(self, query_mgr):
+        qm, doc = query_mgr
+
+        feat = MagicMock()
+        feat.Name = "Extrude1"
+        debf = MagicMock()
+        debf.Count = 1
+        debf.Item.return_value = feat
+        doc.DesignEdgebarFeatures = debf
+
+        result = qm.delete_feature("NonExistent")
+        assert "error" in result
+
+
+# ============================================================================
+# MEASURE ANGLE
+# ============================================================================
+
+class TestMeasureAngle:
+    def test_right_angle(self, query_mgr):
+        qm, doc = query_mgr
+        # 90 degree angle: P1=(1,0,0), vertex P2=(0,0,0), P3=(0,1,0)
+        result = qm.measure_angle(1, 0, 0, 0, 0, 0, 0, 1, 0)
+        assert abs(result["angle_degrees"] - 90.0) < 0.001
+
+    def test_straight_angle(self, query_mgr):
+        qm, doc = query_mgr
+        # 180 degree angle: P1=(-1,0,0), vertex P2=(0,0,0), P3=(1,0,0)
+        result = qm.measure_angle(-1, 0, 0, 0, 0, 0, 1, 0, 0)
+        assert abs(result["angle_degrees"] - 180.0) < 0.001
+
+    def test_zero_vector(self, query_mgr):
+        qm, doc = query_mgr
+        result = qm.measure_angle(0, 0, 0, 0, 0, 0, 1, 0, 0)
+        assert "error" in result
+
+
+# ============================================================================
+# GET MATERIAL TABLE
+# ============================================================================
+
+class TestGetMaterialTable:
+    def test_with_variables(self, query_mgr):
+        qm, doc = query_mgr
+
+        var1 = MagicMock()
+        var1.Name = "Density"
+        var1.Value = 7850.0
+
+        variables = MagicMock()
+        variables.Count = 1
+        variables.Item.return_value = var1
+        doc.Variables = variables
+
+        result = qm.get_material_table()
+        assert result["property_count"] >= 1
+        assert "Density" in result["material_properties"]

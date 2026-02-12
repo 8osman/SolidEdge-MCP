@@ -843,6 +843,81 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
+    def rename_sheet(self, sheet_index: int, new_name: str) -> Dict[str, Any]:
+        """
+        Rename a draft sheet.
+
+        Args:
+            sheet_index: 0-based sheet index
+            new_name: New name for the sheet
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Sheets'):
+                return {"error": "Active document is not a draft document"}
+
+            sheets = doc.Sheets
+            if sheet_index < 0 or sheet_index >= sheets.Count:
+                return {"error": f"Invalid sheet index: {sheet_index}. Count: {sheets.Count}"}
+
+            sheet = sheets.Item(sheet_index + 1)
+            old_name = sheet.Name
+            sheet.Name = new_name
+
+            return {
+                "status": "renamed",
+                "old_name": old_name,
+                "new_name": new_name,
+                "sheet_index": sheet_index
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def delete_sheet(self, sheet_index: int) -> Dict[str, Any]:
+        """
+        Delete a draft sheet.
+
+        Args:
+            sheet_index: 0-based sheet index
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Sheets'):
+                return {"error": "Active document is not a draft document"}
+
+            sheets = doc.Sheets
+            if sheets.Count <= 1:
+                return {"error": "Cannot delete the last sheet"}
+
+            if sheet_index < 0 or sheet_index >= sheets.Count:
+                return {"error": f"Invalid sheet index: {sheet_index}. Count: {sheets.Count}"}
+
+            sheet = sheets.Item(sheet_index + 1)
+            sheet_name = sheet.Name
+            sheet.Delete()
+
+            return {
+                "status": "deleted",
+                "sheet_name": sheet_name,
+                "remaining_sheets": sheets.Count
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     # Aliases for consistency with MCP tool names
     def export_step(self, file_path: str) -> Dict[str, Any]:
         """Alias for export_to_step"""
@@ -1017,6 +1092,50 @@ class ViewModel:
             return {
                 "status": "display_mode_set",
                 "mode": mode
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def set_view_background(self, red: int, green: int, blue: int) -> Dict[str, Any]:
+        """
+        Set the view background color.
+
+        Args:
+            red: Red component (0-255)
+            green: Green component (0-255)
+            blue: Blue component (0-255)
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Windows') or doc.Windows.Count == 0:
+                return {"error": "No window available"}
+
+            window = doc.Windows.Item(1)
+            view_obj = window.View if hasattr(window, 'View') else None
+
+            if not view_obj:
+                return {"error": "Cannot access view object"}
+
+            ole_color = red | (green << 8) | (blue << 16)
+
+            try:
+                view_obj.SetBackgroundColor(ole_color)
+            except Exception:
+                try:
+                    view_obj.BackgroundColor = ole_color
+                except Exception:
+                    view_obj.SetBackgroundGradientColor(ole_color, ole_color)
+
+            return {
+                "status": "updated",
+                "color": [red, green, blue]
             }
         except Exception as e:
             return {

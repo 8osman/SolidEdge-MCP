@@ -810,3 +810,85 @@ class SketchManager:
                 "error": str(e),
                 "traceback": traceback.format_exc()
             }
+
+    def draw_construction_line(self, x1: float, y1: float, x2: float, y2: float) -> Dict[str, Any]:
+        """
+        Draw a construction line in the active sketch.
+
+        Construction lines are reference geometry that doesn't form part
+        of the profile. Useful for symmetry axes, alignment references, etc.
+
+        Args:
+            x1, y1: Start point coordinates (meters)
+            x2, y2: End point coordinates (meters)
+
+        Returns:
+            Dict with creation status
+        """
+        try:
+            if not self.active_profile:
+                return {"error": "No active sketch. Call create_sketch() first"}
+
+            profile = self.active_profile
+            line = profile.Lines2d.AddBy2Points(x1, y1, x2, y2)
+
+            try:
+                profile.ToggleConstruction(line)
+            except Exception:
+                pass
+
+            return {
+                "status": "created",
+                "type": "construction_line",
+                "start": [x1, y1],
+                "end": [x2, y2]
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def get_sketch_constraints(self) -> Dict[str, Any]:
+        """
+        Get information about constraints in the active sketch.
+
+        Returns:
+            Dict with constraint count and types
+        """
+        try:
+            if not self.active_profile:
+                return {"error": "No active sketch. Call create_sketch() first"}
+
+            profile = self.active_profile
+            constraints = []
+
+            try:
+                relations = profile.Relations2d
+                for i in range(1, relations.Count + 1):
+                    try:
+                        rel = relations.Item(i)
+                        constraint_info = {"index": i - 1}
+                        try:
+                            constraint_info["type"] = rel.Type
+                        except Exception:
+                            pass
+                        try:
+                            constraint_info["name"] = rel.Name
+                        except Exception:
+                            pass
+                        constraints.append(constraint_info)
+                    except Exception:
+                        constraints.append({"index": i - 1, "type": "unknown"})
+            except Exception:
+                pass
+
+            return {
+                "constraints": constraints,
+                "count": len(constraints)
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }

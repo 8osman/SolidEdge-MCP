@@ -898,3 +898,167 @@ class TestGetDocumentCount:
         app.Documents.Count = 3
         result = dm.get_document_count()
         assert result["count"] == 3
+
+
+# ============================================================================
+# RENAME SHEET
+# ============================================================================
+
+class TestRenameSheet:
+    def test_success(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        sheet.Name = "Sheet 1"
+        sheets = MagicMock()
+        sheets.Count = 2
+        sheets.Item.return_value = sheet
+        doc.Sheets = sheets
+
+        result = em.rename_sheet(0, "Drawing A")
+        assert result["status"] == "renamed"
+        assert result["new_name"] == "Drawing A"
+        assert sheet.Name == "Drawing A"
+
+    def test_not_draft(self, export_mgr):
+        em, doc = export_mgr
+        del doc.Sheets
+
+        result = em.rename_sheet(0, "New Name")
+        assert "error" in result
+
+    def test_invalid_index(self, export_mgr):
+        em, doc = export_mgr
+        sheets = MagicMock()
+        sheets.Count = 1
+        doc.Sheets = sheets
+
+        result = em.rename_sheet(5, "New Name")
+        assert "error" in result
+
+
+# ============================================================================
+# DELETE SHEET
+# ============================================================================
+
+class TestDeleteSheet:
+    def test_success(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        sheet.Name = "Sheet 2"
+        sheets = MagicMock()
+        sheets.Count = 3
+        sheets.Item.return_value = sheet
+        doc.Sheets = sheets
+
+        result = em.delete_sheet(1)
+        assert result["status"] == "deleted"
+        sheet.Delete.assert_called_once()
+
+    def test_last_sheet(self, export_mgr):
+        em, doc = export_mgr
+        sheets = MagicMock()
+        sheets.Count = 1
+        doc.Sheets = sheets
+
+        result = em.delete_sheet(0)
+        assert "error" in result
+
+    def test_not_draft(self, export_mgr):
+        em, doc = export_mgr
+        del doc.Sheets
+
+        result = em.delete_sheet(0)
+        assert "error" in result
+
+
+# ============================================================================
+# DRAW CONSTRUCTION LINE
+# ============================================================================
+
+class TestDrawConstructionLine:
+    def test_success(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        dm = MagicMock()
+        sm = SketchManager(dm)
+
+        profile = MagicMock()
+        line = MagicMock()
+        profile.Lines2d.AddBy2Points.return_value = line
+        sm.active_profile = profile
+
+        result = sm.draw_construction_line(0, 0, 0.1, 0)
+        assert result["status"] == "created"
+        assert result["type"] == "construction_line"
+        profile.Lines2d.AddBy2Points.assert_called_once_with(0, 0, 0.1, 0)
+        profile.ToggleConstruction.assert_called_once_with(line)
+
+    def test_no_sketch(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        dm = MagicMock()
+        sm = SketchManager(dm)
+
+        result = sm.draw_construction_line(0, 0, 0.1, 0)
+        assert "error" in result
+
+
+# ============================================================================
+# GET SKETCH CONSTRAINTS
+# ============================================================================
+
+class TestGetSketchConstraints:
+    def test_success(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        dm = MagicMock()
+        sm = SketchManager(dm)
+
+        profile = MagicMock()
+        rel1 = MagicMock()
+        rel1.Type = 1
+        rel1.Name = "Horizontal"
+        relations = MagicMock()
+        relations.Count = 1
+        relations.Item.return_value = rel1
+        profile.Relations2d = relations
+        sm.active_profile = profile
+
+        result = sm.get_sketch_constraints()
+        assert result["count"] == 1
+        assert result["constraints"][0]["type"] == 1
+
+    def test_no_sketch(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        dm = MagicMock()
+        sm = SketchManager(dm)
+
+        result = sm.get_sketch_constraints()
+        assert "error" in result
+
+
+# ============================================================================
+# ASSEMBLY: GET OCCURRENCE COUNT
+# ============================================================================
+
+class TestGetOccurrenceCount:
+    @pytest.fixture
+    def asm_mgr(self):
+        from solidedge_mcp.backends.assembly import AssemblyManager
+        dm = MagicMock()
+        doc = MagicMock()
+        dm.get_active_document.return_value = doc
+
+        occurrences = MagicMock()
+        occurrences.Count = 5
+        doc.Occurrences = occurrences
+
+        return AssemblyManager(dm), doc
+
+    def test_success(self, asm_mgr):
+        am, doc = asm_mgr
+        result = am.get_occurrence_count()
+        assert result["count"] == 5
+
+    def test_not_assembly(self, asm_mgr):
+        am, doc = asm_mgr
+        del doc.Occurrences
+        result = am.get_occurrence_count()
+        assert "error" in result
