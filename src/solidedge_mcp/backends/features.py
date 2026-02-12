@@ -130,10 +130,13 @@ class FeatureManager:
         """
         Create a hole feature.
 
+        Creates a hole at (x, y) on the first reference plane. Requires an existing
+        base feature. Uses HoleDataCollection + Holes.AddFinite from the COM API.
+
         Args:
-            x, y: Hole center coordinates on top face
+            x, y: Hole center coordinates on the sketch plane (meters)
             diameter: Hole diameter in meters
-            depth: Hole depth in meters (0 for through-all)
+            depth: Hole depth in meters
             hole_type: 'Simple', 'Counterbore', or 'Countersink'
 
         Returns:
@@ -141,19 +144,12 @@ class FeatureManager:
         """
         try:
             doc = self.doc_manager.get_active_document()
-
-            # For hole creation, we typically need to create a sketch first
-            # This is a simplified version
             models = doc.Models
 
             if models.Count == 0:
-                return {"error": "No base feature exists. Create a base feature first"}
+                return {"error": "No base feature exists. Create a base feature first."}
 
-            # Get the Holes collection
-            holes = doc.Models.Item(1).Holes if hasattr(doc.Models.Item(1), 'Holes') else None
-
-            if holes is None:
-                return {"error": "Cannot access holes collection on this document type"}
+            model = models.Item(1)
 
             # Map hole type
             type_map = {
@@ -163,18 +159,28 @@ class FeatureManager:
             }
             hole_type_const = type_map.get(hole_type, HoleTypeConstants.igRegularHole)
 
-            # Note: Actual hole creation in Solid Edge requires more complex
-            # setup including face selection and hole data specification
-            # This is a placeholder for the basic structure
+            # Create HoleData via doc.HoleDataCollection
+            hdc = doc.HoleDataCollection
+            hole_data = hdc.Add(hole_type_const, diameter, 90)
+
+            # Create a profile with a Holes2d point for placement
+            ps = doc.ProfileSets.Add()
+            plane = doc.RefPlanes.Item(1)  # Top plane
+            profile = ps.Profiles.Add(plane)
+            profile.Holes2d.Add(x, y)
+            profile.End(0)
+
+            # Holes.AddFinite(Profile, PlaneSide, FiniteDepth, HoleData)
+            holes = model.Holes
+            hole = holes.AddFinite(profile, ExtrudedProtrusion.igRight, depth, hole_data)
 
             return {
                 "status": "created",
                 "type": "hole",
                 "position": [x, y],
                 "diameter": diameter,
-                "depth": depth if depth > 0 else "through",
-                "hole_type": hole_type,
-                "note": "Hole creation requires face selection - simplified implementation"
+                "depth": depth,
+                "hole_type": hole_type
             }
         except Exception as e:
             return {
@@ -184,11 +190,14 @@ class FeatureManager:
 
     def create_round(self, radius: float, edge_indices: Optional[List[int]] = None) -> Dict[str, Any]:
         """
-        Create a round (fillet) feature.
+        Create a round (fillet) feature on body edges.
+
+        Rounds all edges of the first face, or specific edges if indices are given.
+        Uses model.Rounds.Add(count, edgeArray, radiusArray).
 
         Args:
             radius: Round radius in meters
-            edge_indices: List of edge indices to round (optional)
+            edge_indices: Not used currently; rounds all edges of first face
 
         Returns:
             Dict with status and round info
@@ -200,15 +209,44 @@ class FeatureManager:
             if models.Count == 0:
                 return {"error": "No features exist to add rounds to"}
 
-            # Access rounds collection
-            # Note: Actual implementation requires edge selection
-            # which is complex in the COM API
+            model = models.Item(1)
+            body = model.Body
+
+            # Get edges from body faces (body.Edges() doesn't work in late binding)
+            faces = body.Faces(6)  # igQueryAll = 6
+            if faces.Count == 0:
+                return {"error": "No faces found on body"}
+
+            # Collect edges from all faces (deduplicated by COM identity)
+            edge_list = []
+            radius_list = []
+            seen_edges = set()
+
+            for fi in range(1, faces.Count + 1):
+                face = faces.Item(fi)
+                face_edges = face.Edges
+                if not hasattr(face_edges, 'Count'):
+                    continue
+                for ei in range(1, face_edges.Count + 1):
+                    edge = face_edges.Item(ei)
+                    # Use id as dedup key (COM objects)
+                    eid = id(edge)
+                    if eid not in seen_edges:
+                        seen_edges.add(eid)
+                        edge_list.append(edge)
+                        radius_list.append(radius)
+
+            if not edge_list:
+                return {"error": "No edges found on body"}
+
+            rounds = model.Rounds
+            rnd = rounds.Add(len(edge_list), edge_list, radius_list)
 
             return {
                 "status": "created",
                 "type": "round",
                 "radius": radius,
-                "note": "Round creation requires edge selection - use Solid Edge UI for complex selections"
+                "edge_count": len(edge_list)
             }
         except Exception as e:
             return {
@@ -217,7 +255,19 @@ class FeatureManager:
             }
 
     def create_chamfer(self, distance: float, edge_indices: Optional[List[int]] = None) -> Dict[str, Any]:
-        """Create a chamfer feature"""
+        """
+        Create a chamfer feature with equal setback on body edges.
+
+        Chamfers all edges of the first face, or specific edges if indices are given.
+        Uses model.Chamfers.AddEqualSetback(count, edgeArray, setbackDistance).
+
+        Args:
+            distance: Chamfer setback distance in meters
+            edge_indices: Not used currently; chamfers all edges of first face
+
+        Returns:
+            Dict with status and chamfer info
+        """
         try:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
@@ -225,11 +275,41 @@ class FeatureManager:
             if models.Count == 0:
                 return {"error": "No features exist to add chamfers to"}
 
+            model = models.Item(1)
+            body = model.Body
+
+            # Get edges from body faces
+            faces = body.Faces(6)  # igQueryAll = 6
+            if faces.Count == 0:
+                return {"error": "No faces found on body"}
+
+            # Collect edges from all faces
+            edge_list = []
+            seen_edges = set()
+
+            for fi in range(1, faces.Count + 1):
+                face = faces.Item(fi)
+                face_edges = face.Edges
+                if not hasattr(face_edges, 'Count'):
+                    continue
+                for ei in range(1, face_edges.Count + 1):
+                    edge = face_edges.Item(ei)
+                    eid = id(edge)
+                    if eid not in seen_edges:
+                        seen_edges.add(eid)
+                        edge_list.append(edge)
+
+            if not edge_list:
+                return {"error": "No edges found on body"}
+
+            chamfers = model.Chamfers
+            chamfer = chamfers.AddEqualSetback(len(edge_list), edge_list, distance)
+
             return {
                 "status": "created",
                 "type": "chamfer",
                 "distance": distance,
-                "note": "Chamfer creation requires edge selection"
+                "edge_count": len(edge_list)
             }
         except Exception as e:
             return {

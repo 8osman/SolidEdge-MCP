@@ -195,13 +195,15 @@ class ExportManager:
         """
         Capture a screenshot of the current view.
 
+        Uses View.SaveAsImage(filename, width, height). Supports .png, .jpg, .bmp formats.
+
         Args:
-            file_path: Output image file path
+            file_path: Output image file path (.png, .jpg, .bmp)
             width: Image width in pixels
             height: Image height in pixels
 
         Returns:
-            Dict with status and image info
+            Dict with status, path, and file size
         """
         try:
             doc = self.doc_manager.get_active_document()
@@ -210,27 +212,25 @@ class ExportManager:
             if not any(file_path.lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.bmp']):
                 file_path += '.png'
 
-            # Get the window
-            if hasattr(doc, 'Windows') and doc.Windows.Count > 0:
-                window = doc.Windows.Item(1)
-
-                # Save as image
-                # Note: Actual method varies by Solid Edge version
-                if hasattr(window, 'SaveAsImage'):
-                    window.SaveAsImage(file_path, width, height)
-                    return {
-                        "status": "captured",
-                        "path": file_path,
-                        "dimensions": [width, height],
-                        "size_bytes": os.path.getsize(file_path) if os.path.exists(file_path) else 0
-                    }
-                else:
-                    return {
-                        "error": "Screenshot capture not supported in this Solid Edge version",
-                        "note": "Use View > Save Image in Solid Edge UI"
-                    }
-            else:
+            # Get the window and view
+            if not hasattr(doc, 'Windows') or doc.Windows.Count == 0:
                 return {"error": "No window available for screenshot"}
+
+            window = doc.Windows.Item(1)
+            view = window.View if hasattr(window, 'View') else None
+
+            if not view:
+                return {"error": "Cannot access view object"}
+
+            # View.SaveAsImage(Filename, Width, Height)
+            view.SaveAsImage(file_path, width, height)
+
+            return {
+                "status": "captured",
+                "path": file_path,
+                "dimensions": [width, height],
+                "size_bytes": os.path.getsize(file_path) if os.path.exists(file_path) else 0
+            }
         except Exception as e:
             return {
                 "error": str(e),
