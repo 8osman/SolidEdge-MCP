@@ -688,3 +688,94 @@ class TestCreateGusset:
         sketch_mgr.get_active_sketch.return_value = None
         result = feature_mgr.create_gusset(0.002)
         assert "error" in result
+
+
+# ============================================================================
+# THREAD
+# ============================================================================
+
+class TestCreateThread:
+    def test_success(self, feature_mgr, managers):
+        _, _, _, _, model, _ = managers
+        face = MagicMock()
+        faces = MagicMock()
+        faces.Count = 6
+        faces.Item.return_value = face
+        model.Body.Faces.return_value = faces
+
+        threads = MagicMock()
+        model.Threads = threads
+
+        result = feature_mgr.create_thread(2, 0.001)
+        assert result["status"] == "created"
+        assert result["type"] == "thread"
+        assert result["face_index"] == 2
+        threads.Add.assert_called_once_with(face, 0.001)
+
+    def test_invalid_face(self, feature_mgr, managers):
+        _, _, _, _, model, _ = managers
+        faces = MagicMock()
+        faces.Count = 3
+        model.Body.Faces.return_value = faces
+
+        result = feature_mgr.create_thread(5)
+        assert "error" in result
+
+    def test_no_base_feature(self, feature_mgr, managers):
+        _, _, doc, _, _, _ = managers
+        models = MagicMock()
+        models.Count = 0
+        doc.Models = models
+
+        result = feature_mgr.create_thread(0)
+        assert "error" in result
+
+
+# ============================================================================
+# SLOT
+# ============================================================================
+
+class TestCreateSlot:
+    def test_success(self, feature_mgr, managers):
+        _, _, _, _, model, profile = managers
+        slots = MagicMock()
+        model.Slots = slots
+        result = feature_mgr.create_slot(0.01)
+        assert result["status"] == "created"
+        assert result["type"] == "slot"
+        slots.Add.assert_called_once_with(profile, 2, 0.01)
+
+    def test_no_profile(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, _, _ = managers
+        sketch_mgr.get_active_sketch.return_value = None
+        result = feature_mgr.create_slot(0.01)
+        assert "error" in result
+
+    def test_reverse_direction(self, feature_mgr, managers):
+        _, _, _, _, model, profile = managers
+        slots = MagicMock()
+        model.Slots = slots
+        result = feature_mgr.create_slot(0.01, "Reverse")
+        assert result["status"] == "created"
+        slots.Add.assert_called_once_with(profile, 1, 0.01)
+
+
+# ============================================================================
+# SPLIT
+# ============================================================================
+
+class TestCreateSplit:
+    def test_success(self, feature_mgr, managers):
+        _, _, _, _, model, profile = managers
+        splits = MagicMock()
+        model.Splits = splits
+        result = feature_mgr.create_split()
+        assert result["status"] == "created"
+        assert result["type"] == "split"
+        splits.Add.assert_called_once_with(profile, 2)
+
+    def test_no_profile(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, _, _ = managers
+        sketch_mgr.get_active_sketch.return_value = None
+        result = feature_mgr.create_split()
+        assert "error" in result

@@ -2863,3 +2863,137 @@ class FeatureManager:
                 "error": str(e),
                 "traceback": traceback.format_exc()
             }
+
+    def create_thread(self, face_index: int, pitch: float = 0.001,
+                      thread_type: str = "External") -> Dict[str, Any]:
+        """
+        Create a thread feature on a cylindrical face.
+
+        Adds cosmetic or modeled threads to a cylindrical face (hole or shaft).
+
+        Args:
+            face_index: 0-based index of the cylindrical face
+            pitch: Thread pitch in meters (default 1mm)
+            thread_type: 'External' (on shaft) or 'Internal' (in hole)
+
+        Returns:
+            Dict with status and thread info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+            if models.Count == 0:
+                return {"error": "No base feature exists. Create a base feature first."}
+
+            model = models.Item(1)
+            body = model.Body
+            faces = body.Faces(6)  # igQueryAll = 6
+
+            if face_index < 0 or face_index >= faces.Count:
+                return {"error": f"Invalid face index: {face_index}. Count: {faces.Count}"}
+
+            face = faces.Item(face_index + 1)
+
+            threads = model.Threads
+            thread = threads.Add(face, pitch)
+
+            return {
+                "status": "created",
+                "type": "thread",
+                "face_index": face_index,
+                "pitch": pitch,
+                "pitch_mm": pitch * 1000,
+                "thread_type": thread_type
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def create_slot(self, depth: float, direction: str = "Normal") -> Dict[str, Any]:
+        """
+        Create a slot feature from the active sketch profile.
+
+        Slots are elongated cutouts typically used for fastener clearance.
+        Requires an active sketch profile and an existing base feature.
+
+        Args:
+            depth: Slot depth in meters
+            direction: 'Normal' or 'Reverse'
+
+        Returns:
+            Dict with status and slot info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+
+            if not profile:
+                return {"error": "No active sketch profile. Create and close a sketch first."}
+
+            models = doc.Models
+            if models.Count == 0:
+                return {"error": "No base feature exists. Create a base feature first."}
+
+            model = models.Item(1)
+
+            # igLeft=1, igRight=2
+            side = 2 if direction == "Normal" else 1
+
+            slots = model.Slots
+            slot = slots.Add(profile, side, depth)
+
+            return {
+                "status": "created",
+                "type": "slot",
+                "depth": depth,
+                "direction": direction
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def create_split(self, direction: str = "Normal") -> Dict[str, Any]:
+        """
+        Create a split feature to divide a body along the active sketch profile.
+
+        Requires an active sketch profile and an existing base feature.
+
+        Args:
+            direction: 'Normal' or 'Reverse' - which side to keep
+
+        Returns:
+            Dict with status and split info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+
+            if not profile:
+                return {"error": "No active sketch profile. Create and close a sketch first."}
+
+            models = doc.Models
+            if models.Count == 0:
+                return {"error": "No base feature exists. Create a base feature first."}
+
+            model = models.Item(1)
+
+            # igLeft=1, igRight=2
+            side = 2 if direction == "Normal" else 1
+
+            splits = model.Splits
+            split = splits.Add(profile, side)
+
+            return {
+                "status": "created",
+                "type": "split",
+                "direction": direction
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }

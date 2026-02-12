@@ -534,3 +534,183 @@ class TestGroundComponent:
         am, doc, occ, rels = asm_mgr
         result = am.ground_component(99, True)
         assert "error" in result
+
+
+# ============================================================================
+# ADD DIMENSION
+# ============================================================================
+
+class TestAddDimension:
+    def test_success(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        dims = MagicMock()
+        sheet.Dimensions = dims
+        doc.ActiveSheet = sheet
+        doc.Sheets = MagicMock()
+
+        result = em.add_dimension(0.0, 0.0, 0.1, 0.0)
+        assert result["status"] == "added"
+        assert result["type"] == "dimension"
+        dims.AddLength.assert_called_once()
+
+    def test_not_draft(self, export_mgr):
+        em, doc = export_mgr
+        del doc.Sheets
+
+        result = em.add_dimension(0, 0, 0.1, 0)
+        assert "error" in result
+
+
+# ============================================================================
+# ADD BALLOON
+# ============================================================================
+
+class TestAddBalloon:
+    def test_success(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        balloons = MagicMock()
+        balloon = MagicMock()
+        balloons.Add.return_value = balloon
+        sheet.Balloons = balloons
+        doc.ActiveSheet = sheet
+        doc.Sheets = MagicMock()
+
+        result = em.add_balloon(0.1, 0.1, "1", 0.05, 0.05)
+        assert result["status"] == "added"
+        assert result["type"] == "balloon"
+        balloons.Add.assert_called_once_with(0.05, 0.05, 0, 0.1, 0.1, 0)
+
+    def test_not_draft(self, export_mgr):
+        em, doc = export_mgr
+        del doc.Sheets
+
+        result = em.add_balloon(0.1, 0.1)
+        assert "error" in result
+
+
+# ============================================================================
+# ADD NOTE
+# ============================================================================
+
+class TestAddNote:
+    def test_success(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        text_boxes = MagicMock()
+        text_box = MagicMock()
+        text_boxes.Add.return_value = text_box
+        sheet.TextBoxes = text_boxes
+        doc.ActiveSheet = sheet
+        doc.Sheets = MagicMock()
+
+        result = em.add_note(0.1, 0.1, "Test note")
+        assert result["status"] == "added"
+        assert result["type"] == "note"
+        assert result["text"] == "Test note"
+        text_boxes.Add.assert_called_once_with(0.1, 0.1, 0)
+        assert text_box.Text == "Test note"
+
+    def test_not_draft(self, export_mgr):
+        em, doc = export_mgr
+        del doc.Sheets
+
+        result = em.add_note(0.1, 0.1, "Test")
+        assert "error" in result
+
+
+# ============================================================================
+# GET SHEET INFO
+# ============================================================================
+
+class TestGetSheetInfo:
+    def test_success(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        sheet.Name = "Sheet 1"
+        sheets = MagicMock()
+        sheets.Count = 2
+        doc.ActiveSheet = sheet
+        doc.Sheets = sheets
+
+        result = em.get_sheet_info()
+        assert result["status"] == "ok"
+        assert result["sheet_name"] == "Sheet 1"
+        assert result["sheet_count"] == 2
+
+    def test_not_draft(self, export_mgr):
+        em, doc = export_mgr
+        del doc.Sheets
+
+        result = em.get_sheet_info()
+        assert "error" in result
+
+
+# ============================================================================
+# ACTIVATE SHEET
+# ============================================================================
+
+class TestActivateSheet:
+    def test_success(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        sheet.Name = "Sheet 2"
+        sheets = MagicMock()
+        sheets.Count = 3
+        sheets.Item.return_value = sheet
+        doc.Sheets = sheets
+
+        result = em.activate_sheet(1)
+        assert result["status"] == "activated"
+        assert result["sheet_name"] == "Sheet 2"
+        sheet.Activate.assert_called_once()
+
+    def test_invalid_index(self, export_mgr):
+        em, doc = export_mgr
+        sheets = MagicMock()
+        sheets.Count = 1
+        doc.Sheets = sheets
+
+        result = em.activate_sheet(5)
+        assert "error" in result
+
+    def test_not_draft(self, export_mgr):
+        em, doc = export_mgr
+        del doc.Sheets
+
+        result = em.activate_sheet(0)
+        assert "error" in result
+
+
+# ============================================================================
+# CONNECTION: DISCONNECT AND IS_CONNECTED
+# ============================================================================
+
+class TestDisconnect:
+    def test_success(self):
+        from solidedge_mcp.backends.connection import SolidEdgeConnection
+        conn = SolidEdgeConnection()
+        conn._is_connected = True
+        conn.application = MagicMock()
+
+        result = conn.disconnect()
+        assert result["status"] == "disconnected"
+        assert conn.application is None
+        assert conn._is_connected is False
+
+
+class TestIsConnected:
+    def test_connected(self):
+        from solidedge_mcp.backends.connection import SolidEdgeConnection
+        conn = SolidEdgeConnection()
+        conn._is_connected = True
+        conn.application = MagicMock()
+
+        assert conn.is_connected() is True
+
+    def test_not_connected(self):
+        from solidedge_mcp.backends.connection import SolidEdgeConnection
+        conn = SolidEdgeConnection()
+
+        assert conn.is_connected() is False

@@ -604,6 +604,245 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
+    def add_dimension(self, x1: float, y1: float, x2: float, y2: float,
+                      dim_x: float = None, dim_y: float = None) -> Dict[str, Any]:
+        """
+        Add a linear dimension between two points on the active draft sheet.
+
+        Args:
+            x1: First point X (meters)
+            y1: First point Y (meters)
+            x2: Second point X (meters)
+            y2: Second point Y (meters)
+            dim_x: Dimension text X position (meters, optional)
+            dim_y: Dimension text Y position (meters, optional)
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Sheets'):
+                return {"error": "Active document is not a draft document"}
+
+            sheet = doc.ActiveSheet
+
+            # Default dimension text position to midpoint offset
+            if dim_x is None:
+                dim_x = (x1 + x2) / 2
+            if dim_y is None:
+                dim_y = max(y1, y2) + 0.02  # 20mm above
+
+            dimensions = sheet.Dimensions
+            dim = dimensions.AddLength(x1, y1, 0, x2, y2, 0, dim_x, dim_y, 0)
+
+            return {
+                "status": "added",
+                "type": "dimension",
+                "point1": [x1, y1],
+                "point2": [x2, y2],
+                "text_position": [dim_x, dim_y]
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def add_balloon(self, x: float, y: float, text: str = "",
+                    leader_x: float = None, leader_y: float = None) -> Dict[str, Any]:
+        """
+        Add a balloon annotation to the active draft sheet.
+
+        Balloons are circular annotations typically used for BOM item numbers.
+
+        Args:
+            x: Balloon center X (meters)
+            y: Balloon center Y (meters)
+            text: Text inside the balloon
+            leader_x: Leader arrow X (meters, optional)
+            leader_y: Leader arrow Y (meters, optional)
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Sheets'):
+                return {"error": "Active document is not a draft document"}
+
+            sheet = doc.ActiveSheet
+
+            balloons = sheet.Balloons
+
+            if leader_x is not None and leader_y is not None:
+                balloon = balloons.Add(leader_x, leader_y, 0, x, y, 0)
+            else:
+                balloon = balloons.Add(x, y, 0, x + 0.02, y + 0.02, 0)
+
+            if text:
+                try:
+                    balloon.BalloonText = text
+                except Exception:
+                    try:
+                        balloon.Text = text
+                    except Exception:
+                        pass
+
+            return {
+                "status": "added",
+                "type": "balloon",
+                "position": [x, y],
+                "text": text
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def add_note(self, x: float, y: float, text: str, height: float = 0.005) -> Dict[str, Any]:
+        """
+        Add a note (free-standing text) to the active draft sheet.
+
+        Similar to text box but simpler - just plain text annotation.
+
+        Args:
+            x: Note X position (meters)
+            y: Note Y position (meters)
+            text: Note text content
+            height: Text height in meters (default 5mm)
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Sheets'):
+                return {"error": "Active document is not a draft document"}
+
+            sheet = doc.ActiveSheet
+
+            # Try TextBoxes first (most reliable)
+            text_boxes = sheet.TextBoxes
+            text_box = text_boxes.Add(x, y, 0)
+            text_box.Text = text
+
+            try:
+                text_box.TextHeight = height
+            except Exception:
+                pass
+
+            return {
+                "status": "added",
+                "type": "note",
+                "position": [x, y],
+                "text": text,
+                "height": height
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def get_sheet_info(self) -> Dict[str, Any]:
+        """
+        Get information about the active draft sheet.
+
+        Returns:
+            Dict with sheet name, size, scale, and counts of drawing objects
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Sheets'):
+                return {"error": "Active document is not a draft document"}
+
+            sheet = doc.ActiveSheet
+            sheets = doc.Sheets
+
+            info = {
+                "status": "ok",
+                "sheet_name": sheet.Name,
+                "sheet_count": sheets.Count,
+            }
+
+            # Try to get sheet dimensions
+            try:
+                info["width"] = sheet.SheetWidth
+                info["height"] = sheet.SheetHeight
+            except Exception:
+                pass
+
+            # Try to get background name
+            try:
+                info["background"] = sheet.Background
+            except Exception:
+                pass
+
+            # Count drawing objects
+            try:
+                info["drawing_views"] = sheet.DrawingViews.Count
+            except Exception:
+                pass
+            try:
+                info["text_boxes"] = sheet.TextBoxes.Count
+            except Exception:
+                pass
+            try:
+                info["leaders"] = sheet.Leaders.Count
+            except Exception:
+                pass
+            try:
+                info["dimensions"] = sheet.Dimensions.Count
+            except Exception:
+                pass
+
+            return info
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def activate_sheet(self, sheet_index: int) -> Dict[str, Any]:
+        """
+        Activate a specific draft sheet by index.
+
+        Args:
+            sheet_index: 0-based sheet index
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Sheets'):
+                return {"error": "Active document is not a draft document"}
+
+            sheets = doc.Sheets
+            if sheet_index < 0 or sheet_index >= sheets.Count:
+                return {"error": f"Invalid sheet index: {sheet_index}. Count: {sheets.Count}"}
+
+            sheet = sheets.Item(sheet_index + 1)  # COM is 1-indexed
+            sheet.Activate()
+
+            return {
+                "status": "activated",
+                "sheet_name": sheet.Name,
+                "sheet_index": sheet_index
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     # Aliases for consistency with MCP tool names
     def export_step(self, file_path: str) -> Dict[str, Any]:
         """Alias for export_to_step"""

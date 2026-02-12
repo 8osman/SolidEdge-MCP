@@ -971,3 +971,193 @@ class TestGetVolume:
 
         result = qm.get_volume()
         assert "error" in result
+
+
+# ============================================================================
+# GET FACE COUNT
+# ============================================================================
+
+class TestGetFaceCount:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+        model = MagicMock()
+        models = MagicMock()
+        models.Count = 1
+        models.Item.return_value = model
+        doc.Models = models
+
+        faces = MagicMock()
+        faces.Count = 6
+        model.Body.Faces.return_value = faces
+
+        result = qm.get_face_count()
+        assert result["face_count"] == 6
+
+    def test_no_model(self, query_mgr):
+        qm, doc = query_mgr
+        models = MagicMock()
+        models.Count = 0
+        doc.Models = models
+
+        result = qm.get_face_count()
+        assert "error" in result
+
+
+# ============================================================================
+# GET EDGE INFO
+# ============================================================================
+
+class TestGetEdgeInfo:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+        model = MagicMock()
+        models = MagicMock()
+        models.Count = 1
+        models.Item.return_value = model
+        doc.Models = models
+
+        edge = MagicMock()
+        edge.Length = 0.1
+        edge.Type = 1
+
+        edges = MagicMock()
+        edges.Count = 3
+        edges.Item.return_value = edge
+
+        face = MagicMock()
+        face.Edges = edges
+
+        faces = MagicMock()
+        faces.Count = 6
+        faces.Item.return_value = face
+        model.Body.Faces.return_value = faces
+
+        result = qm.get_edge_info(0, 0)
+        assert result["face_index"] == 0
+        assert result["edge_index"] == 0
+        assert result["length"] == 0.1
+
+    def test_invalid_face(self, query_mgr):
+        qm, doc = query_mgr
+        model = MagicMock()
+        models = MagicMock()
+        models.Count = 1
+        models.Item.return_value = model
+        doc.Models = models
+
+        faces = MagicMock()
+        faces.Count = 6
+        model.Body.Faces.return_value = faces
+
+        result = qm.get_edge_info(10, 0)
+        assert "error" in result
+
+    def test_invalid_edge(self, query_mgr):
+        qm, doc = query_mgr
+        model = MagicMock()
+        models = MagicMock()
+        models.Count = 1
+        models.Item.return_value = model
+        doc.Models = models
+
+        face = MagicMock()
+        face.Edges.Count = 2
+
+        faces = MagicMock()
+        faces.Count = 6
+        faces.Item.return_value = face
+        model.Body.Faces.return_value = faces
+
+        result = qm.get_edge_info(0, 5)
+        assert "error" in result
+
+
+# ============================================================================
+# SET FACE COLOR
+# ============================================================================
+
+class TestSetFaceColor:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+        model = MagicMock()
+        models = MagicMock()
+        models.Count = 1
+        models.Item.return_value = model
+        doc.Models = models
+
+        face = MagicMock()
+        faces = MagicMock()
+        faces.Count = 6
+        faces.Item.return_value = face
+        model.Body.Faces.return_value = faces
+
+        result = qm.set_face_color(0, 255, 0, 0)
+        assert result["status"] == "updated"
+        assert result["color"] == [255, 0, 0]
+
+    def test_invalid_face(self, query_mgr):
+        qm, doc = query_mgr
+        model = MagicMock()
+        models = MagicMock()
+        models.Count = 1
+        models.Item.return_value = model
+        doc.Models = models
+
+        faces = MagicMock()
+        faces.Count = 2
+        model.Body.Faces.return_value = faces
+
+        result = qm.set_face_color(5, 0, 0, 255)
+        assert "error" in result
+
+
+# ============================================================================
+# GET CENTER OF GRAVITY
+# ============================================================================
+
+class TestGetCenterOfGravity:
+    def test_success_via_variables(self, query_mgr):
+        qm, doc = query_mgr
+
+        var_x = MagicMock()
+        var_x.Name = "CoMX"
+        var_x.Value = 0.05
+        var_y = MagicMock()
+        var_y.Name = "CoMY"
+        var_y.Value = 0.025
+        var_z = MagicMock()
+        var_z.Name = "CoMZ"
+        var_z.Value = 0.01
+
+        variables = MagicMock()
+        variables.Count = 3
+        variables.Item.side_effect = lambda i: [None, var_x, var_y, var_z][i]
+        doc.Variables = variables
+
+        result = qm.get_center_of_gravity()
+        assert result["center_of_gravity"] == [0.05, 0.025, 0.01]
+        assert result["center_of_gravity_mm"][0] == 50.0
+
+
+# ============================================================================
+# GET MOMENTS OF INERTIA
+# ============================================================================
+
+class TestGetMomentsOfInertia:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+        model = MagicMock()
+        models = MagicMock()
+        models.Count = 1
+        models.Item.return_value = model
+        doc.Models = models
+
+        moi = (1.0, 2.0, 3.0)
+        principal = (1.5, 2.5, 3.5)
+        model.ComputePhysicalPropertiesWithSpecifiedDensity.return_value = (
+            0.001, 0.06, 7.85, (0, 0, 0), (0,), moi, principal, (0,), (0,), 0, 0
+        )
+
+        result = qm.get_moments_of_inertia()
+        assert result["moments_of_inertia"] == [1.0, 2.0, 3.0]
+        assert result["principal_moments"] == [1.5, 2.5, 3.5]

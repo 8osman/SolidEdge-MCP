@@ -70,6 +70,30 @@ def get_application_info() -> dict:
     return connection.get_info()
 
 
+@mcp.tool()
+def disconnect_from_solidedge() -> dict:
+    """
+    Disconnect from the Solid Edge application without closing it.
+
+    Releases the COM connection. Use connect_to_solidedge() to reconnect later.
+
+    Returns:
+        Disconnection status
+    """
+    return connection.disconnect()
+
+
+@mcp.tool()
+def is_connected() -> dict:
+    """
+    Check if currently connected to Solid Edge.
+
+    Returns:
+        Dict with connection status boolean
+    """
+    return {"connected": connection.is_connected()}
+
+
 # ============================================================================
 # DOCUMENT MANAGEMENT TOOLS
 # ============================================================================
@@ -1403,6 +1427,58 @@ def create_gusset(thickness: float, direction: str = "Normal") -> dict:
     return feature_manager.create_gusset(thickness, direction)
 
 
+@mcp.tool()
+def create_thread(face_index: int, pitch: float = 0.001, thread_type: str = "External") -> dict:
+    """
+    Create a thread feature on a cylindrical face.
+
+    Adds threads to a cylindrical face (hole or shaft).
+
+    Args:
+        face_index: 0-based index of the cylindrical face
+        pitch: Thread pitch in meters (default 1mm)
+        thread_type: 'External' (on shaft) or 'Internal' (in hole)
+
+    Returns:
+        Thread creation status
+    """
+    return feature_manager.create_thread(face_index, pitch, thread_type)
+
+
+@mcp.tool()
+def create_slot(depth: float, direction: str = "Normal") -> dict:
+    """
+    Create a slot feature from the active sketch profile.
+
+    Slots are elongated cutouts used for fastener clearance.
+    Requires an active sketch profile and an existing base feature.
+
+    Args:
+        depth: Slot depth in meters
+        direction: 'Normal' or 'Reverse'
+
+    Returns:
+        Slot creation status
+    """
+    return feature_manager.create_slot(depth, direction)
+
+
+@mcp.tool()
+def create_split(direction: str = "Normal") -> dict:
+    """
+    Create a split feature to divide a body along the active sketch profile.
+
+    Requires an active sketch profile and an existing base feature.
+
+    Args:
+        direction: 'Normal' or 'Reverse' - which side to keep
+
+    Returns:
+        Split creation status
+    """
+    return feature_manager.create_split(direction)
+
+
 # ============================================================================
 # BODY OPERATIONS
 # ============================================================================
@@ -1767,6 +1843,71 @@ def get_volume() -> dict:
         Body volume in cubic meters, cubic millimeters, and cubic centimeters
     """
     return query_manager.get_volume()
+
+
+@mcp.tool()
+def get_face_count() -> dict:
+    """
+    Get the total number of faces on the body.
+
+    Returns:
+        Face count
+    """
+    return query_manager.get_face_count()
+
+
+@mcp.tool()
+def get_edge_info(face_index: int, edge_index: int) -> dict:
+    """
+    Get information about a specific edge on a face.
+
+    Args:
+        face_index: 0-based face index
+        edge_index: 0-based edge index within that face
+
+    Returns:
+        Edge type, length, and vertex coordinates
+    """
+    return query_manager.get_edge_info(face_index, edge_index)
+
+
+@mcp.tool()
+def set_face_color(face_index: int, red: int, green: int, blue: int) -> dict:
+    """
+    Set the color of a specific face.
+
+    Args:
+        face_index: 0-based face index
+        red: Red component (0-255)
+        green: Green component (0-255)
+        blue: Blue component (0-255)
+
+    Returns:
+        Color update status
+    """
+    return query_manager.set_face_color(face_index, red, green, blue)
+
+
+@mcp.tool()
+def get_center_of_gravity() -> dict:
+    """
+    Get the center of gravity (center of mass) of the part.
+
+    Returns:
+        CoG coordinates in meters and millimeters
+    """
+    return query_manager.get_center_of_gravity()
+
+
+@mcp.tool()
+def get_moments_of_inertia() -> dict:
+    """
+    Get the moments of inertia of the part.
+
+    Returns:
+        Moments of inertia and principal moments
+    """
+    return query_manager.get_moments_of_inertia()
 
 
 # ============================================================================
@@ -2248,6 +2389,89 @@ def add_leader(x1: float, y1: float, x2: float, y2: float, text: str = "") -> di
         Leader creation status
     """
     return export_manager.add_leader(x1, y1, x2, y2, text)
+
+
+@mcp.tool()
+def add_dimension(x1: float, y1: float, x2: float, y2: float,
+                  dim_x: Optional[float] = None, dim_y: Optional[float] = None) -> dict:
+    """
+    Add a linear dimension between two points on the active draft sheet.
+
+    Args:
+        x1: First point X (meters)
+        y1: First point Y (meters)
+        x2: Second point X (meters)
+        y2: Second point Y (meters)
+        dim_x: Dimension text X position (meters, optional)
+        dim_y: Dimension text Y position (meters, optional)
+
+    Returns:
+        Dimension creation status
+    """
+    return export_manager.add_dimension(x1, y1, x2, y2, dim_x, dim_y)
+
+
+@mcp.tool()
+def add_balloon(x: float, y: float, text: str = "",
+                leader_x: Optional[float] = None, leader_y: Optional[float] = None) -> dict:
+    """
+    Add a balloon annotation to the active draft sheet.
+
+    Balloons are circular annotations typically used for BOM item numbers.
+
+    Args:
+        x: Balloon center X (meters)
+        y: Balloon center Y (meters)
+        text: Text inside the balloon
+        leader_x: Leader arrow X (meters, optional)
+        leader_y: Leader arrow Y (meters, optional)
+
+    Returns:
+        Balloon creation status
+    """
+    return export_manager.add_balloon(x, y, text, leader_x, leader_y)
+
+
+@mcp.tool()
+def add_note(x: float, y: float, text: str, height: float = 0.005) -> dict:
+    """
+    Add a note (free-standing text) to the active draft sheet.
+
+    Args:
+        x: Note X position (meters)
+        y: Note Y position (meters)
+        text: Note text content
+        height: Text height in meters (default 5mm)
+
+    Returns:
+        Note creation status
+    """
+    return export_manager.add_note(x, y, text, height)
+
+
+@mcp.tool()
+def get_sheet_info() -> dict:
+    """
+    Get information about the active draft sheet.
+
+    Returns:
+        Sheet name, size, scale, and counts of drawing objects
+    """
+    return export_manager.get_sheet_info()
+
+
+@mcp.tool()
+def activate_sheet(sheet_index: int) -> dict:
+    """
+    Activate a specific draft sheet by index.
+
+    Args:
+        sheet_index: 0-based sheet index
+
+    Returns:
+        Activation status with sheet name
+    """
+    return export_manager.activate_sheet(sheet_index)
 
 
 @mcp.tool()

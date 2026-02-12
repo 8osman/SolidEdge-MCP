@@ -1527,3 +1527,205 @@ class QueryManager:
                 "error": str(e),
                 "traceback": traceback.format_exc()
             }
+
+    def get_face_count(self) -> Dict[str, Any]:
+        """
+        Get the total number of faces on the body.
+
+        Returns:
+            Dict with face count
+        """
+        try:
+            doc, model = self._get_first_model()
+            body = model.Body
+            faces = body.Faces(6)  # igQueryAll = 6
+            return {
+                "face_count": faces.Count
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def get_edge_info(self, face_index: int, edge_index: int) -> Dict[str, Any]:
+        """
+        Get information about a specific edge on a face.
+
+        Args:
+            face_index: 0-based face index
+            edge_index: 0-based edge index within the face
+
+        Returns:
+            Dict with edge type, length, and vertex coordinates
+        """
+        try:
+            doc, model = self._get_first_model()
+            body = model.Body
+            faces = body.Faces(6)  # igQueryAll = 6
+
+            if face_index < 0 or face_index >= faces.Count:
+                return {"error": f"Invalid face index: {face_index}. Count: {faces.Count}"}
+
+            face = faces.Item(face_index + 1)
+            edges = face.Edges
+
+            if edge_index < 0 or edge_index >= edges.Count:
+                return {"error": f"Invalid edge index: {edge_index}. Count: {edges.Count}"}
+
+            edge = edges.Item(edge_index + 1)
+
+            info = {
+                "face_index": face_index,
+                "edge_index": edge_index,
+            }
+
+            try:
+                info["length"] = edge.Length
+                info["length_mm"] = edge.Length * 1000
+            except Exception:
+                pass
+
+            try:
+                info["type"] = edge.Type
+            except Exception:
+                pass
+
+            try:
+                start = edge.StartVertex
+                end = edge.EndVertex
+                info["start_vertex"] = [start.X, start.Y, start.Z]
+                info["end_vertex"] = [end.X, end.Y, end.Z]
+            except Exception:
+                pass
+
+            return info
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def set_face_color(self, face_index: int, red: int, green: int, blue: int) -> Dict[str, Any]:
+        """
+        Set the color of a specific face.
+
+        Args:
+            face_index: 0-based face index
+            red: Red component (0-255)
+            green: Green component (0-255)
+            blue: Blue component (0-255)
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc, model = self._get_first_model()
+            body = model.Body
+            faces = body.Faces(6)  # igQueryAll = 6
+
+            if face_index < 0 or face_index >= faces.Count:
+                return {"error": f"Invalid face index: {face_index}. Count: {faces.Count}"}
+
+            face = faces.Item(face_index + 1)
+
+            # SetFaceStyle or put color directly
+            try:
+                face.SetColor(red, green, blue)
+            except Exception:
+                # Try alternative: FaceStyle
+                try:
+                    face.Color = (red << 0) | (green << 8) | (blue << 16)
+                except Exception:
+                    # Final fallback using OLE color
+                    ole_color = red | (green << 8) | (blue << 16)
+                    face.Color = ole_color
+
+            return {
+                "status": "updated",
+                "face_index": face_index,
+                "color": [red, green, blue]
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def get_center_of_gravity(self) -> Dict[str, Any]:
+        """
+        Get the center of gravity (center of mass) of the part.
+
+        Returns:
+            Dict with CoG coordinates in meters and mm
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            # Try using named variables first (most reliable)
+            try:
+                variables = doc.Variables
+                cog_x = None
+                cog_y = None
+                cog_z = None
+
+                for i in range(1, variables.Count + 1):
+                    var = variables.Item(i)
+                    name = var.Name
+                    if name == "CoMX":
+                        cog_x = var.Value
+                    elif name == "CoMY":
+                        cog_y = var.Value
+                    elif name == "CoMZ":
+                        cog_z = var.Value
+
+                if cog_x is not None:
+                    return {
+                        "center_of_gravity": [cog_x, cog_y, cog_z],
+                        "center_of_gravity_mm": [
+                            cog_x * 1000,
+                            cog_y * 1000,
+                            cog_z * 1000
+                        ]
+                    }
+            except Exception:
+                pass
+
+            # Fallback: compute physical properties
+            doc, model = self._get_first_model()
+            result = model.ComputePhysicalPropertiesWithSpecifiedDensity(7850.0, 0.001)
+            # result[3] is the center of gravity tuple
+            cog = result[3]
+            return {
+                "center_of_gravity": list(cog),
+                "center_of_gravity_mm": [c * 1000 for c in cog]
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def get_moments_of_inertia(self) -> Dict[str, Any]:
+        """
+        Get the moments of inertia of the part.
+
+        Returns:
+            Dict with moments of inertia values
+        """
+        try:
+            doc, model = self._get_first_model()
+            result = model.ComputePhysicalPropertiesWithSpecifiedDensity(7850.0, 0.001)
+            # result: (volume, area, mass, cog, cov, moi, principal_moi, principal_axes, radii_of_gyration, ?, ?)
+            moi = result[5]
+            principal_moi = result[6]
+
+            return {
+                "moments_of_inertia": list(moi) if hasattr(moi, '__iter__') else moi,
+                "principal_moments": list(principal_moi) if hasattr(principal_moi, '__iter__') else principal_moi,
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
