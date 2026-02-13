@@ -78,14 +78,28 @@ class FaceQueryConstants:
 
 
 class ViewOrientationConstants:
-    """3D window view orientation constants (from type library)"""
+    """Standard orthographic view orientation constants (from type library)"""
     igTopView = 1
     igRightView = 2
-    igIsometricView = 2  # Same numeric value as igRightView (different enum context)
     igLeftView = 3
     igFrontView = 4
     igBottomView = 5
     igBackView = 6
+    # Pictorial views use a separate numbering scheme:
+    igTopFrontLeftView = 8    # Standard isometric
+    igTopFrontRightView = 9
+    igTopBackLeftView = 7
+    igTopBackRightView = 10
+
+
+class DrawingViewTypeConstants:
+    """Drawing view type constants (from type library - separate enum)"""
+    igPrincipleView = 1
+    igIsometricView = 2
+    igAuxiliaryView = 3
+    igXSectionView = 4
+    igDetailView = 5
+    igIsoXSectionView = 6
 
 
 class DrawingViewOrientationConstants:
