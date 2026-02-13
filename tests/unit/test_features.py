@@ -1262,3 +1262,647 @@ class TestDoIdle:
 
         result = cm.do_idle()
         assert "error" in result
+
+
+# ============================================================================
+# TIER 1: SWEPT CUTOUT
+# ============================================================================
+
+class TestSweptCutout:
+    def test_success(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, model, _ = managers
+        profile1 = MagicMock()
+        profile2 = MagicMock()
+        sketch_mgr.get_accumulated_profiles.return_value = [profile1, profile2]
+
+        result = feature_mgr.create_swept_cutout()
+        assert result["status"] == "created"
+        assert result["type"] == "swept_cutout"
+        assert result["num_cross_sections"] == 1
+        model.SweptCutouts.Add.assert_called_once()
+        sketch_mgr.clear_accumulated_profiles.assert_called_once()
+
+    def test_no_base_feature(self, feature_mgr, managers):
+        _, _, _, models, _, _ = managers
+        models.Count = 0
+        result = feature_mgr.create_swept_cutout()
+        assert "error" in result
+        assert "No base feature" in result["error"]
+
+    def test_insufficient_profiles(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, _, _ = managers
+        sketch_mgr.get_accumulated_profiles.return_value = [MagicMock()]
+        result = feature_mgr.create_swept_cutout()
+        assert "error" in result
+        assert "at least 2 profiles" in result["error"]
+
+    def test_custom_path_index(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, model, _ = managers
+        p0, p1, p2 = MagicMock(), MagicMock(), MagicMock()
+        sketch_mgr.get_accumulated_profiles.return_value = [p0, p1, p2]
+
+        result = feature_mgr.create_swept_cutout(path_profile_index=1)
+        assert result["status"] == "created"
+        assert result["num_cross_sections"] == 2
+
+
+# ============================================================================
+# TIER 1: HELIX CUTOUT
+# ============================================================================
+
+class TestHelixCutout:
+    def test_success(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, model, profile = managers
+        refaxis = MagicMock()
+        sketch_mgr.get_active_refaxis.return_value = refaxis
+
+        result = feature_mgr.create_helix_cutout(
+            pitch=0.005, height=0.03, revolutions=6
+        )
+        assert result["status"] == "created"
+        assert result["type"] == "helix_cutout"
+        assert result["pitch"] == 0.005
+        assert result["height"] == 0.03
+        assert result["revolutions"] == 6
+        model.HelixCutouts.AddFinite.assert_called_once()
+
+    def test_no_base_feature(self, feature_mgr, managers):
+        _, _, _, models, _, _ = managers
+        models.Count = 0
+        result = feature_mgr.create_helix_cutout(pitch=0.005, height=0.03)
+        assert "error" in result
+        assert "No base feature" in result["error"]
+
+    def test_no_profile(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, _, _ = managers
+        sketch_mgr.get_active_sketch.return_value = None
+        result = feature_mgr.create_helix_cutout(pitch=0.005, height=0.03)
+        assert "error" in result
+        assert "No active sketch" in result["error"]
+
+    def test_no_refaxis(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, _, _ = managers
+        sketch_mgr.get_active_refaxis.return_value = None
+        result = feature_mgr.create_helix_cutout(pitch=0.005, height=0.03)
+        assert "error" in result
+        assert "No axis" in result["error"]
+
+    def test_auto_revolutions(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, model, _ = managers
+        sketch_mgr.get_active_refaxis.return_value = MagicMock()
+
+        result = feature_mgr.create_helix_cutout(pitch=0.01, height=0.05)
+        assert result["status"] == "created"
+        assert result["revolutions"] == 5.0
+
+    def test_left_hand(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, model, _ = managers
+        sketch_mgr.get_active_refaxis.return_value = MagicMock()
+
+        result = feature_mgr.create_helix_cutout(
+            pitch=0.005, height=0.03, direction="Left"
+        )
+        assert result["status"] == "created"
+        assert result["direction"] == "Left"
+
+
+# ============================================================================
+# TIER 1: VARIABLE ROUND
+# ============================================================================
+
+class TestVariableRound:
+    def test_success(self, feature_mgr, managers):
+        _, _, _, _, model, _ = managers
+        result = feature_mgr.create_variable_round([0.001, 0.002])
+        assert result["status"] == "created"
+        assert result["type"] == "variable_round"
+        assert result["edge_count"] == 2
+        model.Rounds.AddVariable.assert_called_once()
+
+    def test_no_base_feature(self, feature_mgr, managers):
+        _, _, _, models, _, _ = managers
+        models.Count = 0
+        result = feature_mgr.create_variable_round([0.001])
+        assert "error" in result
+        assert "No features" in result["error"]
+
+    def test_radii_extends_to_edge_count(self, feature_mgr, managers):
+        """If fewer radii than edges, last radius should be repeated."""
+        _, _, _, _, model, _ = managers
+        result = feature_mgr.create_variable_round([0.003])
+        assert result["status"] == "created"
+        # 2 edges in fixture, 1 radius provided -> extended to [0.003, 0.003]
+        assert len(result["radii"]) == 2
+        assert result["radii"] == [0.003, 0.003]
+
+    def test_on_specific_face(self, feature_mgr, managers):
+        _, _, _, _, model, _ = managers
+        result = feature_mgr.create_variable_round([0.001, 0.002], face_index=0)
+        assert result["status"] == "created"
+        assert result["edge_count"] == 2
+
+    def test_invalid_face_index(self, feature_mgr, managers):
+        _, _, _, _, model, _ = managers
+        result = feature_mgr.create_variable_round([0.001], face_index=5)
+        assert "error" in result
+        assert "Invalid face index" in result["error"]
+
+
+# ============================================================================
+# TIER 1: BLEND
+# ============================================================================
+
+class TestBlend:
+    def test_success(self, feature_mgr, managers):
+        _, _, _, _, model, _ = managers
+        result = feature_mgr.create_blend(0.003)
+        assert result["status"] == "created"
+        assert result["type"] == "blend"
+        assert result["radius"] == 0.003
+        assert result["edge_count"] == 2
+        model.Blends.Add.assert_called_once()
+
+    def test_no_base_feature(self, feature_mgr, managers):
+        _, _, _, models, _, _ = managers
+        models.Count = 0
+        result = feature_mgr.create_blend(0.003)
+        assert "error" in result
+        assert "No features" in result["error"]
+
+    def test_on_specific_face(self, feature_mgr, managers):
+        _, _, _, _, model, _ = managers
+        result = feature_mgr.create_blend(0.002, face_index=0)
+        assert result["status"] == "created"
+        assert result["edge_count"] == 2
+
+    def test_invalid_face_index(self, feature_mgr, managers):
+        _, _, _, _, model, _ = managers
+        result = feature_mgr.create_blend(0.002, face_index=99)
+        assert "error" in result
+        assert "Invalid face index" in result["error"]
+
+
+# ============================================================================
+# TIER 1: REFERENCE PLANE BY ANGLE
+# ============================================================================
+
+class TestRefPlaneByAngle:
+    def test_success(self, feature_mgr, managers):
+        _, _, doc, _, _, _ = managers
+        ref_planes = MagicMock()
+        ref_planes.Count = 4  # 3 default + 1 new
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_ref_plane_by_angle(1, 45.0)
+        assert result["status"] == "created"
+        assert result["type"] == "reference_plane"
+        assert result["method"] == "angular_by_angle"
+        assert result["angle_degrees"] == 45.0
+        ref_planes.AddAngularByAngle.assert_called_once()
+
+    def test_invalid_plane_index(self, feature_mgr, managers):
+        _, _, doc, _, _, _ = managers
+        ref_planes = MagicMock()
+        ref_planes.Count = 3
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_ref_plane_by_angle(5, 30.0)
+        assert "error" in result
+        assert "Invalid plane index" in result["error"]
+
+    def test_reverse_side(self, feature_mgr, managers):
+        _, _, doc, _, _, _ = managers
+        ref_planes = MagicMock()
+        ref_planes.Count = 4
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_ref_plane_by_angle(2, 60.0, normal_side="Reverse")
+        assert result["status"] == "created"
+        assert result["normal_side"] == "Reverse"
+
+
+# ============================================================================
+# TIER 1: REFERENCE PLANE BY 3 POINTS
+# ============================================================================
+
+class TestRefPlaneBy3Points:
+    def test_success(self, feature_mgr, managers):
+        _, _, doc, _, _, _ = managers
+        ref_planes = MagicMock()
+        ref_planes.Count = 4
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_ref_plane_by_3_points(
+            0, 0, 0,
+            0.1, 0, 0,
+            0, 0.1, 0
+        )
+        assert result["status"] == "created"
+        assert result["type"] == "reference_plane"
+        assert result["method"] == "by_3_points"
+        assert result["point1"] == [0, 0, 0]
+        assert result["point2"] == [0.1, 0, 0]
+        assert result["point3"] == [0, 0.1, 0]
+        ref_planes.AddBy3Points.assert_called_once_with(
+            0, 0, 0, 0.1, 0, 0, 0, 0.1, 0
+        )
+
+
+# ============================================================================
+# TIER 1: REFERENCE PLANE MID-PLANE
+# ============================================================================
+
+class TestRefPlaneMidPlane:
+    def test_success(self, feature_mgr, managers):
+        _, _, doc, _, _, _ = managers
+        ref_planes = MagicMock()
+        ref_planes.Count = 4
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_ref_plane_midplane(1, 3)
+        assert result["status"] == "created"
+        assert result["type"] == "reference_plane"
+        assert result["method"] == "mid_plane"
+        assert result["plane1_index"] == 1
+        assert result["plane2_index"] == 3
+        ref_planes.AddMidPlane.assert_called_once()
+
+    def test_invalid_plane1(self, feature_mgr, managers):
+        _, _, doc, _, _, _ = managers
+        ref_planes = MagicMock()
+        ref_planes.Count = 3
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_ref_plane_midplane(5, 1)
+        assert "error" in result
+        assert "Invalid plane1" in result["error"]
+
+    def test_invalid_plane2(self, feature_mgr, managers):
+        _, _, doc, _, _, _ = managers
+        ref_planes = MagicMock()
+        ref_planes.Count = 3
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_ref_plane_midplane(1, 5)
+        assert "error" in result
+        assert "Invalid plane2" in result["error"]
+
+
+# ============================================================================
+# TIER 1: HOLE THROUGH ALL
+# ============================================================================
+
+class TestHoleThroughAll:
+    def test_success(self, feature_mgr, managers):
+        _, _, doc, _, model, _ = managers
+        profile_sets = MagicMock()
+        ps = MagicMock()
+        profile = MagicMock()
+        ps.Profiles.Add.return_value = profile
+        profile_sets.Add.return_value = ps
+        doc.ProfileSets = profile_sets
+        ref_planes = MagicMock()
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_hole_through_all(0.01, 0.02, 0.005)
+        assert result["status"] == "created"
+        assert result["type"] == "hole_through_all"
+        assert result["position"] == [0.01, 0.02]
+        assert result["diameter"] == 0.005
+        model.ExtrudedCutouts.AddThroughAllMulti.assert_called_once()
+
+    def test_no_base_feature(self, feature_mgr, managers):
+        _, _, _, models, _, _ = managers
+        models.Count = 0
+        result = feature_mgr.create_hole_through_all(0, 0, 0.005)
+        assert "error" in result
+        assert "No base feature" in result["error"]
+
+    def test_reverse_direction(self, feature_mgr, managers):
+        _, _, doc, _, model, _ = managers
+        profile_sets = MagicMock()
+        ps = MagicMock()
+        profile = MagicMock()
+        ps.Profiles.Add.return_value = profile
+        profile_sets.Add.return_value = ps
+        doc.ProfileSets = profile_sets
+        ref_planes = MagicMock()
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_hole_through_all(0, 0, 0.01, direction="Reverse")
+        assert result["status"] == "created"
+        assert result["direction"] == "Reverse"
+
+
+# ============================================================================
+# TIER 1: BOX CUTOUT
+# ============================================================================
+
+class TestBoxCutout:
+    def test_success(self, feature_mgr, managers):
+        _, _, doc, models, _, _ = managers
+        ref_planes = MagicMock()
+        doc.RefPlanes = ref_planes
+        box_features = MagicMock()
+        models.BoxFeatures = box_features
+
+        result = feature_mgr.create_box_cutout_by_two_points(
+            0, 0, 0, 0.05, 0.05, 0.05
+        )
+        assert result["status"] == "created"
+        assert result["type"] == "box_cutout"
+        assert result["corner1"] == [0, 0, 0]
+        assert result["corner2"] == [0.05, 0.05, 0.05]
+        box_features.AddCutoutByTwoPoints.assert_called_once()
+
+    def test_no_base_feature(self, feature_mgr, managers):
+        _, _, _, models, _, _ = managers
+        models.Count = 0
+        result = feature_mgr.create_box_cutout_by_two_points(0, 0, 0, 1, 1, 1)
+        assert "error" in result
+        assert "No base feature" in result["error"]
+
+
+# ============================================================================
+# TIER 1: CYLINDER CUTOUT
+# ============================================================================
+
+class TestCylinderCutout:
+    def test_success(self, feature_mgr, managers):
+        _, _, doc, models, _, _ = managers
+        ref_planes = MagicMock()
+        doc.RefPlanes = ref_planes
+        cyl_features = MagicMock()
+        models.CylinderFeatures = cyl_features
+
+        result = feature_mgr.create_cylinder_cutout(0, 0, 0, 0.01, 0.05)
+        assert result["status"] == "created"
+        assert result["type"] == "cylinder_cutout"
+        assert result["radius"] == 0.01
+        assert result["height"] == 0.05
+        cyl_features.AddCutoutByCenterAndRadius.assert_called_once()
+
+    def test_no_base_feature(self, feature_mgr, managers):
+        _, _, _, models, _, _ = managers
+        models.Count = 0
+        result = feature_mgr.create_cylinder_cutout(0, 0, 0, 0.01, 0.05)
+        assert "error" in result
+        assert "No base feature" in result["error"]
+
+
+# ============================================================================
+# TIER 1: SPHERE CUTOUT
+# ============================================================================
+
+class TestSphereCutout:
+    def test_success(self, feature_mgr, managers):
+        _, _, doc, models, _, _ = managers
+        ref_planes = MagicMock()
+        doc.RefPlanes = ref_planes
+        sph_features = MagicMock()
+        models.SphereFeatures = sph_features
+
+        result = feature_mgr.create_sphere_cutout(0, 0, 0, 0.02)
+        assert result["status"] == "created"
+        assert result["type"] == "sphere_cutout"
+        assert result["radius"] == 0.02
+        sph_features.AddCutoutByCenterAndRadius.assert_called_once()
+
+    def test_no_base_feature(self, feature_mgr, managers):
+        _, _, _, models, _, _ = managers
+        models.Count = 0
+        result = feature_mgr.create_sphere_cutout(0, 0, 0, 0.02)
+        assert "error" in result
+        assert "No base feature" in result["error"]
+
+
+# ============================================================================
+# TIER 2: EXTRUDED CUTOUT THROUGH NEXT
+# ============================================================================
+
+class TestExtrudedCutoutThroughNext:
+    def test_success(self, feature_mgr, managers):
+        _, _, _, _, model, profile = managers
+        result = feature_mgr.create_extruded_cutout_through_next("Normal")
+        assert result["status"] == "created"
+        assert result["type"] == "extruded_cutout_through_next"
+        model.ExtrudedCutouts.AddThroughNextMulti.assert_called_once()
+
+    def test_no_profile(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, _, _ = managers
+        sketch_mgr.get_active_sketch.return_value = None
+        result = feature_mgr.create_extruded_cutout_through_next()
+        assert "error" in result
+        assert "No active sketch" in result["error"]
+
+    def test_no_base_feature(self, feature_mgr, managers):
+        _, _, _, models, _, _ = managers
+        models.Count = 0
+        result = feature_mgr.create_extruded_cutout_through_next()
+        assert "error" in result
+        assert "No base feature" in result["error"]
+
+    def test_reverse_direction(self, feature_mgr, managers):
+        _, _, _, _, model, _ = managers
+        result = feature_mgr.create_extruded_cutout_through_next("Reverse")
+        assert result["status"] == "created"
+        assert result["direction"] == "Reverse"
+
+
+# ============================================================================
+# TIER 2: NORMAL CUTOUT THROUGH ALL
+# ============================================================================
+
+class TestNormalCutoutThroughAll:
+    def test_success(self, feature_mgr, managers):
+        _, _, _, _, model, _ = managers
+        result = feature_mgr.create_normal_cutout_through_all("Normal")
+        assert result["status"] == "created"
+        assert result["type"] == "normal_cutout_through_all"
+        model.NormalCutouts.AddThroughAllMulti.assert_called_once()
+
+    def test_no_profile(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, _, _ = managers
+        sketch_mgr.get_active_sketch.return_value = None
+        result = feature_mgr.create_normal_cutout_through_all()
+        assert "error" in result
+        assert "No active sketch" in result["error"]
+
+    def test_no_base_feature(self, feature_mgr, managers):
+        _, _, _, models, _, _ = managers
+        models.Count = 0
+        result = feature_mgr.create_normal_cutout_through_all()
+        assert "error" in result
+        assert "No base feature" in result["error"]
+
+
+# ============================================================================
+# TIER 2: DELETE HOLE
+# ============================================================================
+
+class TestDeleteHole:
+    def test_success_all(self, feature_mgr, managers):
+        _, _, _, _, model, _ = managers
+        result = feature_mgr.create_delete_hole(0.01, "All")
+        assert result["status"] == "created"
+        assert result["type"] == "delete_hole"
+        assert result["max_diameter"] == 0.01
+        assert result["hole_type"] == "All"
+        model.DeleteHoles.Add.assert_called_once_with(0, 0.01)
+
+    def test_success_round_only(self, feature_mgr, managers):
+        _, _, _, _, model, _ = managers
+        result = feature_mgr.create_delete_hole(0.005, "Round")
+        assert result["status"] == "created"
+        model.DeleteHoles.Add.assert_called_once_with(1, 0.005)
+
+    def test_success_nonround(self, feature_mgr, managers):
+        _, _, _, _, model, _ = managers
+        result = feature_mgr.create_delete_hole(0.02, "NonRound")
+        assert result["status"] == "created"
+        model.DeleteHoles.Add.assert_called_once_with(2, 0.02)
+
+    def test_no_base_feature(self, feature_mgr, managers):
+        _, _, _, models, _, _ = managers
+        models.Count = 0
+        result = feature_mgr.create_delete_hole()
+        assert "error" in result
+        assert "No base feature" in result["error"]
+
+
+# ============================================================================
+# TIER 2: DELETE BLEND
+# ============================================================================
+
+class TestDeleteBlend:
+    def test_success(self, feature_mgr, managers):
+        _, _, _, _, model, _ = managers
+        result = feature_mgr.create_delete_blend(0)
+        assert result["status"] == "created"
+        assert result["type"] == "delete_blend"
+        assert result["face_index"] == 0
+        model.DeleteBlends.Add.assert_called_once()
+
+    def test_no_base_feature(self, feature_mgr, managers):
+        _, _, _, models, _, _ = managers
+        models.Count = 0
+        result = feature_mgr.create_delete_blend(0)
+        assert "error" in result
+
+    def test_invalid_face_index(self, feature_mgr, managers):
+        _, _, _, _, model, _ = managers
+        body = model.Body
+        faces = body.Faces.return_value
+        faces.Count = 3
+        result = feature_mgr.create_delete_blend(5)
+        assert "error" in result
+        assert "Invalid face index" in result["error"]
+
+
+# ============================================================================
+# TIER 2: REVOLVED SURFACE
+# ============================================================================
+
+class TestRevolvedSurface:
+    def test_success(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, model, _ = managers
+        refaxis = MagicMock()
+        sketch_mgr.get_active_refaxis.return_value = refaxis
+        result = feature_mgr.create_revolved_surface(360)
+        assert result["status"] == "created"
+        assert result["type"] == "revolved_surface"
+        assert result["angle_degrees"] == 360
+        model.RevolvedSurfaces.AddFinite.assert_called_once()
+
+    def test_no_profile(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, _, _ = managers
+        sketch_mgr.get_active_sketch.return_value = None
+        result = feature_mgr.create_revolved_surface()
+        assert "error" in result
+        assert "No active sketch" in result["error"]
+
+    def test_no_refaxis(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, _, _ = managers
+        sketch_mgr.get_active_refaxis.return_value = None
+        result = feature_mgr.create_revolved_surface()
+        assert "error" in result
+        assert "axis" in result["error"].lower()
+
+    def test_partial_angle(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, model, _ = managers
+        refaxis = MagicMock()
+        sketch_mgr.get_active_refaxis.return_value = refaxis
+        result = feature_mgr.create_revolved_surface(180, want_end_caps=True)
+        assert result["status"] == "created"
+        assert result["angle_degrees"] == 180
+        assert result["want_end_caps"] is True
+
+
+# ============================================================================
+# TIER 2: LOFTED SURFACE
+# ============================================================================
+
+class TestLoftedSurface:
+    def test_success(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, model, _ = managers
+        p1, p2 = MagicMock(), MagicMock()
+        sketch_mgr.get_accumulated_profiles.return_value = [p1, p2]
+        result = feature_mgr.create_lofted_surface()
+        assert result["status"] == "created"
+        assert result["type"] == "lofted_surface"
+        assert result["num_profiles"] == 2
+        model.LoftedSurfaces.Add.assert_called_once()
+
+    def test_too_few_profiles(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, _, _ = managers
+        sketch_mgr.get_accumulated_profiles.return_value = [MagicMock()]
+        result = feature_mgr.create_lofted_surface()
+        assert "error" in result
+        assert "at least 2" in result["error"]
+
+    def test_no_base_feature(self, feature_mgr, managers):
+        _, sketch_mgr, _, models, _, _ = managers
+        models.Count = 0
+        p1, p2 = MagicMock(), MagicMock()
+        sketch_mgr.get_accumulated_profiles.return_value = [p1, p2]
+        result = feature_mgr.create_lofted_surface()
+        assert "error" in result
+        assert "base feature" in result["error"].lower()
+
+
+# ============================================================================
+# TIER 2: SWEPT SURFACE
+# ============================================================================
+
+class TestSweptSurface:
+    def test_success(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, model, _ = managers
+        path, cs = MagicMock(), MagicMock()
+        sketch_mgr.get_accumulated_profiles.return_value = [path, cs]
+        result = feature_mgr.create_swept_surface()
+        assert result["status"] == "created"
+        assert result["type"] == "swept_surface"
+        assert result["num_cross_sections"] == 1
+        model.SweptSurfaces.Add.assert_called_once()
+
+    def test_too_few_profiles(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, _, _ = managers
+        sketch_mgr.get_accumulated_profiles.return_value = [MagicMock()]
+        result = feature_mgr.create_swept_surface()
+        assert "error" in result
+        assert "at least 2" in result["error"]
+
+    def test_no_base_feature(self, feature_mgr, managers):
+        _, sketch_mgr, _, models, _, _ = managers
+        models.Count = 0
+        result = feature_mgr.create_swept_surface()
+        assert "error" in result
+        assert "No base feature" in result["error"]
+
+    def test_with_end_caps(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, model, _ = managers
+        path, cs = MagicMock(), MagicMock()
+        sketch_mgr.get_accumulated_profiles.return_value = [path, cs]
+        result = feature_mgr.create_swept_surface(want_end_caps=True)
+        assert result["status"] == "created"
+        assert result["want_end_caps"] is True

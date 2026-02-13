@@ -1072,6 +1072,173 @@ def create_lofted_cutout(profile_indices: Optional[list] = None) -> dict:
     return feature_manager.create_lofted_cutout(profile_indices)
 
 
+@mcp.tool()
+def create_swept_cutout(path_profile_index: Optional[int] = None) -> dict:
+    """
+    Create a swept cutout (cut) along a path.
+
+    Same workflow as create_sweep but removes material instead of adding it.
+    Requires at least 2 accumulated profiles: path (open) + cross-section (closed).
+
+    Args:
+        path_profile_index: Index of the path profile (default: 0)
+
+    Returns:
+        Swept cutout creation status
+    """
+    return feature_manager.create_swept_cutout(path_profile_index)
+
+
+@mcp.tool()
+def create_helix_cutout(pitch: float, height: float,
+                        revolutions: Optional[float] = None,
+                        direction: str = "Right") -> dict:
+    """
+    Create a helical cutout (cut) in the part.
+
+    Same workflow as create_helix but removes material.
+    Requires a closed sketch profile and an axis of revolution.
+
+    Args:
+        pitch: Distance between coils in meters
+        height: Total height of helix in meters
+        revolutions: Number of turns (optional, calculated from pitch/height)
+        direction: 'Right' or 'Left' hand helix
+
+    Returns:
+        Helix cutout creation status
+    """
+    return feature_manager.create_helix_cutout(pitch, height, revolutions, direction)
+
+
+@mcp.tool()
+def create_extruded_cutout_through_next(direction: str = "Normal") -> dict:
+    """
+    Create an extruded cutout that cuts to the next face encountered.
+
+    Cuts from the sketch plane to the first face it meets in the specified
+    direction. Requires an existing base feature and a closed sketch profile.
+
+    Args:
+        direction: 'Normal' or 'Reverse'
+
+    Returns:
+        Cutout creation status
+    """
+    return feature_manager.create_extruded_cutout_through_next(direction)
+
+
+@mcp.tool()
+def create_normal_cutout_through_all(direction: str = "Normal") -> dict:
+    """
+    Create a normal cutout that goes through the entire part.
+
+    Normal cutouts follow the surface normal direction rather than a
+    fixed axis. Requires an existing base feature and a closed sketch profile.
+
+    Args:
+        direction: 'Normal' or 'Reverse'
+
+    Returns:
+        Cutout creation status
+    """
+    return feature_manager.create_normal_cutout_through_all(direction)
+
+
+@mcp.tool()
+def create_delete_hole(max_diameter: float = 1.0, hole_type: str = "All") -> dict:
+    """
+    Delete/fill holes in the model body.
+
+    Fills holes up to the specified diameter threshold. Useful for
+    simplifying models or removing unwanted holes.
+
+    Args:
+        max_diameter: Maximum hole diameter to delete (meters)
+        hole_type: Type of holes to delete: 'All', 'Round', 'NonRound'
+
+    Returns:
+        Deletion status
+    """
+    return feature_manager.create_delete_hole(max_diameter, hole_type)
+
+
+@mcp.tool()
+def create_delete_blend(face_index: int) -> dict:
+    """
+    Delete/remove a blend (fillet) from the model by specifying a face.
+
+    Removes the blend associated with the specified face. Use
+    get_body_faces() to find the face index of the blend to remove.
+
+    Args:
+        face_index: 0-based face index of the blend face to remove
+
+    Returns:
+        Deletion status
+    """
+    return feature_manager.create_delete_blend(face_index)
+
+
+# ============================================================================
+# CONSTRUCTION SURFACE TOOLS
+# ============================================================================
+
+@mcp.tool()
+def create_revolved_surface(angle: float = 360,
+                             want_end_caps: bool = False) -> dict:
+    """
+    Create a revolved construction surface from the active profile.
+
+    Requires a profile with an axis of revolution set. Creates a surface
+    body (not solid) useful as construction geometry.
+
+    Args:
+        angle: Revolution angle in degrees (360 for full revolution)
+        want_end_caps: Whether to cap the ends of the surface
+
+    Returns:
+        Surface creation status
+    """
+    return feature_manager.create_revolved_surface(angle, want_end_caps)
+
+
+@mcp.tool()
+def create_lofted_surface(want_end_caps: bool = False) -> dict:
+    """
+    Create a lofted construction surface between multiple profiles.
+
+    Same workflow as create_loft: create 2+ sketches on different parallel
+    planes, close each one, then call this method. Creates a surface body.
+
+    Args:
+        want_end_caps: Whether to cap the ends of the surface
+
+    Returns:
+        Surface creation status
+    """
+    return feature_manager.create_lofted_surface(want_end_caps)
+
+
+@mcp.tool()
+def create_swept_surface(path_profile_index: Optional[int] = None,
+                          want_end_caps: bool = False) -> dict:
+    """
+    Create a swept construction surface along a path.
+
+    Same workflow as create_sweep: path profile (open) + cross-section (closed).
+    Creates a surface body useful as construction geometry.
+
+    Args:
+        path_profile_index: Index of the path profile (default: 0)
+        want_end_caps: Whether to cap the ends of the surface
+
+    Returns:
+        Surface creation status
+    """
+    return feature_manager.create_swept_surface(path_profile_index, want_end_caps)
+
+
 # ============================================================================
 # MIRROR COPY
 # ============================================================================
@@ -1139,6 +1306,67 @@ def create_ref_plane_normal_to_curve(curve_end: str = "End",
         Reference plane creation status with new plane index
     """
     return feature_manager.create_ref_plane_normal_to_curve(curve_end, pivot_plane_index)
+
+
+@mcp.tool()
+def create_ref_plane_by_angle(parent_plane_index: int, angle: float,
+                               normal_side: str = "Normal") -> dict:
+    """
+    Create a reference plane at an angle to an existing plane.
+
+    Rotates from the parent plane by the specified angle.
+
+    Args:
+        parent_plane_index: Index of parent plane (1=Top/XZ, 2=Front/XY, 3=Right/YZ)
+        angle: Angle in degrees from the parent plane
+        normal_side: 'Normal' or 'Reverse'
+
+    Returns:
+        Reference plane creation status with new plane index
+    """
+    return feature_manager.create_ref_plane_by_angle(parent_plane_index, angle, normal_side)
+
+
+@mcp.tool()
+def create_ref_plane_by_3_points(
+    x1: float, y1: float, z1: float,
+    x2: float, y2: float, z2: float,
+    x3: float, y3: float, z3: float
+) -> dict:
+    """
+    Create a reference plane through 3 points in space.
+
+    Defines a plane by specifying three non-collinear points.
+
+    Args:
+        x1, y1, z1: First point coordinates (meters)
+        x2, y2, z2: Second point coordinates (meters)
+        x3, y3, z3: Third point coordinates (meters)
+
+    Returns:
+        Reference plane creation status with new plane index
+    """
+    return feature_manager.create_ref_plane_by_3_points(
+        x1, y1, z1, x2, y2, z2, x3, y3, z3
+    )
+
+
+@mcp.tool()
+def create_ref_plane_midplane(plane1_index: int, plane2_index: int) -> dict:
+    """
+    Create a reference plane midway between two existing planes.
+
+    Useful for symmetry operations. The new plane is equidistant
+    from both parent planes.
+
+    Args:
+        plane1_index: Index of first plane (1=Top/XZ, 2=Front/XY, 3=Right/YZ)
+        plane2_index: Index of second plane
+
+    Returns:
+        Reference plane creation status with new plane index
+    """
+    return feature_manager.create_ref_plane_midplane(plane1_index, plane2_index)
 
 
 # ============================================================================
@@ -1280,6 +1508,66 @@ def create_chamfer_angle(distance: float, angle: float,
         Chamfer creation status with edge count
     """
     return feature_manager.create_chamfer_angle(distance, angle, face_index)
+
+
+@mcp.tool()
+def create_variable_round(radii: list, face_index: Optional[int] = None) -> dict:
+    """
+    Create a variable-radius round (fillet) on body edges.
+
+    Unlike create_round which applies a constant radius, this allows different
+    radii at different points. Each edge gets a corresponding radius value.
+
+    Args:
+        radii: List of radius values in meters. If fewer than edges, last value repeats.
+        face_index: 0-based face index to apply to (None = all edges)
+
+    Returns:
+        Variable round creation status with edge count
+    """
+    return feature_manager.create_variable_round(radii, face_index)
+
+
+@mcp.tool()
+def create_blend(radius: float, face_index: Optional[int] = None) -> dict:
+    """
+    Create a blend (face-to-face fillet) feature.
+
+    Creates smooth transitions between faces. Uses the same edge-based
+    approach as rounds but through the Blends collection.
+
+    Args:
+        radius: Blend radius in meters
+        face_index: 0-based face index to apply to (None = all edges)
+
+    Returns:
+        Blend creation status with edge count
+    """
+    return feature_manager.create_blend(radius, face_index)
+
+
+@mcp.tool()
+def create_hole_through_all(
+    x: float, y: float, diameter: float,
+    plane_index: int = 1, direction: str = "Normal"
+) -> dict:
+    """
+    Create a hole that goes through the entire part.
+
+    Places a through-all hole at (x, y) on a reference plane.
+    Unlike create_hole which has a finite depth, this cuts completely through.
+
+    Args:
+        x: Hole center X coordinate (meters)
+        y: Hole center Y coordinate (meters)
+        diameter: Hole diameter in meters
+        plane_index: Reference plane (1=Top/XZ, 2=Front/XY, 3=Right/YZ)
+        direction: 'Normal' or 'Reverse'
+
+    Returns:
+        Through-all hole creation status
+    """
+    return feature_manager.create_hole_through_all(x, y, diameter, plane_index, direction)
 
 
 @mcp.tool()
@@ -1473,6 +1761,71 @@ def create_sphere(
         Sphere creation status
     """
     return feature_manager.create_sphere(center_x, center_y, center_z, radius)
+
+
+# ============================================================================
+# PRIMITIVE CUTOUTS
+# ============================================================================
+
+@mcp.tool()
+def create_box_cutout(
+    x1: float, y1: float, z1: float,
+    x2: float, y2: float, z2: float
+) -> dict:
+    """
+    Create a box-shaped cutout (boolean subtract) by two opposite corners.
+
+    Removes a rectangular volume from the existing part. Requires a base feature.
+
+    Args:
+        x1, y1, z1: First corner coordinates (meters)
+        x2, y2, z2: Opposite corner coordinates (meters)
+
+    Returns:
+        Box cutout creation status
+    """
+    return feature_manager.create_box_cutout_by_two_points(x1, y1, z1, x2, y2, z2)
+
+
+@mcp.tool()
+def create_cylinder_cutout(
+    center_x: float, center_y: float, center_z: float,
+    radius: float, height: float
+) -> dict:
+    """
+    Create a cylindrical cutout (boolean subtract) primitive.
+
+    Removes a cylindrical volume from the existing part. Requires a base feature.
+
+    Args:
+        center_x, center_y, center_z: Center coordinates (meters)
+        radius: Cylinder radius (meters)
+        height: Cylinder/cut depth (meters)
+
+    Returns:
+        Cylinder cutout creation status
+    """
+    return feature_manager.create_cylinder_cutout(center_x, center_y, center_z, radius, height)
+
+
+@mcp.tool()
+def create_sphere_cutout(
+    center_x: float, center_y: float, center_z: float,
+    radius: float
+) -> dict:
+    """
+    Create a spherical cutout (boolean subtract) primitive.
+
+    Removes a spherical volume from the existing part. Requires a base feature.
+
+    Args:
+        center_x, center_y, center_z: Sphere center coordinates (meters)
+        radius: Sphere radius (meters)
+
+    Returns:
+        Sphere cutout creation status
+    """
+    return feature_manager.create_sphere_cutout(center_x, center_y, center_z, radius)
 
 
 # ============================================================================
@@ -2505,6 +2858,43 @@ def set_variable(name: str, value: float) -> dict:
     return query_manager.set_variable(name, value)
 
 
+@mcp.tool()
+def add_variable(name: str, formula: str, units_type: Optional[str] = None) -> dict:
+    """
+    Create a new user variable in the active document.
+
+    Variables enable parametric design - link dimensions to formulas
+    that can be changed later to update the entire model.
+
+    Args:
+        name: Variable name (e.g., 'MyWidth', 'BoltDiameter')
+        formula: Variable formula/value as string (e.g., '0.025', 'V1 * 2')
+        units_type: Optional units type string
+
+    Returns:
+        Variable creation status with value
+    """
+    return query_manager.add_variable(name, formula, units_type)
+
+
+@mcp.tool()
+def query_variables(pattern: str = "*", case_insensitive: bool = True) -> dict:
+    """
+    Search variables by name pattern.
+
+    Supports wildcards (* and ?) to find matching variables.
+    For example, '*Length*' finds all variables with 'Length' in the name.
+
+    Args:
+        pattern: Search pattern with wildcards (e.g., '*Length*', 'V?')
+        case_insensitive: Whether to ignore case (default True)
+
+    Returns:
+        Matching variables with names, values, and formulas
+    """
+    return query_manager.query_variables(pattern, case_insensitive)
+
+
 # ============================================================================
 # CUSTOM PROPERTIES
 # ============================================================================
@@ -2777,6 +3167,25 @@ def clear_select_set() -> dict:
         Clear status with count of items removed
     """
     return query_manager.clear_select_set()
+
+
+@mcp.tool()
+def select_add(object_type: str, index: int) -> dict:
+    """
+    Add an object to the selection set programmatically.
+
+    Resolves the object from the specified type and index, then adds it
+    to the current selection. Useful for automating workflows that
+    require selected objects.
+
+    Args:
+        object_type: Type of object: 'feature', 'face', or 'plane'
+        index: 0-based index of the object
+
+    Returns:
+        Selection status with count
+    """
+    return query_manager.select_add(object_type, index)
 
 
 # ============================================================================
@@ -3568,6 +3977,50 @@ def set_view_background(red: int, green: int, blue: int) -> dict:
         Color update status
     """
     return view_manager.set_view_background(red, green, blue)
+
+
+@mcp.tool()
+def get_camera() -> dict:
+    """
+    Get the current camera parameters.
+
+    Returns eye position, target position, up vector, perspective flag,
+    and scale/field-of-view angle. Useful for saving and restoring views.
+
+    Returns:
+        Camera parameters (eye, target, up, perspective, scale_or_angle)
+    """
+    return view_manager.get_camera()
+
+
+@mcp.tool()
+def set_camera(eye_x: float, eye_y: float, eye_z: float,
+               target_x: float, target_y: float, target_z: float,
+               up_x: float = 0.0, up_y: float = 1.0, up_z: float = 0.0,
+               perspective: bool = False,
+               scale_or_angle: float = 1.0) -> dict:
+    """
+    Set the camera parameters for the active view.
+
+    Provides full control over the 3D view camera including position,
+    look-at target, orientation, and projection type.
+
+    Args:
+        eye_x, eye_y, eye_z: Camera eye (position) coordinates
+        target_x, target_y, target_z: Camera target (look-at) coordinates
+        up_x, up_y, up_z: Camera up vector (default: Y-up)
+        perspective: True for perspective, False for orthographic
+        scale_or_angle: View scale (ortho) or FOV angle in radians (perspective)
+
+    Returns:
+        Camera setting status
+    """
+    return view_manager.set_camera(
+        eye_x, eye_y, eye_z,
+        target_x, target_y, target_z,
+        up_x, up_y, up_z,
+        perspective, scale_or_angle
+    )
 
 
 # ============================================================================

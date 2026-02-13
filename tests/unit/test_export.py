@@ -1487,3 +1487,113 @@ class TestAddKeypointConstraint:
         sm = SketchManager(MagicMock())
         result = sm.add_keypoint_constraint("line", 1, 0, "line", 2, 1)
         assert "error" in result
+
+
+# ============================================================================
+# TIER 2: CAMERA CONTROL (ViewModel)
+# ============================================================================
+
+@pytest.fixture
+def view_mgr():
+    """Create ViewModel with mocked dependencies."""
+    from solidedge_mcp.backends.export import ViewModel
+    dm = MagicMock()
+    doc = MagicMock()
+    dm.get_active_document.return_value = doc
+
+    window = MagicMock()
+    view_obj = MagicMock()
+    window.View = view_obj
+    windows = MagicMock()
+    windows.Count = 1
+    windows.Item.return_value = window
+    doc.Windows = windows
+
+    return ViewModel(dm), doc, view_obj
+
+
+class TestGetCamera:
+    def test_success(self, view_mgr):
+        vm, doc, view_obj = view_mgr
+        # GetCamera returns 11-element tuple
+        view_obj.GetCamera.return_value = (
+            1.0, 2.0, 3.0,    # eye
+            0.0, 0.0, 0.0,    # target
+            0.0, 1.0, 0.0,    # up
+            False,             # perspective
+            1.5                # scale
+        )
+        result = vm.get_camera()
+        assert result["eye"] == [1.0, 2.0, 3.0]
+        assert result["target"] == [0.0, 0.0, 0.0]
+        assert result["up"] == [0.0, 1.0, 0.0]
+        assert result["perspective"] is False
+        assert result["scale_or_angle"] == 1.5
+        view_obj.GetCamera.assert_called_once()
+
+    def test_no_window(self):
+        from solidedge_mcp.backends.export import ViewModel
+        dm = MagicMock()
+        doc = MagicMock()
+        doc.Windows.Count = 0
+        dm.get_active_document.return_value = doc
+        vm = ViewModel(dm)
+        result = vm.get_camera()
+        assert "error" in result
+
+    def test_perspective_mode(self, view_mgr):
+        vm, doc, view_obj = view_mgr
+        view_obj.GetCamera.return_value = (
+            0.5, 0.5, 0.5,
+            0.0, 0.0, 0.0,
+            0.0, 0.0, 1.0,
+            True,
+            0.785  # ~45 degrees FOV
+        )
+        result = vm.get_camera()
+        assert result["perspective"] is True
+        assert result["scale_or_angle"] == 0.785
+
+
+class TestSetCamera:
+    def test_success(self, view_mgr):
+        vm, doc, view_obj = view_mgr
+        result = vm.set_camera(1.0, 2.0, 3.0, 0.0, 0.0, 0.0)
+        assert result["status"] == "camera_set"
+        assert result["eye"] == [1.0, 2.0, 3.0]
+        assert result["target"] == [0.0, 0.0, 0.0]
+        assert result["up"] == [0.0, 1.0, 0.0]  # defaults
+        view_obj.SetCamera.assert_called_once_with(
+            1.0, 2.0, 3.0,
+            0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            False, 1.0
+        )
+
+    def test_with_perspective(self, view_mgr):
+        vm, doc, view_obj = view_mgr
+        result = vm.set_camera(
+            0.5, 0.5, 0.5,
+            0.0, 0.0, 0.0,
+            0.0, 0.0, 1.0,
+            True, 0.785
+        )
+        assert result["status"] == "camera_set"
+        assert result["perspective"] is True
+        assert result["up"] == [0.0, 0.0, 1.0]
+        view_obj.SetCamera.assert_called_once_with(
+            0.5, 0.5, 0.5,
+            0.0, 0.0, 0.0,
+            0.0, 0.0, 1.0,
+            True, 0.785
+        )
+
+    def test_no_window(self):
+        from solidedge_mcp.backends.export import ViewModel
+        dm = MagicMock()
+        doc = MagicMock()
+        doc.Windows.Count = 0
+        dm.get_active_document.return_value = doc
+        vm = ViewModel(dm)
+        result = vm.set_camera(0, 0, 1, 0, 0, 0)
+        assert "error" in result

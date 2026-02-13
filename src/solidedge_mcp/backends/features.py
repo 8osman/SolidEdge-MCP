@@ -3461,3 +3461,1177 @@ class FeatureManager:
                 "error": str(e),
                 "traceback": traceback.format_exc()
             }
+
+    # =================================================================
+    # TIER 1: SWEPT CUTOUT
+    # =================================================================
+
+    def create_swept_cutout(self, path_profile_index: int = None) -> Dict[str, Any]:
+        """
+        Create a swept cutout (cut) along a path.
+
+        Same workflow as create_sweep but removes material instead of adding it.
+        Requires at least 2 accumulated profiles: path (open) + cross-section (closed).
+        Uses model.SweptCutouts.Add() (type library: SweptCutouts collection).
+
+        Args:
+            path_profile_index: Index of the path profile in accumulated profiles
+                (default: 0, the first accumulated profile)
+
+        Returns:
+            Dict with status and swept cutout info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            if models.Count == 0:
+                return {"error": "No base feature exists. Create a base feature first."}
+
+            model = models.Item(1)
+
+            all_profiles = self.sketch_manager.get_accumulated_profiles()
+
+            if len(all_profiles) < 2:
+                return {
+                    "error": f"Swept cutout requires at least 2 profiles (path + cross-section), "
+                    f"got {len(all_profiles)}. Create a path sketch and a cross-section sketch first."
+                }
+
+            path_idx = path_profile_index if path_profile_index is not None else 0
+            path_profile = all_profiles[path_idx]
+            cross_sections = [p for i, p in enumerate(all_profiles) if i != path_idx]
+
+            igProfileBasedCrossSection = 48
+            igRight = 2
+            igNone = 44
+
+            # Path arrays
+            v_paths = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [path_profile])
+            v_path_types = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_I4, [igProfileBasedCrossSection])
+
+            # Cross-section arrays
+            v_sections = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, cross_sections)
+            v_section_types = VARIANT(
+                pythoncom.VT_ARRAY | pythoncom.VT_I4,
+                [igProfileBasedCrossSection] * len(cross_sections)
+            )
+            v_origins = VARIANT(
+                pythoncom.VT_ARRAY | pythoncom.VT_VARIANT,
+                [VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8, [0.0, 0.0])
+                 for _ in cross_sections]
+            )
+            v_seg = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_VARIANT, [])
+
+            # SweptCutouts.Add: same 15 params as SweptProtrusions
+            swept_cutouts = model.SweptCutouts
+            cutout = swept_cutouts.Add(
+                1, v_paths, v_path_types,                   # Path (1 curve)
+                len(cross_sections), v_sections, v_section_types, v_origins, v_seg,
+                igRight,                                     # MaterialSide
+                igNone, 0.0, None,                          # Start extent
+                igNone, 0.0, None,                          # End extent
+            )
+
+            self.sketch_manager.clear_accumulated_profiles()
+            return {
+                "status": "created",
+                "type": "swept_cutout",
+                "num_cross_sections": len(cross_sections),
+                "method": "model.SweptCutouts.Add"
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # TIER 1: HELIX CUTOUT
+    # =================================================================
+
+    def create_helix_cutout(
+        self,
+        pitch: float,
+        height: float,
+        revolutions: float = None,
+        direction: str = "Right"
+    ) -> Dict[str, Any]:
+        """
+        Create a helical cutout (cut) in the part.
+
+        Same workflow as create_helix but removes material. Requires a closed sketch
+        profile and an axis of revolution. Uses model.HelixCutouts.AddFinite().
+        Type library: HelixCutouts.AddFinite(HelixAxis, AxisStart, NumCrossSections,
+        CrossSectionArray, ProfileSide, Height, Pitch, NumberOfTurns, HelixDir, ...).
+
+        Args:
+            pitch: Distance between coils in meters
+            height: Total height of helix in meters
+            revolutions: Number of turns (optional, calculated from pitch/height)
+            direction: 'Right' or 'Left' hand helix
+
+        Returns:
+            Dict with status and helix cutout info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            if models.Count == 0:
+                return {"error": "No base feature exists. Create a base feature first."}
+
+            model = models.Item(1)
+            profile = self.sketch_manager.get_active_sketch()
+            refaxis = self.sketch_manager.get_active_refaxis()
+
+            if not profile:
+                return {"error": "No active sketch profile. Create and close a sketch first."}
+
+            if not refaxis:
+                return {"error": "No axis of revolution set. Use set_axis_of_revolution() in the sketch."}
+
+            if revolutions is None:
+                revolutions = height / pitch
+
+            igRight = 2
+            igLeft = 1
+            # AxisStart: igRight = start from sketch plane in normal direction
+            axis_start = igRight
+
+            # Helix direction
+            dir_const = igRight if direction == "Right" else igLeft
+
+            # Wrap cross-section profile in SAFEARRAY
+            v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
+
+            helix_cutouts = model.HelixCutouts
+            cutout = helix_cutouts.AddFinite(
+                refaxis,        # HelixAxis
+                axis_start,     # AxisStart
+                1,              # NumCrossSections
+                v_profiles,     # CrossSectionArray
+                igRight,        # ProfileSide
+                height,         # Height
+                pitch,          # Pitch
+                revolutions,    # NumberOfTurns
+                dir_const,      # HelixDir
+            )
+
+            self.sketch_manager.clear_accumulated_profiles()
+            return {
+                "status": "created",
+                "type": "helix_cutout",
+                "pitch": pitch,
+                "height": height,
+                "revolutions": revolutions,
+                "direction": direction,
+                "method": "model.HelixCutouts.AddFinite"
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # TIER 1: VARIABLE ROUND (FILLET)
+    # =================================================================
+
+    def create_variable_round(self, radii: list, face_index: int = None) -> Dict[str, Any]:
+        """
+        Create a variable-radius round (fillet) on body edges.
+
+        Unlike create_round which applies a constant radius, this allows different
+        radii at different points along the edge. Uses model.Rounds.AddVariable().
+        Type library: Rounds.AddVariable(NumberOfEdgeSets, EdgeSetArray, RadiusArray).
+
+        Args:
+            radii: List of radius values in meters. Each edge gets a corresponding radius.
+                   If fewer radii than edges, the last radius is repeated.
+            face_index: 0-based face index to apply to (None = all edges)
+
+        Returns:
+            Dict with status and variable round info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            if models.Count == 0:
+                return {"error": "No features exist to add variable rounds to"}
+
+            model = models.Item(1)
+            body = model.Body
+
+            faces = body.Faces(1)  # igQueryAll = 1
+            if faces.Count == 0:
+                return {"error": "No faces found on body"}
+
+            # Collect edges from specified face or all faces
+            edge_list = []
+            if face_index is not None:
+                if face_index < 0 or face_index >= faces.Count:
+                    return {"error": f"Invalid face index: {face_index}. Body has {faces.Count} faces."}
+                face = faces.Item(face_index + 1)
+                face_edges = face.Edges
+                if hasattr(face_edges, 'Count'):
+                    for ei in range(1, face_edges.Count + 1):
+                        edge_list.append(face_edges.Item(ei))
+            else:
+                for fi in range(1, faces.Count + 1):
+                    face = faces.Item(fi)
+                    face_edges = face.Edges
+                    if not hasattr(face_edges, 'Count'):
+                        continue
+                    for ei in range(1, face_edges.Count + 1):
+                        edge_list.append(face_edges.Item(ei))
+
+            if not edge_list:
+                return {"error": "No edges found on body"}
+
+            # Extend radii list to match edge count if needed
+            radius_values = list(radii)
+            while len(radius_values) < len(edge_list):
+                radius_values.append(radius_values[-1])
+
+            # VARIANT wrappers required for Rounds methods
+            edge_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, edge_list)
+            radius_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8, radius_values[:len(edge_list)])
+
+            rounds = model.Rounds
+            rnd = rounds.AddVariable(1, edge_arr, radius_arr)
+
+            return {
+                "status": "created",
+                "type": "variable_round",
+                "edge_count": len(edge_list),
+                "radii": radius_values[:len(edge_list)]
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # TIER 1: BLEND (FACE-TO-FACE FILLET)
+    # =================================================================
+
+    def create_blend(self, radius: float, face_index: int = None) -> Dict[str, Any]:
+        """
+        Create a blend (face-to-face fillet) feature.
+
+        Uses model.Blends.Add(NumberOfEdgeSets, EdgeSetArray, RadiusArray).
+        Same VARIANT wrapper pattern as Rounds. Unlike Rounds which fillets edges,
+        Blends create smooth transitions between faces.
+
+        Args:
+            radius: Blend radius in meters
+            face_index: 0-based face index to apply to (None = all edges)
+
+        Returns:
+            Dict with status and blend info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            if models.Count == 0:
+                return {"error": "No features exist to add blends to"}
+
+            model = models.Item(1)
+            body = model.Body
+
+            faces = body.Faces(1)  # igQueryAll = 1
+            if faces.Count == 0:
+                return {"error": "No faces found on body"}
+
+            # Collect edges
+            edge_list = []
+            if face_index is not None:
+                if face_index < 0 or face_index >= faces.Count:
+                    return {"error": f"Invalid face index: {face_index}. Body has {faces.Count} faces."}
+                face = faces.Item(face_index + 1)
+                face_edges = face.Edges
+                if hasattr(face_edges, 'Count'):
+                    for ei in range(1, face_edges.Count + 1):
+                        edge_list.append(face_edges.Item(ei))
+            else:
+                for fi in range(1, faces.Count + 1):
+                    face = faces.Item(fi)
+                    face_edges = face.Edges
+                    if not hasattr(face_edges, 'Count'):
+                        continue
+                    for ei in range(1, face_edges.Count + 1):
+                        edge_list.append(face_edges.Item(ei))
+
+            if not edge_list:
+                return {"error": "No edges found on body"}
+
+            # VARIANT wrappers (same pattern as Rounds)
+            edge_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, edge_list)
+            radius_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8, [radius])
+
+            blends = model.Blends
+            blend = blends.Add(1, edge_arr, radius_arr)
+
+            return {
+                "status": "created",
+                "type": "blend",
+                "radius": radius,
+                "edge_count": len(edge_list)
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # TIER 1: REFERENCE PLANE BY ANGLE
+    # =================================================================
+
+    def create_ref_plane_by_angle(
+        self,
+        parent_plane_index: int,
+        angle: float,
+        normal_side: str = "Normal"
+    ) -> Dict[str, Any]:
+        """
+        Create a reference plane at an angle to an existing plane.
+
+        Uses RefPlanes.AddAngularByAngle(ParentPlane, Angle, NormalSide).
+        Type library: AddAngularByAngle(ParentPlane: IDispatch, Angle: VT_R8,
+        NormalSide: FeaturePropertyConstants, [Edge: VT_VARIANT]).
+
+        Args:
+            parent_plane_index: Index of parent plane (1=Top/XZ, 2=Front/XY, 3=Right/YZ)
+            angle: Angle in degrees from the parent plane
+            normal_side: 'Normal' (igRight=2) or 'Reverse' (igLeft=1)
+
+        Returns:
+            Dict with status and new plane index
+        """
+        try:
+            import math
+
+            doc = self.doc_manager.get_active_document()
+            ref_planes = doc.RefPlanes
+
+            if parent_plane_index < 1 or parent_plane_index > ref_planes.Count:
+                return {"error": f"Invalid plane index: {parent_plane_index}. Count: {ref_planes.Count}"}
+
+            parent = ref_planes.Item(parent_plane_index)
+
+            side_map = {
+                "Normal": ExtrudedProtrusion.igRight,
+                "Reverse": ExtrudedProtrusion.igLeft,
+            }
+            side_const = side_map.get(normal_side, ExtrudedProtrusion.igRight)
+
+            # Angle in radians for the COM API
+            angle_rad = math.radians(angle)
+
+            new_plane = ref_planes.AddAngularByAngle(parent, angle_rad, side_const)
+
+            return {
+                "status": "created",
+                "type": "reference_plane",
+                "method": "angular_by_angle",
+                "parent_plane": parent_plane_index,
+                "angle_degrees": angle,
+                "normal_side": normal_side,
+                "new_plane_index": ref_planes.Count
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # TIER 1: REFERENCE PLANE BY 3 POINTS
+    # =================================================================
+
+    def create_ref_plane_by_3_points(
+        self,
+        x1: float, y1: float, z1: float,
+        x2: float, y2: float, z2: float,
+        x3: float, y3: float, z3: float
+    ) -> Dict[str, Any]:
+        """
+        Create a reference plane through 3 points in space.
+
+        Uses RefPlanes.AddBy3Points(Point1X, Point1Y, Point1Z, ...).
+        Type library: AddBy3Points(9x VT_R8 params) -> RefPlane*.
+
+        Args:
+            x1, y1, z1: First point coordinates (meters)
+            x2, y2, z2: Second point coordinates (meters)
+            x3, y3, z3: Third point coordinates (meters)
+
+        Returns:
+            Dict with status and new plane index
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            ref_planes = doc.RefPlanes
+
+            new_plane = ref_planes.AddBy3Points(
+                x1, y1, z1,
+                x2, y2, z2,
+                x3, y3, z3
+            )
+
+            return {
+                "status": "created",
+                "type": "reference_plane",
+                "method": "by_3_points",
+                "point1": [x1, y1, z1],
+                "point2": [x2, y2, z2],
+                "point3": [x3, y3, z3],
+                "new_plane_index": ref_planes.Count
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # TIER 1: REFERENCE PLANE MID-PLANE
+    # =================================================================
+
+    def create_ref_plane_midplane(
+        self,
+        plane1_index: int,
+        plane2_index: int
+    ) -> Dict[str, Any]:
+        """
+        Create a reference plane midway between two existing planes.
+
+        Uses RefPlanes.AddMidPlane(Plane1, Plane2).
+        Useful for symmetry operations.
+
+        Args:
+            plane1_index: Index of first plane (1=Top/XZ, 2=Front/XY, 3=Right/YZ)
+            plane2_index: Index of second plane
+
+        Returns:
+            Dict with status and new plane index
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            ref_planes = doc.RefPlanes
+
+            if plane1_index < 1 or plane1_index > ref_planes.Count:
+                return {"error": f"Invalid plane1 index: {plane1_index}. Count: {ref_planes.Count}"}
+            if plane2_index < 1 or plane2_index > ref_planes.Count:
+                return {"error": f"Invalid plane2 index: {plane2_index}. Count: {ref_planes.Count}"}
+
+            plane1 = ref_planes.Item(plane1_index)
+            plane2 = ref_planes.Item(plane2_index)
+
+            new_plane = ref_planes.AddMidPlane(plane1, plane2)
+
+            return {
+                "status": "created",
+                "type": "reference_plane",
+                "method": "mid_plane",
+                "plane1_index": plane1_index,
+                "plane2_index": plane2_index,
+                "new_plane_index": ref_planes.Count
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # TIER 1: HOLE THROUGH ALL
+    # =================================================================
+
+    def create_hole_through_all(
+        self,
+        x: float, y: float,
+        diameter: float,
+        plane_index: int = 1,
+        direction: str = "Normal"
+    ) -> Dict[str, Any]:
+        """
+        Create a hole that goes through the entire part.
+
+        Creates a circular profile and uses ExtrudedCutouts.AddThroughAllMulti.
+        Type library: ExtrudedCutouts.AddThroughAllMulti(NumProfiles, ProfileArray, PlaneSide).
+
+        Args:
+            x, y: Hole center coordinates on the sketch plane (meters)
+            diameter: Hole diameter in meters
+            plane_index: Reference plane index (1=Top/XZ, 2=Front/XY, 3=Right/YZ)
+            direction: 'Normal' or 'Reverse'
+
+        Returns:
+            Dict with status and hole info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            if models.Count == 0:
+                return {"error": "No base feature exists. Create a base feature first."}
+
+            model = models.Item(1)
+            radius = diameter / 2.0
+
+            dir_const = ExtrudedProtrusion.igRight  # Normal
+            if direction == "Reverse":
+                dir_const = ExtrudedProtrusion.igLeft
+
+            # Create a circular profile on the specified plane
+            ps = doc.ProfileSets.Add()
+            plane = doc.RefPlanes.Item(plane_index)
+            profile = ps.Profiles.Add(plane)
+            profile.Circles2d.AddByCenterRadius(x, y, radius)
+            profile.End(0)
+
+            # Use through-all cutout
+            cutouts = model.ExtrudedCutouts
+            cutout = cutouts.AddThroughAllMulti(1, (profile,), dir_const)
+
+            return {
+                "status": "created",
+                "type": "hole_through_all",
+                "position": [x, y],
+                "diameter": diameter,
+                "plane_index": plane_index,
+                "direction": direction
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # TIER 1: BOX CUTOUT PRIMITIVE
+    # =================================================================
+
+    def create_box_cutout_by_two_points(
+        self,
+        x1: float, y1: float, z1: float,
+        x2: float, y2: float, z2: float
+    ) -> Dict[str, Any]:
+        """
+        Create a box-shaped cutout (boolean subtract) by two opposite corners.
+
+        Uses BoxFeatures.AddCutoutByTwoPoints with same params as AddBoxByTwoPoints.
+        Requires an existing base feature to cut from.
+        Type library: AddCutoutByTwoPoints(6x VT_R8, dAngle, dDepth, pPlane,
+        ExtentSide, vbKeyPointExtent, pKeyPointObj, pKeyPointFlags).
+
+        Args:
+            x1, y1, z1: First corner coordinates (meters)
+            x2, y2, z2: Opposite corner coordinates (meters)
+
+        Returns:
+            Dict with status and cutout info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            if models.Count == 0:
+                return {"error": "No base feature exists. Create a base feature first."}
+
+            top_plane = self._get_ref_plane(doc, 1)
+            depth = abs(z2 - z1) if abs(z2 - z1) > 0 else abs(y2 - y1)
+
+            # BoxFeatures is on the Models collection level
+            box_features = models.BoxFeatures if hasattr(models, 'BoxFeatures') else None
+            if box_features is None:
+                # Try via the model object
+                model = models.Item(1)
+                box_features = model.BoxFeatures if hasattr(model, 'BoxFeatures') else None
+
+            if box_features is None:
+                return {"error": "BoxFeatures collection not accessible"}
+
+            cutout = box_features.AddCutoutByTwoPoints(
+                x1, y1, z1,
+                x2, y2, z2,
+                0,                              # dAngle
+                depth,                          # dDepth
+                top_plane,                      # pPlane
+                ExtrudedProtrusion.igRight,     # ExtentSide
+                False,                          # vbKeyPointExtent
+                None,                           # pKeyPointObj
+                0                               # pKeyPointFlags
+            )
+
+            return {
+                "status": "created",
+                "type": "box_cutout",
+                "method": "by_two_points",
+                "corner1": [x1, y1, z1],
+                "corner2": [x2, y2, z2]
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # TIER 1: CYLINDER CUTOUT PRIMITIVE
+    # =================================================================
+
+    def create_cylinder_cutout(
+        self,
+        center_x: float,
+        center_y: float,
+        center_z: float,
+        radius: float,
+        height: float
+    ) -> Dict[str, Any]:
+        """
+        Create a cylindrical cutout (boolean subtract) primitive.
+
+        Uses CylinderFeatures.AddCutoutByCenterAndRadius.
+        Requires an existing base feature to cut from.
+        Type library: AddCutoutByCenterAndRadius(x, y, z, dRadius, dDepth, pPlane,
+        ProfileSide, ExtentSide, vbKeyPointExtent, pKeyPointObj, pKeyPointFlags).
+
+        Args:
+            center_x, center_y, center_z: Center coordinates (meters)
+            radius: Cylinder radius (meters)
+            height: Cylinder/cut depth (meters)
+
+        Returns:
+            Dict with status and cutout info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            if models.Count == 0:
+                return {"error": "No base feature exists. Create a base feature first."}
+
+            top_plane = self._get_ref_plane(doc, 1)
+
+            # CylinderFeatures collection - try on Models first, then model
+            cyl_features = models.CylinderFeatures if hasattr(models, 'CylinderFeatures') else None
+            if cyl_features is None:
+                model = models.Item(1)
+                cyl_features = model.CylinderFeatures if hasattr(model, 'CylinderFeatures') else None
+
+            if cyl_features is None:
+                return {"error": "CylinderFeatures collection not accessible"}
+
+            cutout = cyl_features.AddCutoutByCenterAndRadius(
+                center_x, center_y, center_z,
+                radius,
+                height,                             # dDepth
+                top_plane,                          # pPlane
+                ExtrudedProtrusion.igRight,         # ProfileSide
+                ExtrudedProtrusion.igRight,         # ExtentSide
+                False,                              # vbKeyPointExtent
+                None,                               # pKeyPointObj
+                0                                   # pKeyPointFlags
+            )
+
+            return {
+                "status": "created",
+                "type": "cylinder_cutout",
+                "center": [center_x, center_y, center_z],
+                "radius": radius,
+                "height": height
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # TIER 1: SPHERE CUTOUT PRIMITIVE
+    # =================================================================
+
+    def create_sphere_cutout(
+        self,
+        center_x: float,
+        center_y: float,
+        center_z: float,
+        radius: float
+    ) -> Dict[str, Any]:
+        """
+        Create a spherical cutout (boolean subtract) primitive.
+
+        Uses SphereFeatures.AddCutoutByCenterAndRadius.
+        Requires an existing base feature to cut from.
+        Type library: AddCutoutByCenterAndRadius(x, y, z, dRadius, pPlane,
+        ProfileSide, ExtentSide, vbKeyPointExtent, vbCreateLiveSection,
+        pKeyPointObj, pKeyPointFlags).
+
+        Args:
+            center_x, center_y, center_z: Sphere center coordinates (meters)
+            radius: Sphere radius (meters)
+
+        Returns:
+            Dict with status and cutout info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            if models.Count == 0:
+                return {"error": "No base feature exists. Create a base feature first."}
+
+            top_plane = self._get_ref_plane(doc, 1)
+
+            # SphereFeatures collection
+            sph_features = models.SphereFeatures if hasattr(models, 'SphereFeatures') else None
+            if sph_features is None:
+                model = models.Item(1)
+                sph_features = model.SphereFeatures if hasattr(model, 'SphereFeatures') else None
+
+            if sph_features is None:
+                return {"error": "SphereFeatures collection not accessible"}
+
+            cutout = sph_features.AddCutoutByCenterAndRadius(
+                center_x, center_y, center_z,
+                radius,
+                top_plane,                          # pPlane
+                ExtrudedProtrusion.igRight,         # ProfileSide
+                ExtrudedProtrusion.igRight,         # ExtentSide
+                False,                              # vbKeyPointExtent
+                False,                              # vbCreateLiveSection
+                None,                               # pKeyPointObj
+                0                                   # pKeyPointFlags
+            )
+
+            return {
+                "status": "created",
+                "type": "sphere_cutout",
+                "center": [center_x, center_y, center_z],
+                "radius": radius
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # TIER 2: EXTRUDED CUTOUT THROUGH NEXT
+    # =================================================================
+
+    def create_extruded_cutout_through_next(self, direction: str = "Normal") -> Dict[str, Any]:
+        """
+        Create an extruded cutout that cuts to the next face encountered.
+
+        Uses model.ExtrudedCutouts.AddThroughNextMulti(NumProfiles, ProfileArray, PlaneSide).
+        Cuts from the sketch plane to the first face it meets.
+
+        Args:
+            direction: 'Normal' or 'Reverse'
+
+        Returns:
+            Dict with status and cutout info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+
+            if not profile:
+                return {"error": "No active sketch profile. Create and close a sketch first."}
+
+            models = doc.Models
+            if models.Count == 0:
+                return {"error": "No base feature exists. Create a base feature first."}
+
+            model = models.Item(1)
+
+            direction_map = {
+                "Normal": ExtrudedProtrusion.igRight,
+                "Reverse": ExtrudedProtrusion.igLeft,
+            }
+            dir_const = direction_map.get(direction, ExtrudedProtrusion.igRight)
+
+            cutouts = model.ExtrudedCutouts
+            cutout = cutouts.AddThroughNextMulti(1, (profile,), dir_const)
+
+            self.sketch_manager.clear_accumulated_profiles()
+
+            return {
+                "status": "created",
+                "type": "extruded_cutout_through_next",
+                "direction": direction
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # TIER 2: NORMAL CUTOUT THROUGH ALL
+    # =================================================================
+
+    def create_normal_cutout_through_all(self, direction: str = "Normal") -> Dict[str, Any]:
+        """
+        Create a normal cutout that goes through the entire part.
+
+        Uses model.NormalCutouts.AddThroughAllMulti(NumProfiles, ProfileArray,
+        PlaneSide, Method). Normal cutouts follow the surface normal.
+
+        Args:
+            direction: 'Normal' or 'Reverse'
+
+        Returns:
+            Dict with status and cutout info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+
+            if not profile:
+                return {"error": "No active sketch profile. Create and close a sketch first."}
+
+            models = doc.Models
+            if models.Count == 0:
+                return {"error": "No base feature exists. Create a base feature first."}
+
+            model = models.Item(1)
+
+            direction_map = {
+                "Normal": ExtrudedProtrusion.igRight,
+                "Reverse": ExtrudedProtrusion.igLeft,
+            }
+            dir_const = direction_map.get(direction, ExtrudedProtrusion.igRight)
+
+            # igNormalCutoutMethod_Normal = 0 (default method)
+            cutouts = model.NormalCutouts
+            cutout = cutouts.AddThroughAllMulti(1, (profile,), dir_const, 0)
+
+            self.sketch_manager.clear_accumulated_profiles()
+
+            return {
+                "status": "created",
+                "type": "normal_cutout_through_all",
+                "direction": direction
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # TIER 2: DELETE HOLES
+    # =================================================================
+
+    def create_delete_hole(self, max_diameter: float = 1.0,
+                           hole_type: str = "All") -> Dict[str, Any]:
+        """
+        Delete/fill holes in the model body.
+
+        Uses model.DeleteHoles.Add(HoleTypeToDelete, ThresholdHoleDiameter).
+        Fills holes up to the specified diameter threshold.
+
+        Args:
+            max_diameter: Maximum hole diameter to delete (meters). Holes with
+                diameter <= this value will be filled.
+            hole_type: Type of holes to delete: 'All', 'Round', 'NonRound'
+
+        Returns:
+            Dict with status and deletion info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            if models.Count == 0:
+                return {"error": "No base feature exists. Create a base feature first."}
+
+            model = models.Item(1)
+
+            # HoleTypeToDeleteConstants from type library
+            type_map = {
+                "All": 0,
+                "Round": 1,
+                "NonRound": 2,
+            }
+            hole_type_const = type_map.get(hole_type, 0)
+
+            delete_holes = model.DeleteHoles
+            result_feat = delete_holes.Add(hole_type_const, max_diameter)
+
+            return {
+                "status": "created",
+                "type": "delete_hole",
+                "max_diameter": max_diameter,
+                "hole_type": hole_type
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # TIER 2: DELETE BLENDS
+    # =================================================================
+
+    def create_delete_blend(self, face_index: int) -> Dict[str, Any]:
+        """
+        Delete/remove a blend (fillet) from the model by specifying a face.
+
+        Uses model.DeleteBlends.Add(BlendsToDelete). Removes the blend
+        associated with the specified face.
+
+        Args:
+            face_index: 0-based face index of the blend face to remove
+
+        Returns:
+            Dict with status and deletion info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            if models.Count == 0:
+                return {"error": "No base feature exists."}
+
+            model = models.Item(1)
+            body = model.Body
+
+            faces = body.Faces(1)  # igQueryAll = 1
+            if face_index < 0 or face_index >= faces.Count:
+                return {"error": f"Invalid face index: {face_index}. Body has {faces.Count} faces."}
+
+            face = faces.Item(face_index + 1)
+
+            delete_blends = model.DeleteBlends
+            result_feat = delete_blends.Add(face)
+
+            return {
+                "status": "created",
+                "type": "delete_blend",
+                "face_index": face_index
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # TIER 2: REVOLVED SURFACE
+    # =================================================================
+
+    def create_revolved_surface(self, angle: float = 360,
+                                 want_end_caps: bool = False) -> Dict[str, Any]:
+        """
+        Create a revolved construction surface from the active profile.
+
+        Uses RevolvedSurfaces.AddFinite(NumProfiles, ProfileArray, RefAxis,
+        ProfilePlaneSide, AngleOfRevolution, WantEndCaps).
+        Requires a profile with an axis of revolution set.
+
+        Args:
+            angle: Revolution angle in degrees (360 for full revolution)
+            want_end_caps: Whether to cap the ends of the surface
+
+        Returns:
+            Dict with status and surface info
+        """
+        try:
+            import math
+
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+            refaxis = self.sketch_manager.get_active_refaxis()
+
+            if not profile:
+                return {"error": "No active sketch profile. Create and close a sketch first."}
+
+            if not refaxis:
+                return {"error": "No axis of revolution set. Use set_axis_of_revolution() first."}
+
+            models = doc.Models
+            igRight = ExtrudedProtrusion.igRight
+            angle_rad = math.radians(angle)
+
+            v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
+
+            # Try collection-level API first (on model), then Models-level
+            if models.Count > 0:
+                model = models.Item(1)
+                rev_surfaces = model.RevolvedSurfaces
+                surface = rev_surfaces.AddFinite(
+                    1, v_profiles, refaxis, igRight, angle_rad, want_end_caps
+                )
+            else:
+                # First feature - use Models method if available
+                surface = models.AddFiniteRevolvedSurface(
+                    1, v_profiles, refaxis, igRight, angle_rad, want_end_caps
+                )
+
+            self.sketch_manager.clear_accumulated_profiles()
+
+            return {
+                "status": "created",
+                "type": "revolved_surface",
+                "angle_degrees": angle,
+                "want_end_caps": want_end_caps
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # TIER 2: LOFTED SURFACE
+    # =================================================================
+
+    def create_lofted_surface(self, want_end_caps: bool = False) -> Dict[str, Any]:
+        """
+        Create a lofted construction surface between multiple profiles.
+
+        Uses LoftedSurfaces.Add with accumulated profiles. Same workflow as
+        create_loft: create 2+ sketches on different planes, close each,
+        then call this method.
+
+        Args:
+            want_end_caps: Whether to cap the ends of the surface
+
+        Returns:
+            Dict with status and surface info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            all_profiles = self.sketch_manager.get_accumulated_profiles()
+
+            if len(all_profiles) < 2:
+                return {
+                    "error": f"Lofted surface requires at least 2 profiles, "
+                    f"got {len(all_profiles)}."
+                }
+
+            igProfileBasedCrossSection = 48
+            igNone = 44
+
+            v_sections = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, all_profiles)
+            v_types = VARIANT(
+                pythoncom.VT_ARRAY | pythoncom.VT_I4,
+                [igProfileBasedCrossSection] * len(all_profiles)
+            )
+            v_origins = VARIANT(
+                pythoncom.VT_ARRAY | pythoncom.VT_VARIANT,
+                [VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8, [0.0, 0.0])
+                 for _ in all_profiles]
+            )
+
+            if models.Count > 0:
+                model = models.Item(1)
+                loft_surfaces = model.LoftedSurfaces
+                surface = loft_surfaces.Add(
+                    len(all_profiles), v_sections, v_types, v_origins,
+                    igNone,     # StartExtentType
+                    igNone,     # EndExtentType
+                    0, 0.0,     # StartTangentType, StartTangentMagnitude
+                    0, 0.0,     # EndTangentType, EndTangentMagnitude
+                    0, None,    # NumGuideCurves, GuideCurves
+                    want_end_caps
+                )
+            else:
+                return {"error": "Lofted surface requires an existing base feature."}
+
+            self.sketch_manager.clear_accumulated_profiles()
+
+            return {
+                "status": "created",
+                "type": "lofted_surface",
+                "num_profiles": len(all_profiles),
+                "want_end_caps": want_end_caps
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # TIER 2: SWEPT SURFACE
+    # =================================================================
+
+    def create_swept_surface(self, path_profile_index: int = None,
+                              want_end_caps: bool = False) -> Dict[str, Any]:
+        """
+        Create a swept construction surface along a path.
+
+        Same workflow as create_sweep: path profile (open) + cross-section (closed).
+        Uses SweptSurfaces.Add.
+
+        Args:
+            path_profile_index: Index of the path profile (default: 0)
+            want_end_caps: Whether to cap the ends of the surface
+
+        Returns:
+            Dict with status and surface info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            if models.Count == 0:
+                return {"error": "No base feature exists. Create a base feature first."}
+
+            model = models.Item(1)
+
+            all_profiles = self.sketch_manager.get_accumulated_profiles()
+
+            if len(all_profiles) < 2:
+                return {
+                    "error": f"Swept surface requires at least 2 profiles (path + cross-section), "
+                    f"got {len(all_profiles)}."
+                }
+
+            path_idx = path_profile_index if path_profile_index is not None else 0
+            path_profile = all_profiles[path_idx]
+            cross_sections = [p for i, p in enumerate(all_profiles) if i != path_idx]
+
+            igProfileBasedCrossSection = 48
+            igNone = 44
+
+            v_paths = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [path_profile])
+            v_sections = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, cross_sections)
+
+            swept_surfaces = model.SweptSurfaces
+            surface = swept_surfaces.Add(
+                1, v_paths, igProfileBasedCrossSection,     # Path
+                len(cross_sections), v_sections, igProfileBasedCrossSection,  # Sections
+                None, None,             # Origins, OriginRefs
+                igNone,                 # StartExtentType
+                igNone,                 # EndExtentType
+                want_end_caps
+            )
+
+            self.sketch_manager.clear_accumulated_profiles()
+
+            return {
+                "status": "created",
+                "type": "swept_surface",
+                "num_cross_sections": len(cross_sections),
+                "want_end_caps": want_end_caps
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }

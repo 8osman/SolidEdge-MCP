@@ -65,13 +65,13 @@ src/solidedge_mcp/
 
 ### Current State
 
-**✅ FULLY IMPLEMENTED**: All 134 MCP tools are registered and operational!
+**✅ FULLY IMPLEMENTED**: All 241 MCP tools are registered and operational!
 
 - **Backend layer**: Complete COM automation using pywin32 (connection, documents, sketching, features, assembly, query, export, diagnostics)
-- **MCP tools**: All 129 tools registered in `server.py` using `@mcp.tool()` decorator
-- **Tool categories**: Connection (3), Documents (11), Sketching (11), Primitives (5), Extrusions (3), Revolves (5), Cutouts (5), Ref Planes (2), Rounds/Chamfers/Holes (3), Mirror (1), Loft (2), Sweep (2), Helix (4), Sheet Metal (8), Body Operations (7), Simplification (4), View (4), Variables (3), Custom Properties (3), Body Topology (3), Performance (2), Query/Analysis (12), Modeling Mode (2), Feature Management (2), Draft/Drawing (2), Export (10), Assembly (16), Select Set (2), Diagnostics (2)
-- **Coverage**: 100% of core Solid Edge COM API methods including cutout operations via collection-level APIs
-- **Test suite**: 96 unit tests across 4 test files
+- **MCP tools**: All 241 tools registered in `server.py` using `@mcp.tool()` decorator
+- **Tool categories**: Connection (6), Documents (13), Sketching (22), Primitives (8), Extrusions (4), Revolves (5), Cutouts (9), Ref Planes (5), Rounds/Chamfers/Holes (9), Mirror (1), Loft (2), Sweep (2), Helix (4), Surfaces (3), Sheet Metal (8), Body Operations (9), Simplification (4), View (7), Variables (5), Custom Properties (3), Body Topology (3), Performance (2), Query/Analysis (20), Feature Management (5), Draft/Drawing (10), Export (10), Assembly (22), Part Features (10), Select Set (3), Diagnostics (2)
+- **Coverage**: 95% of core Solid Edge Part COM API feature collections implemented
+- **Test suite**: 371 unit tests across 4 test files
 
 **Pending**: Resource providers (read-only state), prompt templates, session management/undo
 
@@ -79,11 +79,11 @@ src/solidedge_mcp/
 
 Following the MCP spec, the server exposes:
 
-- **Tools** ✅ (134 implemented): Actions that create/modify models (connect, create_sketch, extrude, cutout, round, chamfer, hole, mirror, place_component, export)
+- **Tools** ✅ (241 implemented): Actions that create/modify models (connect, create_sketch, extrude, cutout, round, chamfer, hole, mirror, place_component, export)
 - **Resources** ⏳ (pending): Read-only model data (feature list, component tree, mass properties, document info)
 - **Prompts** ⏳ (pending): Conversation templates (design review, manufacturability check, modeling guidance)
 
-### Tool Categories (134 total)
+### Tool Categories (241 total)
 
 See `IMPLEMENTATION_STATUS.md` for the complete list. High-level categories:
 
@@ -177,16 +177,67 @@ Each manager encapsulates related COM operations and maintains necessary state (
 - **Profile validation**: After drawing geometry, profiles need to be validated/closed before using them for features. The `close_sketch()` tool calls `profile.End(0)`.
 - **Angle units**: Most angle parameters in the API expect **radians**, so convert degrees to radians using `math.radians(angle)`.
 
+## Type Library Reference (MANDATORY)
+
+**All MCP server development MUST use the scraped type library data as the source of truth.**
+
+We have a complete dump of every Solid Edge COM type library (41 .tlb files, 2,240 interfaces,
+21,237 methods, 14,575 enum values) in structured JSON. This eliminates guessing at constant
+values, method signatures, and parameter types.
+
+### Reference Files
+
+| File | Purpose |
+|------|---------|
+| `reference/typelib_dump.json` | **Primary reference** - Full structured dump of all type libraries. Search this for exact method signatures, parameter names/types, enum values, and interface hierarchies. |
+| `reference/typelib_summary.md` | Human-readable overview of all 40 type libraries with interface/enum counts. |
+| `reference/TYPELIB_IMPLEMENTATION_MAP.md` | Maps every COM API surface against current MCP tool coverage. Identifies gaps and prioritizes what to implement. Check this before starting any new tool work. |
+| `scripts/scrape_typelibs.py` | Scraper script to regenerate the dump (run if SE version changes). |
+
+### Rules for COM API Development
+
+1. **NEVER guess constant values.** Look up the exact enum name and value in `typelib_dump.json` under `Program/constant.tlb > enums`. Example: search for `FeaturePropertyConstants` to find `igLeft=1, igRight=2, igSymmetric=3`, etc.
+
+2. **NEVER guess method signatures.** Look up the interface in the appropriate .tlb entry (usually `Program/Part.tlb`, `Program/assembly.tlb`, `Program/draft.tlb`, or `Program/framewrk.tlb`). The dump includes exact parameter names, types (VT_I4, VT_R8, VT_DISPATCH, SAFEARRAY, etc.), flags (in/out/optional), and return types.
+
+3. **Check the implementation map first.** Before implementing a new tool, consult `reference/TYPELIB_IMPLEMENTATION_MAP.md` to see:
+   - Whether the API method is already implemented
+   - Which collection/interface the method belongs to
+   - The exact method signature from the type library
+   - Priority tier and any known issues (e.g., SAFEARRAY marshaling problems)
+
+4. **Use correct collection-level APIs.** The type library shows which methods exist on collection interfaces (e.g., `ExtrudedCutouts.AddFiniteMulti`) vs. the `Models` interface (e.g., `Models.AddFiniteExtrudedProtrusion`). Prefer collection-level methods as they are proven to work.
+
+5. **Cross-reference user-defined types.** When a parameter type shows a name like `FeaturePropertyConstants` or `RefAxis*`, look up that type in the same .tlb or in `constant.tlb` to find the actual values/interface.
+
+6. **Update constants.py from type library data.** When adding new constants to `backends/constants.py`, copy the exact values from the scraped data. Add a comment noting which enum they came from.
+
+### Quick Lookup Examples
+
+```python
+# To find a method signature:
+# Search typelib_dump.json for: "AddAngularByAngle" in Program/Part.tlb > interfaces > RefPlanes > methods
+
+# To find a constant value:
+# Search typelib_dump.json for: "FeaturePropertyConstants" in Program/constant.tlb > enums
+
+# To check what's implemented vs available:
+# Read reference/TYPELIB_IMPLEMENTATION_MAP.md
+```
+
 ## Development Workflow
 
 When adding new capabilities:
 
-1. **Backend first**: Implement the raw COM operation in the appropriate `backends/` module (e.g., `features.py` for new feature types)
-2. **Test manually**: Use `python -i` to import and test the backend function directly, or use the diagnostic tools
-3. **Wrap as tool**: Add `@mcp.tool()` decorator wrapper in `server.py` that calls the backend manager method
-4. **Update tracking**: Update `IMPLEMENTATION_STATUS.md` to mark the tool as implemented
-5. **Add tests**: Write pytest tests in `tests/unit/` or `tests/integration/`
-6. **Update docs**: Add to README.md if it's a major user-facing feature
+1. **Check the implementation map**: Read `reference/TYPELIB_IMPLEMENTATION_MAP.md` to understand what's available and what's already done
+2. **Look up the method signature**: Find the exact COM method in `reference/typelib_dump.json` - get parameter names, types, and order
+3. **Verify constants**: Look up any enum values in the constants type library data, add to `backends/constants.py` if missing
+4. **Backend first**: Implement the raw COM operation in the appropriate `backends/` module (e.g., `features.py` for new feature types)
+5. **Test manually**: Use `python -i` to import and test the backend function directly, or use the diagnostic tools
+6. **Wrap as tool**: Add `@mcp.tool()` decorator wrapper in `server.py` that calls the backend manager method
+7. **Update tracking**: Update `IMPLEMENTATION_STATUS.md` to mark the tool as implemented
+8. **Add tests**: Write pytest tests in `tests/unit/` or `tests/integration/`
+9. **Update docs**: Add to README.md if it's a major user-facing feature
 
 ### Common Development Tasks
 
@@ -199,10 +250,12 @@ print(diagnose_document(doc))
 ```
 
 **Adding a new feature type:**
-1. Add backend method to `backends/features.py` in the `FeatureManager` class
-2. Add MCP tool wrapper in `server.py` in the appropriate section (marked with comments)
-3. Follow the existing pattern: try/except, return dict with status or error
-4. Update `IMPLEMENTATION_STATUS.md` table
+1. Look up the method signature in `reference/typelib_dump.json` (search for the method name in the relevant .tlb)
+2. Look up any required constants in `Program/constant.tlb > enums` and add to `backends/constants.py`
+3. Add backend method to `backends/features.py` in the `FeatureManager` class, using exact parameter names/types from the type library
+4. Add MCP tool wrapper in `server.py` in the appropriate section (marked with comments)
+5. Follow the existing pattern: try/except, return dict with status or error
+6. Update `IMPLEMENTATION_STATUS.md` table and check off in `reference/TYPELIB_IMPLEMENTATION_MAP.md`
 
 **Checking tool count:**
 ```bash

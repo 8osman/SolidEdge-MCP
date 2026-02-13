@@ -4,41 +4,42 @@ Last Updated: 2026-02-12
 
 ## MCP Server Status: **OPERATIONAL**
 
-**134 MCP tools** are now registered and ready to use!
+**241 MCP tools** are now registered and ready to use!
 
 ## Quick Summary
 
 | Category | Implemented | Notes |
 |----------|-------------|-------|
-| **Connection** | 3 | Connect, app info, quit |
-| **Document Management** | 11 | Create (part, assembly, sheet metal), open, save, close, list, activate, undo, redo |
-| **Sketching** | 11 | Lines, circles, arcs, rects, polygons, ellipses, splines, constraints, axis |
-| **Basic Primitives** | 5 | Box (3 variants), cylinder, sphere |
-| **Extrusions** | 3 | Finite, infinite, thin-wall |
+| **Connection** | 6 | Connect, disconnect, app info, quit, is_connected, process_info |
+| **Document Management** | 13 | Create (part, assembly, sheet metal, draft), open, save, close, list, activate, undo, redo |
+| **Sketching** | 22 | Lines, circles, arcs (multiple), rects, polygons, ellipses, splines, points, constraints (9 types), fillet, chamfer, mirror, construction, hide profile |
+| **Basic Primitives** | 8 | Box (3 variants), cylinder, sphere, box cutout, cylinder cutout, sphere cutout |
+| **Extrusions** | 4 | Finite, infinite, thin-wall, extruded surface |
 | **Revolves** | 5 | Basic, finite, sync, thin-wall |
-| **Cutouts** | 5 | Extruded finite, through-all, revolved, normal, lofted |
-| **Rounds/Chamfers/Holes** | 3 | Round (fillet), chamfer, hole |
-| **Reference Planes** | 2 | Offset parallel plane, list planes |
+| **Cutouts** | 9 | Extruded finite/through-all/through-next, revolved, normal/normal-through-all, lofted, swept, helix |
+| **Rounds/Chamfers/Holes** | 9 | Round (all/face), variable round, blend, chamfer (equal/unequal/angle/face), hole, hole through-all |
+| **Reference Planes** | 5 | Offset, normal-to-curve, angle, 3-points, mid-plane |
 | **Loft** | 2 | Basic, thin-wall |
 | **Sweep** | 2 | Basic, thin-wall |
 | **Helix/Spiral** | 4 | Basic, sync, thin-wall variants |
-| **Sheet Metal** | 8 | Base flange/tab, lofted flange, web network |
-| **Body Operations** | 7 | Add body, thicken, mesh, tag, construction |
+| **Construction Surfaces** | 3 | Revolved surface, lofted surface, swept surface |
+| **Sheet Metal** | 8 | Base flange/tab, lofted flange, web network, advanced variants |
+| **Body Operations** | 9 | Add body, thicken, mesh, tag, construction, delete holes, delete blends |
 | **Simplification** | 4 | Auto-simplify, enclosure, duplicate |
-| **View/Display** | 4 | Orientation, zoom, display mode |
-| **Variables** | 3 | Get all, get by name, set value |
+| **View/Display** | 7 | Orientation, zoom, display mode, background color, get/set camera |
+| **Variables** | 5 | Get all, get by name, set value, add variable, query/search |
 | **Custom Properties** | 3 | Get all, set/create, delete |
 | **Body Topology** | 3 | Body faces, body edges, face info |
 | **Performance** | 2 | Set performance mode, recompute |
-| **Query/Analysis** | 12 | Mass properties, bounding box, features, measurements, facet data, solid bodies, select set |
-| **Modeling Mode** | 2 | Get/set ordered vs synchronous |
-| **Feature Management** | 2 | Suppress, unsuppress features |
+| **Query/Analysis** | 20 | Mass properties, bounding box, features, measurements, facet data, solid bodies, modeling mode, face/edge info, colors, angles, volume, delete feature, material table |
+| **Feature Management** | 5 | Suppress, unsuppress, face rotate (2), draft angle |
 | **Export** | 10 | STEP, STL, IGES, PDF, DXF, flat DXF, Parasolid, JT, drawing, screenshot |
-| **Assembly** | 16 | Place, list, constraints, patterns, suppress, BOM, interference, bbox, relations, doc tree |
-| **Draft/Drawing** | 2 | Add sheet, assembly drawing view |
+| **Assembly** | 22 | Place, list, constraints, patterns, suppress, BOM, structured BOM, interference, bbox, relations, doc tree, replace, delete, visibility, color, transform, count |
+| **Draft/Drawing** | 10 | Sheets (add, activate, delete, rename), views, annotations (dimension, balloon, note, leader, text box) |
+| **Part Features** | 10 | Dimple, etch, rib, lip, drawn cutout, bead, louver, gusset, thread, slot, split |
 | **Diagnostics** | 2 | API and feature inspection |
-| **Select Set** | 2 | Get selection, clear selection |
-| **TOTAL** | **134** | |
+| **Select Set** | 3 | Get selection, clear selection, add to selection |
+| **TOTAL** | **241** | |
 
 ---
 

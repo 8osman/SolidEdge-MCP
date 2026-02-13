@@ -11,3 +11,6 @@ build/
 .env
 .claude/
 nul
+
+# Generated type library reference (19+ MB JSON)
+reference/typelib_dump.json

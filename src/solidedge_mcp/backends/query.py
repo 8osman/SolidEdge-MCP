@@ -474,6 +474,51 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
+    def add_variable(self, name: str, formula: str, units_type: str = None) -> Dict[str, Any]:
+        """
+        Create a new user variable in the active document.
+
+        Uses Variables.Add(pName, pFormula, [UnitsType]).
+        Type library: Add(pName: VT_BSTR, pFormula: VT_BSTR, [UnitsType: VT_VARIANT]) -> variable*.
+
+        Args:
+            name: Variable name (e.g., 'MyWidth', 'BoltDiameter')
+            formula: Variable formula/value as string (e.g., '0.025', 'V1 * 2')
+            units_type: Optional units type string
+
+        Returns:
+            Dict with status and variable info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            variables = doc.Variables
+
+            if units_type is not None:
+                var = variables.Add(name, formula, units_type)
+            else:
+                var = variables.Add(name, formula)
+
+            result = {
+                "status": "created",
+                "name": name,
+                "formula": formula
+            }
+            try:
+                result["value"] = var.Value
+            except Exception:
+                pass
+            try:
+                result["display_name"] = var.DisplayName
+            except Exception:
+                pass
+
+            return result
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     # =================================================================
     # CUSTOM PROPERTIES
     # =================================================================
@@ -1160,6 +1205,67 @@ class QueryManager:
             return {
                 "status": "cleared",
                 "items_removed": old_count
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def select_add(self, object_type: str, index: int) -> Dict[str, Any]:
+        """
+        Add an object to the selection set programmatically.
+
+        Uses SelectSet.Add(Dispatch). Resolves the object from the specified
+        type and index, then adds it to the current selection.
+        Type library: SelectSet.Add(Dispatch: VT_DISPATCH) -> VT_VOID.
+
+        Args:
+            object_type: Type of object to select: 'feature', 'face', 'edge', 'plane'
+            index: 0-based index of the object
+
+        Returns:
+            Dict with status and selection info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            select_set = doc.SelectSet
+
+            obj = None
+            if object_type == "feature":
+                features = doc.DesignEdgebarFeatures
+                if index < 0 or index >= features.Count:
+                    return {"error": f"Invalid feature index: {index}. Count: {features.Count}"}
+                obj = features.Item(index + 1)
+            elif object_type == "face":
+                models = doc.Models
+                if models.Count == 0:
+                    return {"error": "No model features exist"}
+                model = models.Item(1)
+                body = model.Body
+                faces = body.Faces(1)  # igQueryAll = 1
+                if index < 0 or index >= faces.Count:
+                    return {"error": f"Invalid face index: {index}. Count: {faces.Count}"}
+                obj = faces.Item(index + 1)
+            elif object_type == "plane":
+                ref_planes = doc.RefPlanes
+                plane_idx = index + 1
+                if plane_idx < 1 or plane_idx > ref_planes.Count:
+                    return {"error": f"Invalid plane index: {index}. Count: {ref_planes.Count}"}
+                obj = ref_planes.Item(plane_idx)
+            else:
+                return {"error": f"Unsupported object type: {object_type}. Use 'feature', 'face', or 'plane'."}
+
+            if obj is None:
+                return {"error": "Could not resolve object to select"}
+
+            select_set.Add(obj)
+
+            return {
+                "status": "added",
+                "object_type": object_type,
+                "index": index,
+                "selection_count": select_set.Count
             }
         except Exception as e:
             return {
@@ -1941,6 +2047,97 @@ class QueryManager:
             return {
                 "material_properties": material_vars,
                 "property_count": len(material_vars)
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def query_variables(self, pattern: str = "*",
+                        case_insensitive: bool = True) -> Dict[str, Any]:
+        """
+        Search variables by name pattern.
+
+        Uses Variables.Query(pFindCriterium, NamedBy, VarType, CaseInsensitive)
+        to find matching variables. Supports wildcards (* and ?).
+
+        Args:
+            pattern: Search pattern with wildcards (e.g., "*Length*", "V?")
+            case_insensitive: Whether to ignore case (default True)
+
+        Returns:
+            Dict with matching variables
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            variables = doc.Variables
+
+            # Variables.Query returns a collection of matching variables
+            # NamedBy: 0 = DisplayName, 1 = SystemName
+            # VarType: 0 = All, 1 = Dimensions, 2 = UserVariables
+            try:
+                results = variables.Query(pattern, 0, 0, case_insensitive)
+            except Exception:
+                # Fallback: manual filtering if Query method not available
+                matches = []
+                import fnmatch
+                for i in range(1, variables.Count + 1):
+                    try:
+                        var = variables.Item(i)
+                        name = var.Name if hasattr(var, 'Name') else str(i)
+                        if case_insensitive:
+                            match = fnmatch.fnmatch(name.lower(), pattern.lower())
+                        else:
+                            match = fnmatch.fnmatch(name, pattern)
+                        if match:
+                            entry = {"name": name}
+                            try:
+                                entry["value"] = var.Value
+                            except Exception:
+                                pass
+                            try:
+                                entry["formula"] = var.Formula
+                            except Exception:
+                                pass
+                            matches.append(entry)
+                    except Exception:
+                        continue
+
+                return {
+                    "pattern": pattern,
+                    "matches": matches,
+                    "count": len(matches),
+                    "method": "fallback_fnmatch"
+                }
+
+            # Process Query results
+            matches = []
+            if results is not None:
+                try:
+                    for i in range(1, results.Count + 1):
+                        var = results.Item(i)
+                        entry = {}
+                        try:
+                            entry["name"] = var.Name
+                        except Exception:
+                            entry["name"] = f"var_{i}"
+                        try:
+                            entry["value"] = var.Value
+                        except Exception:
+                            pass
+                        try:
+                            entry["formula"] = var.Formula
+                        except Exception:
+                            pass
+                        matches.append(entry)
+                except Exception:
+                    pass
+
+            return {
+                "pattern": pattern,
+                "matches": matches,
+                "count": len(matches)
             }
         except Exception as e:
             return {

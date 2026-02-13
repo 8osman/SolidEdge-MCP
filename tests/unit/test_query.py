@@ -1239,3 +1239,254 @@ class TestGetMaterialTable:
         result = qm.get_material_table()
         assert result["property_count"] >= 1
         assert "Density" in result["material_properties"]
+
+
+# ============================================================================
+# TIER 1: ADD VARIABLE
+# ============================================================================
+
+class TestAddVariable:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+        variables = MagicMock()
+        new_var = MagicMock()
+        new_var.Value = 0.025
+        new_var.DisplayName = "MyWidth"
+        variables.Add.return_value = new_var
+        doc.Variables = variables
+
+        result = qm.add_variable("MyWidth", "0.025")
+        assert result["status"] == "created"
+        assert result["name"] == "MyWidth"
+        assert result["formula"] == "0.025"
+        assert result["value"] == 0.025
+        variables.Add.assert_called_once_with("MyWidth", "0.025")
+
+    def test_with_units(self, query_mgr):
+        qm, doc = query_mgr
+        variables = MagicMock()
+        new_var = MagicMock()
+        new_var.Value = 0.01
+        new_var.DisplayName = "BoltDia"
+        variables.Add.return_value = new_var
+        doc.Variables = variables
+
+        result = qm.add_variable("BoltDia", "0.01", units_type="m")
+        assert result["status"] == "created"
+        variables.Add.assert_called_once_with("BoltDia", "0.01", "m")
+
+    def test_formula_expression(self, query_mgr):
+        qm, doc = query_mgr
+        variables = MagicMock()
+        new_var = MagicMock()
+        new_var.Value = 0.05
+        new_var.DisplayName = "TotalWidth"
+        variables.Add.return_value = new_var
+        doc.Variables = variables
+
+        result = qm.add_variable("TotalWidth", "MyWidth * 2")
+        assert result["status"] == "created"
+        assert result["formula"] == "MyWidth * 2"
+
+
+# ============================================================================
+# TIER 1: SELECT ADD
+# ============================================================================
+
+class TestSelectAdd:
+    def test_add_feature(self, query_mgr):
+        qm, doc = query_mgr
+        select_set = MagicMock()
+        select_set.Count = 1
+        doc.SelectSet = select_set
+
+        features = MagicMock()
+        features.Count = 3
+        feat = MagicMock()
+        features.Item.return_value = feat
+        doc.DesignEdgebarFeatures = features
+
+        result = qm.select_add("feature", 0)
+        assert result["status"] == "added"
+        assert result["object_type"] == "feature"
+        assert result["selection_count"] == 1
+        select_set.Add.assert_called_once_with(feat)
+
+    def test_add_face(self, query_mgr):
+        qm, doc = query_mgr
+        select_set = MagicMock()
+        select_set.Count = 1
+        doc.SelectSet = select_set
+
+        models = MagicMock()
+        models.Count = 1
+        model = MagicMock()
+        models.Item.return_value = model
+        doc.Models = models
+
+        body = MagicMock()
+        model.Body = body
+        face = MagicMock()
+        faces = MagicMock()
+        faces.Count = 5
+        faces.Item.return_value = face
+        body.Faces.return_value = faces
+
+        result = qm.select_add("face", 2)
+        assert result["status"] == "added"
+        assert result["object_type"] == "face"
+        select_set.Add.assert_called_once_with(face)
+
+    def test_add_plane(self, query_mgr):
+        qm, doc = query_mgr
+        select_set = MagicMock()
+        select_set.Count = 1
+        doc.SelectSet = select_set
+
+        ref_planes = MagicMock()
+        ref_planes.Count = 3
+        plane = MagicMock()
+        ref_planes.Item.return_value = plane
+        doc.RefPlanes = ref_planes
+
+        result = qm.select_add("plane", 0)
+        assert result["status"] == "added"
+        assert result["object_type"] == "plane"
+        select_set.Add.assert_called_once_with(plane)
+
+    def test_invalid_type(self, query_mgr):
+        qm, doc = query_mgr
+        select_set = MagicMock()
+        doc.SelectSet = select_set
+
+        result = qm.select_add("invalid", 0)
+        assert "error" in result
+        assert "Unsupported object type" in result["error"]
+
+    def test_invalid_feature_index(self, query_mgr):
+        qm, doc = query_mgr
+        select_set = MagicMock()
+        doc.SelectSet = select_set
+
+        features = MagicMock()
+        features.Count = 2
+        doc.DesignEdgebarFeatures = features
+
+        result = qm.select_add("feature", 5)
+        assert "error" in result
+        assert "Invalid feature index" in result["error"]
+
+    def test_invalid_face_index(self, query_mgr):
+        qm, doc = query_mgr
+        select_set = MagicMock()
+        doc.SelectSet = select_set
+
+        models = MagicMock()
+        models.Count = 1
+        model = MagicMock()
+        models.Item.return_value = model
+        doc.Models = models
+
+        body = MagicMock()
+        model.Body = body
+        faces = MagicMock()
+        faces.Count = 3
+        body.Faces.return_value = faces
+
+        result = qm.select_add("face", 10)
+        assert "error" in result
+        assert "Invalid face index" in result["error"]
+
+
+# ============================================================================
+# TIER 2: QUERY VARIABLES
+# ============================================================================
+
+class TestQueryVariables:
+    def test_query_with_fallback(self, query_mgr):
+        """Test fallback fnmatch when Variables.Query not available."""
+        qm, doc = query_mgr
+        variables = MagicMock()
+        variables.Count = 3
+        variables.Query.side_effect = Exception("Not available")
+
+        v1 = MagicMock()
+        v1.Name = "Length"
+        v1.Value = 0.1
+        v1.Formula = "0.1"
+
+        v2 = MagicMock()
+        v2.Name = "Width"
+        v2.Value = 0.05
+        v2.Formula = "0.05"
+
+        v3 = MagicMock()
+        v3.Name = "LengthOffset"
+        v3.Value = 0.02
+        v3.Formula = "Length / 5"
+
+        variables.Item.side_effect = lambda i: [None, v1, v2, v3][i]
+        doc.Variables = variables
+
+        result = qm.query_variables("*Length*")
+        assert result["count"] == 2
+        assert result["method"] == "fallback_fnmatch"
+        names = [m["name"] for m in result["matches"]]
+        assert "Length" in names
+        assert "LengthOffset" in names
+
+    def test_query_with_native(self, query_mgr):
+        """Test native Variables.Query when available."""
+        qm, doc = query_mgr
+        variables = MagicMock()
+
+        # Mock Query return value
+        query_results = MagicMock()
+        query_results.Count = 1
+        var = MagicMock()
+        var.Name = "Width"
+        var.Value = 0.05
+        var.Formula = "0.05"
+        query_results.Item.return_value = var
+        variables.Query.return_value = query_results
+        doc.Variables = variables
+
+        result = qm.query_variables("Width")
+        assert result["count"] == 1
+        assert result["matches"][0]["name"] == "Width"
+        variables.Query.assert_called_once_with("Width", 0, 0, True)
+
+    def test_case_insensitive(self, query_mgr):
+        """Test case-insensitive search with fallback."""
+        qm, doc = query_mgr
+        variables = MagicMock()
+        variables.Count = 1
+        variables.Query.side_effect = Exception("Not available")
+
+        v1 = MagicMock()
+        v1.Name = "MASS"
+        v1.Value = 1.5
+        v1.Formula = "1.5"
+        variables.Item.return_value = v1
+        doc.Variables = variables
+
+        result = qm.query_variables("*mass*", case_insensitive=True)
+        assert result["count"] == 1
+        assert result["matches"][0]["name"] == "MASS"
+
+    def test_no_matches(self, query_mgr):
+        """Test query with no matching variables."""
+        qm, doc = query_mgr
+        variables = MagicMock()
+        variables.Count = 1
+        variables.Query.side_effect = Exception("Not available")
+
+        v1 = MagicMock()
+        v1.Name = "Length"
+        v1.Value = 0.1
+        variables.Item.return_value = v1
+        doc.Variables = variables
+
+        result = qm.query_variables("*Xyz*")
+        assert result["count"] == 0
+        assert result["matches"] == []

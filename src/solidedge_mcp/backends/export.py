@@ -1142,3 +1142,94 @@ class ViewModel:
                 "error": str(e),
                 "traceback": traceback.format_exc()
             }
+
+    def get_camera(self) -> Dict[str, Any]:
+        """
+        Get the current camera parameters.
+
+        Returns eye position, target position, up vector, perspective flag,
+        and scale/field-of-view angle.
+
+        Returns:
+            Dict with camera parameters
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Windows') or doc.Windows.Count == 0:
+                return {"error": "No window available"}
+
+            window = doc.Windows.Item(1)
+            view_obj = window.View if hasattr(window, 'View') else None
+
+            if not view_obj:
+                return {"error": "Cannot access view object"}
+
+            # GetCamera returns 11 out-params by reference
+            result = view_obj.GetCamera()
+
+            # result is a tuple: (EyeX, EyeY, EyeZ, TargetX, TargetY, TargetZ,
+            #                     UpX, UpY, UpZ, Perspective, ScaleOrAngle)
+            return {
+                "eye": [result[0], result[1], result[2]],
+                "target": [result[3], result[4], result[5]],
+                "up": [result[6], result[7], result[8]],
+                "perspective": bool(result[9]),
+                "scale_or_angle": result[10]
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def set_camera(self, eye_x: float, eye_y: float, eye_z: float,
+                   target_x: float, target_y: float, target_z: float,
+                   up_x: float = 0.0, up_y: float = 1.0, up_z: float = 0.0,
+                   perspective: bool = False,
+                   scale_or_angle: float = 1.0) -> Dict[str, Any]:
+        """
+        Set the camera parameters for the active view.
+
+        Args:
+            eye_x, eye_y, eye_z: Camera eye (position) coordinates
+            target_x, target_y, target_z: Camera target (look-at) coordinates
+            up_x, up_y, up_z: Camera up vector (default: Y-up)
+            perspective: True for perspective, False for orthographic
+            scale_or_angle: View scale (ortho) or FOV angle in radians (perspective)
+
+        Returns:
+            Dict with status and camera settings
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Windows') or doc.Windows.Count == 0:
+                return {"error": "No window available"}
+
+            window = doc.Windows.Item(1)
+            view_obj = window.View if hasattr(window, 'View') else None
+
+            if not view_obj:
+                return {"error": "Cannot access view object"}
+
+            view_obj.SetCamera(
+                eye_x, eye_y, eye_z,
+                target_x, target_y, target_z,
+                up_x, up_y, up_z,
+                perspective, scale_or_angle
+            )
+
+            return {
+                "status": "camera_set",
+                "eye": [eye_x, eye_y, eye_z],
+                "target": [target_x, target_y, target_z],
+                "up": [up_x, up_y, up_z],
+                "perspective": perspective,
+                "scale_or_angle": scale_or_angle
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
