@@ -151,6 +151,51 @@ class ModelingModeConstants:
     seModelingModeOrdered = 2
 
 
+class TreatmentTypeConstants:
+    """Treatment type constants for extruded surfaces (from type library)"""
+    seTreatmentNone = 0
+    seTreatmentCrown = 1
+    seTreatmentDraft = 2
+    seTreatmentCrownAndDraft = 3
+
+
+class DraftSideConstants:
+    """Draft side constants (from type library)"""
+    seDraftNone = 0
+    seDraftInside = 1
+    seDraftOutside = 2
+
+
+class TreatmentCrownTypeConstants:
+    """Crown type constants (from type library)"""
+    seTreatmentCrownByRadius = 0
+    seTreatmentCrownByOffset = 1
+
+
+class TreatmentCrownSideConstants:
+    """Crown side constants (from type library)"""
+    seTreatmentCrownSideInside = 0
+    seTreatmentCrownSideOutside = 1
+
+
+class TreatmentCrownCurvatureSideConstants:
+    """Crown curvature side constants (from type library)"""
+    seTreatmentCrownCurvatureInside = 0
+    seTreatmentCrownCurvatureOutside = 1
+
+
+class OffsetSideConstants:
+    """Offset side constants (from type library)"""
+    seOffsetNone = 0
+    seOffsetInside = 1
+    seOffsetOutside = 2
+
+
+class KeyPointExtentConstants:
+    """Keypoint extent constants (from type library)"""
+    igTangentNormal = 0
+
+
 class LoftSweepConstants:
     """Loft and sweep profile type constants (from type library)"""
     igProfileBasedCrossSection = 48

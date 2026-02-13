@@ -10,7 +10,7 @@
 
 | Metric | Count |
 |--------|-------|
-| **Our implemented MCP tools** | 210 |
+| **Our implemented MCP tools** | 211 |
 | **API operations found in community repos** | 250+ |
 | **Operations we're missing** | ~20 |
 | **High-priority gaps remaining** | ~3 |
@@ -142,7 +142,7 @@
 | Through-all extrusion | `ExtrudedProtrusions.AddThroughAll(...)` | YES (untested) | Untested | Interop |
 | Infinite extrusion | `Models.AddExtrudedProtrusion(...)` | YES (untested) | Untested | — |
 | Thin-wall extrusion | `Models.AddExtrudedProtrusionWithThinWall(...)` | YES (untested) | Broken | — |
-| Extruded surface | `Constructions.ExtrudedSurfaces.Add(...)` | NO | **Available** | Samples |
+| Extruded surface | `Constructions.ExtrudedSurfaces.Add(...)` | YES | Working | Samples |
 
 ## 6. Revolves
 
@@ -603,7 +603,7 @@ Connection                  8              8            100%
 Documents                   19             19           100%
 Sketching 2D                25             25           100%
 Constraints                 8              8            100%
-Extrusions                  3              5            60%
+Extrusions                  5              5            100%
 Revolves                    5              5            100%
 Cutouts                     6              6            100%
 Loft & Sweep                4              6            67%
@@ -625,7 +625,7 @@ Performance                 4              5            80%
 Feature Management          6              8            75%
 Topology Query              8              13           62%
 ─────────────────────────────────────────────────────────────
-TOTAL                       210            ~250         84%
+TOTAL                       211            ~250         84%
 ```
 
 ---

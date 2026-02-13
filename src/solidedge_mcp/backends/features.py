@@ -1074,6 +1074,105 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
+    def create_extruded_surface(self, distance: float,
+                                direction: str = "Normal",
+                                end_caps: bool = True) -> Dict[str, Any]:
+        """
+        Create an extruded surface (construction geometry, not solid body).
+
+        Extrudes the active sketch profile as a surface rather than a solid.
+        Surfaces are useful as construction geometry for trimming, splitting,
+        or as reference faces.
+
+        Args:
+            distance: Extrusion distance in meters
+            direction: 'Normal' or 'Symmetric'
+            end_caps: If True, close the surface ends
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+
+            if not profile:
+                return {"error": "No active sketch profile"}
+
+            constructions = doc.Constructions
+            extruded_surfaces = constructions.ExtrudedSurfaces
+
+            # Build profile array
+            profile_array = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
+
+            # Constants
+            igFinite = 13
+            igRight = 2
+            igLeft = 1
+            igTangentNormal = 0
+            seOffsetNone = 0
+            seTreatmentNone = 0
+            seDraftNone = 0
+            seTreatmentCrownByOffset = 1
+            seTreatmentCrownSideInside = 0
+            seTreatmentCrownCurvatureInside = 0
+
+            depth1 = distance
+            depth2 = distance if direction == "Symmetric" else 0.0
+            side1 = igRight
+            side2 = igLeft if direction == "Symmetric" else igRight
+
+            extruded_surface = extruded_surfaces.Add(
+                1,                      # NumberOfProfiles
+                profile_array,          # ProfileArray
+                igFinite,               # ExtentType1
+                side1,                  # ExtentSide1
+                depth1,                 # FiniteDepth1
+                None,                   # KeyPointOrTangentFace1
+                igTangentNormal,        # KeyPointFlags1
+                None,                   # FromFaceOrRefPlane
+                seOffsetNone,           # FromFaceOffsetSide
+                0.0,                    # FromFaceOffsetDistance
+                seTreatmentNone,        # TreatmentType1
+                seDraftNone,            # TreatmentDraftSide1
+                0.0,                    # TreatmentDraftAngle1
+                seTreatmentCrownByOffset,       # TreatmentCrownType1
+                seTreatmentCrownSideInside,     # TreatmentCrownSide1
+                seTreatmentCrownCurvatureInside, # TreatmentCrownCurvatureSide1
+                0.0,                    # TreatmentCrownRadiusOrOffset1
+                0.0,                    # TreatmentCrownTakeOffAngle1
+                igFinite,               # ExtentType2
+                side2,                  # ExtentSide2
+                depth2,                 # FiniteDepth2
+                None,                   # KeyPointOrTangentFace2
+                igTangentNormal,        # KeyPointFlags2
+                None,                   # ToFaceOrRefPlane
+                seOffsetNone,           # ToFaceOffsetSide
+                0.0,                    # ToFaceOffsetDistance
+                seTreatmentNone,        # TreatmentType2
+                seDraftNone,            # TreatmentDraftSide2
+                0.0,                    # TreatmentDraftAngle2
+                seTreatmentCrownByOffset,       # TreatmentCrownType2
+                seTreatmentCrownSideInside,     # TreatmentCrownSide2
+                seTreatmentCrownCurvatureInside, # TreatmentCrownCurvatureSide2
+                0.0,                    # TreatmentCrownRadiusOrOffset2
+                0.0,                    # TreatmentCrownTakeOffAngle2
+                end_caps                # WantEndCaps
+            )
+
+            return {
+                "status": "created",
+                "type": "extruded_surface",
+                "distance": distance,
+                "direction": direction,
+                "end_caps": end_caps
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     # =================================================================
     # HELIX AND SPIRAL FEATURES
     # =================================================================

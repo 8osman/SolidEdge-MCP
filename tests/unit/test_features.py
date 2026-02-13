@@ -885,3 +885,57 @@ class TestSketchMirror:
 
         result = sm.sketch_mirror()
         assert "error" in result
+
+
+# ============================================================================
+# EXTRUDED SURFACE
+# ============================================================================
+
+class TestCreateExtrudedSurface:
+    def test_success_normal(self):
+        from solidedge_mcp.backends.features import FeatureManager
+        dm = MagicMock()
+        sm = MagicMock()
+        fm = FeatureManager(dm, sm)
+
+        doc = MagicMock()
+        profile = MagicMock()
+        dm.get_active_document.return_value = doc
+        sm.get_active_sketch.return_value = profile
+
+        surface = MagicMock()
+        doc.Constructions.ExtrudedSurfaces.Add.return_value = surface
+
+        result = fm.create_extruded_surface(0.05, direction="Normal", end_caps=True)
+        assert result["status"] == "created"
+        assert result["type"] == "extruded_surface"
+        assert result["distance"] == 0.05
+        assert result["direction"] == "Normal"
+        doc.Constructions.ExtrudedSurfaces.Add.assert_called_once()
+
+    def test_success_symmetric(self):
+        from solidedge_mcp.backends.features import FeatureManager
+        dm = MagicMock()
+        sm = MagicMock()
+        fm = FeatureManager(dm, sm)
+
+        doc = MagicMock()
+        profile = MagicMock()
+        dm.get_active_document.return_value = doc
+        sm.get_active_sketch.return_value = profile
+
+        result = fm.create_extruded_surface(0.03, direction="Symmetric")
+        assert result["status"] == "created"
+        assert result["direction"] == "Symmetric"
+
+    def test_no_profile(self):
+        from solidedge_mcp.backends.features import FeatureManager
+        dm = MagicMock()
+        sm = MagicMock()
+        fm = FeatureManager(dm, sm)
+
+        dm.get_active_document.return_value = MagicMock()
+        sm.get_active_sketch.return_value = None
+
+        result = fm.create_extruded_surface(0.05)
+        assert "error" in result

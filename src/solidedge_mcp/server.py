@@ -901,6 +901,27 @@ def create_extrude_infinite(direction: str = "Normal") -> dict:
 
 
 @mcp.tool()
+def create_extruded_surface(distance: float, direction: str = "Normal",
+                            end_caps: bool = True) -> dict:
+    """
+    Create an extruded surface (construction geometry, not solid body).
+
+    Extrudes the active sketch profile as a surface. Surfaces are useful as
+    construction geometry for trimming, splitting, or as reference faces.
+    Uses doc.Constructions.ExtrudedSurfaces.Add().
+
+    Args:
+        distance: Extrusion distance in meters
+        direction: 'Normal' or 'Symmetric'
+        end_caps: If True, close the surface ends
+
+    Returns:
+        Extruded surface creation status
+    """
+    return feature_manager.create_extruded_surface(distance, direction, end_caps)
+
+
+@mcp.tool()
 def create_revolve_finite(angle: float, axis_type: str = "CenterLine") -> dict:
     """
     Create a finite revolve feature.
