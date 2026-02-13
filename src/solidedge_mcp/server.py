@@ -631,14 +631,53 @@ def add_constraint(constraint_type: str, elements: list) -> dict:
     """
     Add a geometric constraint to sketch elements.
 
+    Elements are specified as [type, index] pairs where type is one of
+    'line', 'circle', 'arc', 'ellipse', 'spline' and index is 1-based
+    within that collection.
+
+    Single-element constraints (Horizontal, Vertical) require 1 element.
+    Two-element constraints (Parallel, Perpendicular, Equal, Concentric, Tangent)
+    require 2 elements.
+
     Args:
-        constraint_type: Type of constraint (e.g., 'Horizontal', 'Vertical', 'Parallel', 'Equal')
-        elements: List of sketch element references
+        constraint_type: 'Horizontal', 'Vertical', 'Parallel', 'Perpendicular',
+                        'Equal', 'Concentric', 'Tangent'
+        elements: List of [type, index] pairs, e.g. [["line", 1], ["line", 2]]
 
     Returns:
         Constraint creation status
     """
     return sketch_manager.add_constraint(constraint_type, elements)
+
+
+@mcp.tool()
+def add_keypoint_constraint(
+    element1_type: str, element1_index: int, keypoint1: int,
+    element2_type: str, element2_index: int, keypoint2: int
+) -> dict:
+    """
+    Add a keypoint constraint connecting two sketch elements at specific points.
+
+    Connects a keypoint on one element to a keypoint on another. This is the
+    fundamental constraint for connecting sketch geometry end-to-end.
+
+    Keypoint indices: 0=start, 1=end for lines/arcs; 0=center for circles.
+
+    Args:
+        element1_type: Type of first element ('line', 'circle', 'arc', etc.)
+        element1_index: 1-based index of first element in its collection
+        keypoint1: Keypoint index on first element (0=start, 1=end)
+        element2_type: Type of second element
+        element2_index: 1-based index of second element
+        keypoint2: Keypoint index on second element (0=start, 1=end)
+
+    Returns:
+        Constraint creation status
+    """
+    return sketch_manager.add_keypoint_constraint(
+        element1_type, element1_index, keypoint1,
+        element2_type, element2_index, keypoint2
+    )
 
 
 @mcp.tool()

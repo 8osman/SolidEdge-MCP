@@ -654,21 +654,153 @@ class SketchManager:
                 "traceback": traceback.format_exc()
             }
 
+    def _get_sketch_element(self, element_type: str, index: int):
+        """
+        Resolve a sketch element by type name and 1-based index.
+
+        Args:
+            element_type: 'line', 'circle', 'arc', 'ellipse', 'spline'
+            index: 1-based index within that collection
+
+        Returns:
+            COM object for the sketch element
+
+        Raises:
+            ValueError: If type or index is invalid
+        """
+        profile = self.active_profile
+        type_map = {
+            "line": "Lines2d",
+            "circle": "Circles2d",
+            "arc": "Arcs2d",
+            "ellipse": "Ellipses2d",
+            "spline": "BSplineCurves2d",
+        }
+        collection_name = type_map.get(element_type.lower())
+        if not collection_name:
+            raise ValueError(f"Unknown element type: '{element_type}'. Use: {', '.join(type_map.keys())}")
+
+        collection = getattr(profile, collection_name)
+        if index < 1 or index > collection.Count:
+            raise ValueError(f"Index {index} out of range for {element_type} (count: {collection.Count})")
+
+        return collection.Item(index)
+
     def add_constraint(self, constraint_type: str, elements: list) -> Dict[str, Any]:
-        """Add a geometric constraint to sketch elements"""
+        """
+        Add a geometric constraint to sketch elements.
+
+        Elements are specified as [type, index] pairs where type is
+        'line', 'circle', 'arc', 'ellipse', or 'spline' and index is
+        1-based within that collection.
+
+        Args:
+            constraint_type: 'Horizontal', 'Vertical', 'Parallel', 'Perpendicular',
+                           'Equal', 'Concentric', 'Tangent'
+            elements: List of [type, index] pairs, e.g. [["line", 1], ["line", 2]]
+
+        Returns:
+            Dict with status
+        """
         try:
             if not self.active_profile:
                 return {"error": "No active sketch"}
 
             relations = self.active_profile.Relations2d
 
-            # This is a simplified version - actual implementation would vary
-            # based on constraint type
+            # Resolve element references
+            objs = []
+            for elem in elements:
+                if not isinstance(elem, (list, tuple)) or len(elem) != 2:
+                    return {"error": f"Each element must be [type, index], got: {elem}"}
+                objs.append(self._get_sketch_element(elem[0], elem[1]))
+
+            ct = constraint_type.lower()
+
+            # Single-element constraints
+            if ct == "horizontal":
+                if len(objs) < 1:
+                    return {"error": "Horizontal constraint requires 1 element"}
+                relations.AddHorizontal(objs[0])
+            elif ct == "vertical":
+                if len(objs) < 1:
+                    return {"error": "Vertical constraint requires 1 element"}
+                relations.AddVertical(objs[0])
+            # Two-element constraints
+            elif ct == "parallel":
+                if len(objs) < 2:
+                    return {"error": "Parallel constraint requires 2 elements"}
+                relations.AddParallel(objs[0], objs[1])
+            elif ct == "perpendicular":
+                if len(objs) < 2:
+                    return {"error": "Perpendicular constraint requires 2 elements"}
+                relations.AddPerpendicular(objs[0], objs[1])
+            elif ct == "equal":
+                if len(objs) < 2:
+                    return {"error": "Equal constraint requires 2 elements"}
+                relations.AddEqual(objs[0], objs[1])
+            elif ct == "concentric":
+                if len(objs) < 2:
+                    return {"error": "Concentric constraint requires 2 elements"}
+                relations.AddConcentric(objs[0], objs[1])
+            elif ct == "tangent":
+                if len(objs) < 2:
+                    return {"error": "Tangent constraint requires 2 elements"}
+                relations.AddTangent(objs[0], objs[1])
+            else:
+                return {"error": f"Unknown constraint type: '{constraint_type}'. "
+                        "Use: Horizontal, Vertical, Parallel, Perpendicular, Equal, Concentric, Tangent"}
+
             return {
                 "status": "constraint_added",
                 "type": constraint_type,
-                "note": "Constraint functionality requires specific element references"
+                "elements": elements
             }
+        except ValueError as e:
+            return {"error": str(e)}
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def add_keypoint_constraint(self, element1_type: str, element1_index: int,
+                                 keypoint1: int, element2_type: str,
+                                 element2_index: int, keypoint2: int) -> Dict[str, Any]:
+        """
+        Add a keypoint constraint connecting two sketch elements at specific points.
+
+        Keypoint indices: 0=start, 1=end for lines/arcs; 0=center for circles.
+
+        Args:
+            element1_type: Type of first element ('line', 'circle', 'arc', etc.)
+            element1_index: 1-based index of first element
+            keypoint1: Keypoint index on first element (0=start, 1=end)
+            element2_type: Type of second element
+            element2_index: 1-based index of second element
+            keypoint2: Keypoint index on second element (0=start, 1=end)
+
+        Returns:
+            Dict with status
+        """
+        try:
+            if not self.active_profile:
+                return {"error": "No active sketch"}
+
+            obj1 = self._get_sketch_element(element1_type, element1_index)
+            obj2 = self._get_sketch_element(element2_type, element2_index)
+
+            relations = self.active_profile.Relations2d
+            relations.AddKeypoint(obj1, keypoint1, obj2, keypoint2)
+
+            return {
+                "status": "constraint_added",
+                "type": "Keypoint",
+                "element1": [element1_type, element1_index, keypoint1],
+                "element2": [element2_type, element2_index, keypoint2]
+            }
+        except ValueError as e:
+            return {"error": str(e)}
         except Exception as e:
             return {
                 "error": str(e),

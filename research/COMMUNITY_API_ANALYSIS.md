@@ -10,7 +10,7 @@
 
 | Metric | Count |
 |--------|-------|
-| **Our implemented MCP tools** | 209 |
+| **Our implemented MCP tools** | 210 |
 | **API operations found in community repos** | 250+ |
 | **Operations we're missing** | ~20 |
 | **High-priority gaps remaining** | ~3 |
@@ -123,16 +123,16 @@
 
 | API Operation | COM Method | We Have? | Status | Source |
 |---|---|---|---|---|
-| Keypoint constraint | `Relations2d.AddKeypoint(obj1, kp1, obj2, kp2)` | Stub | Needs work | Samples |
-| Equal constraint | `Relations2d.AddEqual(obj1, obj2)` | Stub | Needs work | Samples |
-| Parallel constraint | `Relations2d.AddParallel(obj1, obj2)` | Stub | Needs work | Interop |
-| Perpendicular constraint | `Relations2d.AddPerpendicular(obj1, obj2)` | Stub | Needs work | Interop |
-| Concentric constraint | `Relations2d.AddConcentric(obj1, obj2)` | Stub | Needs work | Interop |
-| Tangent constraint | `Relations2d.AddTangent(obj1, obj2)` | Stub | Needs work | Interop |
-| Horizontal constraint | `Relations2d.AddHorizontal(obj)` | Stub | Needs work | Interop |
-| Vertical constraint | `Relations2d.AddVertical(obj)` | Stub | Needs work | Interop |
+| Keypoint constraint | `Relations2d.AddKeypoint(obj1, kp1, obj2, kp2)` | YES | Working | Samples |
+| Equal constraint | `Relations2d.AddEqual(obj1, obj2)` | YES | Working | Samples |
+| Parallel constraint | `Relations2d.AddParallel(obj1, obj2)` | YES | Working | Interop |
+| Perpendicular constraint | `Relations2d.AddPerpendicular(obj1, obj2)` | YES | Working | Interop |
+| Concentric constraint | `Relations2d.AddConcentric(obj1, obj2)` | YES | Working | Interop |
+| Tangent constraint | `Relations2d.AddTangent(obj1, obj2)` | YES | Working | Interop |
+| Horizontal constraint | `Relations2d.AddHorizontal(obj)` | YES | Working | Interop |
+| Vertical constraint | `Relations2d.AddVertical(obj)` | YES | Working | Interop |
 
-**Note:** Constraints are stubbed in our `add_constraint` tool. The challenge is referencing specific sketch elements. Could be improved by tracking element indices during sketch creation.
+**Note:** Elements are referenced as `[type, index]` pairs (e.g., `["line", 1]`). The `add_constraint` tool supports all 7 constraint types, and `add_keypoint_constraint` handles endpoint-to-endpoint connections.
 
 ## 5. Extrusions
 
@@ -602,7 +602,7 @@ Category                    Implemented    Available    Coverage
 Connection                  8              8            100%
 Documents                   19             19           100%
 Sketching 2D                25             25           100%
-Constraints                 1 (stub)       8            13%
+Constraints                 8              8            100%
 Extrusions                  3              5            60%
 Revolves                    5              5            100%
 Cutouts                     6              6            100%
@@ -625,7 +625,7 @@ Performance                 4              5            80%
 Feature Management          6              8            75%
 Topology Query              8              13           62%
 ─────────────────────────────────────────────────────────────
-TOTAL                       209            ~250         84%
+TOTAL                       210            ~250         84%
 ```
 
 ---

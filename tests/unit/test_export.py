@@ -1351,3 +1351,139 @@ class TestHideProfile:
         sm = SketchManager(MagicMock())
         result = sm.hide_profile()
         assert "error" in result
+
+
+# ============================================================================
+# CONSTRAINTS: ADD_CONSTRAINT (all types)
+# ============================================================================
+
+class TestAddConstraint:
+    @pytest.fixture
+    def sketch_mgr(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        dm = MagicMock()
+        sm = SketchManager(dm)
+        sm.active_profile = MagicMock()
+        # Set up Lines2d collection with 2 items
+        line1 = MagicMock(name="line1")
+        line2 = MagicMock(name="line2")
+        lines = MagicMock()
+        lines.Count = 2
+        lines.Item.side_effect = lambda i: {1: line1, 2: line2}[i]
+        sm.active_profile.Lines2d = lines
+        # Set up Circles2d with 2 items
+        circ1 = MagicMock(name="circ1")
+        circ2 = MagicMock(name="circ2")
+        circles = MagicMock()
+        circles.Count = 2
+        circles.Item.side_effect = lambda i: {1: circ1, 2: circ2}[i]
+        sm.active_profile.Circles2d = circles
+        return sm, line1, line2, circ1, circ2
+
+    def test_horizontal(self, sketch_mgr):
+        sm, line1, _, _, _ = sketch_mgr
+        result = sm.add_constraint("Horizontal", [["line", 1]])
+        assert result["status"] == "constraint_added"
+        sm.active_profile.Relations2d.AddHorizontal.assert_called_once_with(line1)
+
+    def test_vertical(self, sketch_mgr):
+        sm, line1, _, _, _ = sketch_mgr
+        result = sm.add_constraint("Vertical", [["line", 1]])
+        assert result["status"] == "constraint_added"
+        sm.active_profile.Relations2d.AddVertical.assert_called_once_with(line1)
+
+    def test_parallel(self, sketch_mgr):
+        sm, line1, line2, _, _ = sketch_mgr
+        result = sm.add_constraint("Parallel", [["line", 1], ["line", 2]])
+        assert result["status"] == "constraint_added"
+        sm.active_profile.Relations2d.AddParallel.assert_called_once_with(line1, line2)
+
+    def test_perpendicular(self, sketch_mgr):
+        sm, line1, line2, _, _ = sketch_mgr
+        result = sm.add_constraint("Perpendicular", [["line", 1], ["line", 2]])
+        assert result["status"] == "constraint_added"
+        sm.active_profile.Relations2d.AddPerpendicular.assert_called_once_with(line1, line2)
+
+    def test_equal(self, sketch_mgr):
+        sm, line1, line2, _, _ = sketch_mgr
+        result = sm.add_constraint("Equal", [["line", 1], ["line", 2]])
+        assert result["status"] == "constraint_added"
+        sm.active_profile.Relations2d.AddEqual.assert_called_once_with(line1, line2)
+
+    def test_concentric(self, sketch_mgr):
+        sm, _, _, circ1, circ2 = sketch_mgr
+        result = sm.add_constraint("Concentric", [["circle", 1], ["circle", 2]])
+        assert result["status"] == "constraint_added"
+        sm.active_profile.Relations2d.AddConcentric.assert_called_once_with(circ1, circ2)
+
+    def test_tangent(self, sketch_mgr):
+        sm, line1, _, circ1, _ = sketch_mgr
+        result = sm.add_constraint("Tangent", [["line", 1], ["circle", 1]])
+        assert result["status"] == "constraint_added"
+        sm.active_profile.Relations2d.AddTangent.assert_called_once_with(line1, circ1)
+
+    def test_unknown_type(self, sketch_mgr):
+        sm, _, _, _, _ = sketch_mgr
+        result = sm.add_constraint("Colinear", [["line", 1]])
+        assert "error" in result
+
+    def test_invalid_element_format(self, sketch_mgr):
+        sm, _, _, _, _ = sketch_mgr
+        result = sm.add_constraint("Horizontal", ["line"])
+        assert "error" in result
+
+    def test_invalid_element_type(self, sketch_mgr):
+        sm, _, _, _, _ = sketch_mgr
+        result = sm.add_constraint("Horizontal", [["polygon", 1]])
+        assert "error" in result
+
+    def test_index_out_of_range(self, sketch_mgr):
+        sm, _, _, _, _ = sketch_mgr
+        result = sm.add_constraint("Horizontal", [["line", 99]])
+        assert "error" in result
+
+    def test_no_sketch(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        sm = SketchManager(MagicMock())
+        result = sm.add_constraint("Horizontal", [["line", 1]])
+        assert "error" in result
+
+
+# ============================================================================
+# CONSTRAINTS: ADD_KEYPOINT_CONSTRAINT
+# ============================================================================
+
+class TestAddKeypointConstraint:
+    @pytest.fixture
+    def sketch_mgr(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        dm = MagicMock()
+        sm = SketchManager(dm)
+        sm.active_profile = MagicMock()
+        line1 = MagicMock(name="line1")
+        line2 = MagicMock(name="line2")
+        lines = MagicMock()
+        lines.Count = 2
+        lines.Item.side_effect = lambda i: {1: line1, 2: line2}[i]
+        sm.active_profile.Lines2d = lines
+        return sm, line1, line2
+
+    def test_success(self, sketch_mgr):
+        sm, line1, line2 = sketch_mgr
+        result = sm.add_keypoint_constraint("line", 1, 1, "line", 2, 0)
+        assert result["status"] == "constraint_added"
+        assert result["type"] == "Keypoint"
+        sm.active_profile.Relations2d.AddKeypoint.assert_called_once_with(
+            line1, 1, line2, 0
+        )
+
+    def test_invalid_index(self, sketch_mgr):
+        sm, _, _ = sketch_mgr
+        result = sm.add_keypoint_constraint("line", 99, 0, "line", 1, 0)
+        assert "error" in result
+
+    def test_no_sketch(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        sm = SketchManager(MagicMock())
+        result = sm.add_keypoint_constraint("line", 1, 0, "line", 2, 1)
+        assert "error" in result
