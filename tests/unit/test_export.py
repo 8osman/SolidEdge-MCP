@@ -362,7 +362,7 @@ class TestGetActiveDocumentType:
         dm.connection.get_application.return_value = app
 
         # This should raise/return error
-        result = dm.get_active_document_type()
+        dm.get_active_document_type()
         # Either works or errors depending on mock setup
 
 
@@ -447,13 +447,13 @@ class TestSetComponentVisibility:
         am, doc, occ = asm_mgr
         result = am.set_component_visibility(0, False)
         assert result["status"] == "updated"
-        assert occ.Visible == False
+        assert occ.Visible is False
 
     def test_show(self, asm_mgr):
         am, doc, occ = asm_mgr
         result = am.set_component_visibility(1, True)
         assert result["status"] == "updated"
-        assert occ.Visible == True
+        assert occ.Visible is True
 
     def test_invalid_index(self, asm_mgr):
         am, doc, occ = asm_mgr

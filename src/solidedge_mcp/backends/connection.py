@@ -4,20 +4,21 @@ Solid Edge Connection Management
 Handles connecting to and managing Solid Edge application instances.
 """
 
-import win32com.client
-import pythoncom
-from typing import Optional, Dict, Any
+import contextlib
 import traceback
+from typing import Any
+
+import win32com.client
 
 
 class SolidEdgeConnection:
     """Manages connection to Solid Edge application"""
 
     def __init__(self):
-        self.application: Optional[Any] = None
+        self.application: Any | None = None
         self._is_connected: bool = False
 
-    def connect(self, start_if_needed: bool = True) -> Dict[str, Any]:
+    def connect(self, start_if_needed: bool = True) -> dict[str, Any]:
         """
         Connect to Solid Edge application instance.
 
@@ -33,21 +34,24 @@ class SolidEdgeConnection:
                     # Try to connect to existing instance
                     self.application = win32com.client.GetActiveObject("SolidEdge.Application")
                     print("Connected to existing Solid Edge instance")
-                except:
+                except Exception:
                     if start_if_needed:
                         # Start new instance with early binding if possible
                         try:
                             self.application = win32com.client.gencache.EnsureDispatch(
                                 "SolidEdge.Application"
                             )
-                        except:
+                        except Exception:
                             # Fall back to late binding
                             self.application = win32com.client.Dispatch("SolidEdge.Application")
 
                         self.application.Visible = True
                         print("Started new Solid Edge instance")
                     else:
-                        raise Exception("No Solid Edge instance found and start_if_needed=False")
+                        raise Exception(
+                            "No Solid Edge instance found "
+                            "and start_if_needed=False"
+                        ) from None
 
             self._is_connected = True
 
@@ -68,13 +72,13 @@ class SolidEdgeConnection:
                 "traceback": traceback.format_exc()
             }
 
-    def disconnect(self) -> Dict[str, Any]:
+    def disconnect(self) -> dict[str, Any]:
         """Disconnect from Solid Edge (does not close the application)"""
         self.application = None
         self._is_connected = False
         return {"status": "disconnected"}
 
-    def get_info(self) -> Dict[str, Any]:
+    def get_info(self) -> dict[str, Any]:
         """Get information about the connected Solid Edge instance"""
         if not self._is_connected or self.application is None:
             return {"error": "Not connected to Solid Edge"}
@@ -90,7 +94,7 @@ class SolidEdgeConnection:
             # Path property may not exist in all Solid Edge versions
             try:
                 info["path"] = self.application.Path
-            except:
+            except Exception:
                 info["path"] = "N/A"
 
             return info
@@ -100,7 +104,7 @@ class SolidEdgeConnection:
                 "traceback": traceback.format_exc()
             }
 
-    def get_application_info(self) -> Dict[str, Any]:
+    def get_application_info(self) -> dict[str, Any]:
         """Alias for get_info() for consistency with MCP tool name"""
         return self.get_info()
 
@@ -118,7 +122,7 @@ class SolidEdgeConnection:
         self.ensure_connected()
         return self.application
 
-    def quit_application(self) -> Dict[str, Any]:
+    def quit_application(self) -> dict[str, Any]:
         """
         Quit the Solid Edge application.
 
@@ -144,7 +148,7 @@ class SolidEdgeConnection:
                 "traceback": traceback.format_exc()
             }
 
-    def get_process_info(self) -> Dict[str, Any]:
+    def get_process_info(self) -> dict[str, Any]:
         """
         Get Solid Edge process information (PID, window handle).
 
@@ -170,7 +174,7 @@ class SolidEdgeConnection:
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def get_install_info(self) -> Dict[str, Any]:
+    def get_install_info(self) -> dict[str, Any]:
         """
         Get Solid Edge installation information (path, language).
 
@@ -184,28 +188,24 @@ class SolidEdgeConnection:
 
             try:
                 install_data = win32com.client.Dispatch("SEInstallDataLib.SEInstallData")
-                try:
+                with contextlib.suppress(Exception):
                     info["install_path"] = install_data.GetInstalledPath()
-                except Exception:
-                    pass
-                try:
+                with contextlib.suppress(Exception):
                     info["language"] = install_data.GetInstalledLanguage()
-                except Exception:
-                    pass
-                try:
+                with contextlib.suppress(Exception):
                     info["version"] = install_data.GetInstalledVersion()
-                except Exception:
-                    pass
             except Exception:
                 # SEInstallData may not be registered; fall back to Application.Path
                 if self._is_connected and self.application is not None:
-                    try:
+                    with contextlib.suppress(Exception):
                         info["install_path"] = self.application.Path
-                    except Exception:
-                        pass
 
             if not info:
-                return {"error": "Could not retrieve installation info. SEInstallData COM library may not be registered."}
+                return {
+                    "error": "Could not retrieve installation"
+                    " info. SEInstallData COM library may "
+                    "not be registered."
+                }
 
             return {"status": "success", **info}
         except Exception as e:
@@ -217,7 +217,7 @@ class SolidEdgeConnection:
         screen_updating: bool = None,
         interactive: bool = None,
         display_alerts: bool = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Set application performance flags for batch operations.
 
@@ -277,7 +277,7 @@ class SolidEdgeConnection:
                 "traceback": traceback.format_exc()
             }
 
-    def start_command(self, command_id: int) -> Dict[str, Any]:
+    def start_command(self, command_id: int) -> dict[str, Any]:
         """
         Execute a Solid Edge command by its command ID.
 
@@ -301,7 +301,7 @@ class SolidEdgeConnection:
                 "traceback": traceback.format_exc()
             }
 
-    def do_idle(self) -> Dict[str, Any]:
+    def do_idle(self) -> dict[str, Any]:
         """
         Allow Solid Edge to process pending operations.
 
@@ -322,7 +322,7 @@ class SolidEdgeConnection:
                 "traceback": traceback.format_exc()
             }
 
-    def activate_application(self) -> Dict[str, Any]:
+    def activate_application(self) -> dict[str, Any]:
         """
         Activate (bring to foreground) the Solid Edge application window.
 
@@ -341,7 +341,7 @@ class SolidEdgeConnection:
                 "traceback": traceback.format_exc()
             }
 
-    def abort_command(self, abort_all: bool = True) -> Dict[str, Any]:
+    def abort_command(self, abort_all: bool = True) -> dict[str, Any]:
         """
         Abort the current Solid Edge command.
 
@@ -364,7 +364,7 @@ class SolidEdgeConnection:
                 "traceback": traceback.format_exc()
             }
 
-    def get_active_environment(self) -> Dict[str, Any]:
+    def get_active_environment(self) -> dict[str, Any]:
         """
         Get the currently active environment in Solid Edge.
 
@@ -383,10 +383,8 @@ class SolidEdgeConnection:
                 result["name"] = env.Name
             except Exception:
                 result["name"] = str(env)
-            try:
+            with contextlib.suppress(Exception):
                 result["caption"] = env.Caption
-            except Exception:
-                pass
 
             return result
         except Exception as e:
@@ -395,7 +393,7 @@ class SolidEdgeConnection:
                 "traceback": traceback.format_exc()
             }
 
-    def get_status_bar(self) -> Dict[str, Any]:
+    def get_status_bar(self) -> dict[str, Any]:
         """
         Get the current status bar text.
 
@@ -412,7 +410,7 @@ class SolidEdgeConnection:
                 "traceback": traceback.format_exc()
             }
 
-    def set_status_bar(self, text: str) -> Dict[str, Any]:
+    def set_status_bar(self, text: str) -> dict[str, Any]:
         """
         Set the status bar text.
 
@@ -432,7 +430,7 @@ class SolidEdgeConnection:
                 "traceback": traceback.format_exc()
             }
 
-    def get_visible(self) -> Dict[str, Any]:
+    def get_visible(self) -> dict[str, Any]:
         """
         Get the visibility state of the Solid Edge application window.
 
@@ -449,7 +447,7 @@ class SolidEdgeConnection:
                 "traceback": traceback.format_exc()
             }
 
-    def set_visible(self, visible: bool) -> Dict[str, Any]:
+    def set_visible(self, visible: bool) -> dict[str, Any]:
         """
         Set the visibility of the Solid Edge application window.
 
@@ -469,7 +467,7 @@ class SolidEdgeConnection:
                 "traceback": traceback.format_exc()
             }
 
-    def get_global_parameter(self, parameter: int) -> Dict[str, Any]:
+    def get_global_parameter(self, parameter: int) -> dict[str, Any]:
         """
         Get an application-level global parameter.
 
@@ -496,7 +494,7 @@ class SolidEdgeConnection:
                 "traceback": traceback.format_exc()
             }
 
-    def set_global_parameter(self, parameter: int, value) -> Dict[str, Any]:
+    def set_global_parameter(self, parameter: int, value) -> dict[str, Any]:
         """
         Set an application-level global parameter.
 

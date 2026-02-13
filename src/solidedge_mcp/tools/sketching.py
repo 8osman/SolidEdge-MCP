@@ -2,8 +2,12 @@
 
 from solidedge_mcp.managers import sketch_manager
 
+
 def create_sketch(plane: str = "Top") -> dict:
-    """Create a new 2D sketch on a reference plane. Plane: 'Top', 'Front', 'Right', 'XY', 'XZ', 'YZ'."""
+    """Create a new 2D sketch on a reference plane.
+
+    Plane: 'Top', 'Front', 'Right', 'XY', 'XZ', 'YZ'.
+    """
     return sketch_manager.create_sketch(plane)
 
 def draw_line(x1: float, y1: float, x2: float, y2: float) -> dict:
@@ -18,7 +22,11 @@ def draw_rectangle(x1: float, y1: float, x2: float, y2: float) -> dict:
     """Draw a rectangle in the active sketch defined by two diagonal corners (meters)."""
     return sketch_manager.draw_rectangle(x1, y1, x2, y2)
 
-def draw_arc(center_x: float, center_y: float, radius: float, start_angle: float, end_angle: float) -> dict:
+def draw_arc(
+    center_x: float, center_y: float,
+    radius: float,
+    start_angle: float, end_angle: float
+) -> dict:
     """Draw an arc by center, radius, and angles (degrees)."""
     return sketch_manager.draw_arc(center_x, center_y, radius, start_angle, end_angle)
 
@@ -26,7 +34,12 @@ def draw_polygon(center_x: float, center_y: float, radius: float, sides: int) ->
     """Draw a regular polygon."""
     return sketch_manager.draw_polygon(center_x, center_y, radius, sides)
 
-def draw_ellipse(center_x: float, center_y: float, major_radius: float, minor_radius: float, angle: float = 0.0) -> dict:
+def draw_ellipse(
+    center_x: float, center_y: float,
+    major_radius: float,
+    minor_radius: float,
+    angle: float = 0.0
+) -> dict:
     """Draw an ellipse. Angle in degrees."""
     return sketch_manager.draw_ellipse(center_x, center_y, major_radius, minor_radius, angle)
 
@@ -34,7 +47,11 @@ def draw_spline(points: list) -> dict:
     """Draw a B-spline curve through a list of [x, y] points."""
     return sketch_manager.draw_spline(points)
 
-def draw_arc_by_3_points(start_x: float, start_y: float, center_x: float, center_y: float, end_x: float, end_y: float) -> dict:
+def draw_arc_by_3_points(
+    start_x: float, start_y: float,
+    center_x: float, center_y: float,
+    end_x: float, end_y: float
+) -> dict:
     """Draw an arc defined by start, center, and end points."""
     return sketch_manager.draw_arc_by_3_points(start_x, start_y, center_x, center_y, end_x, end_y)
 
@@ -42,11 +59,19 @@ def draw_circle_by_2_points(x1: float, y1: float, x2: float, y2: float) -> dict:
     """Draw a circle defined by two diametrically opposite points."""
     return sketch_manager.draw_circle_by_2_points(x1, y1, x2, y2)
 
-def draw_circle_by_3_points(x1: float, y1: float, x2: float, y2: float, x3: float, y3: float) -> dict:
+def draw_circle_by_3_points(
+    x1: float, y1: float,
+    x2: float, y2: float,
+    x3: float, y3: float
+) -> dict:
     """Draw a circle through three points."""
     return sketch_manager.draw_circle_by_3_points(x1, y1, x2, y2, x3, y3)
 
-def mirror_spline(axis_x1: float, axis_y1: float, axis_x2: float, axis_y2: float, copy: bool = True) -> dict:
+def mirror_spline(
+    axis_x1: float, axis_y1: float,
+    axis_x2: float, axis_y2: float,
+    copy: bool = True
+) -> dict:
     """Mirror B-spline curves across a line defined by two points."""
     return sketch_manager.mirror_spline(axis_x1, axis_y1, axis_x2, axis_y2, copy)
 
@@ -62,9 +87,18 @@ def add_constraint(constraint_type: str, elements: list) -> dict:
     """Add a geometric constraint (Horizontal, Vertical, Parallel, etc.) to sketch elements."""
     return sketch_manager.add_constraint(constraint_type, elements)
 
-def add_keypoint_constraint(element1_type: str, element1_index: int, keypoint1: int, element2_type: str, element2_index: int, keypoint2: int) -> dict:
+def add_keypoint_constraint(
+    element1_type: str, element1_index: int,
+    keypoint1: int,
+    element2_type: str, element2_index: int,
+    keypoint2: int
+) -> dict:
     """Add a keypoint constraint connecting two sketch elements at specific points."""
-    return sketch_manager.add_keypoint_constraint(element1_type, element1_index, keypoint1, element2_type, element2_index, keypoint2)
+    return sketch_manager.add_keypoint_constraint(
+        element1_type, element1_index,
+        keypoint1, element2_type,
+        element2_index, keypoint2
+    )
 
 def set_axis_of_revolution(x1: float, y1: float, x2: float, y2: float) -> dict:
     """Draw an axis of revolution for revolve operations."""
@@ -118,6 +152,14 @@ def include_edge(face_index: int, edge_index: int) -> dict:
     """Include a 3D body edge in the active sketch (associative)."""
     return sketch_manager.include_edge(face_index, edge_index)
 
+def project_ref_plane(plane_index: int) -> dict:
+    """Project a reference plane into the active sketch as construction geometry."""
+    return sketch_manager.project_ref_plane(plane_index)
+
+def offset_sketch_2d(offset_side_x: float, offset_side_y: float, offset_distance: float) -> dict:
+    """Offset the active sketch profile in 2D. Side params control offset direction."""
+    return sketch_manager.offset_sketch_2d(offset_side_x, offset_side_y, offset_distance)
+
 def get_sketch_constraints() -> dict:
     """Get information about constraints in the active sketch."""
     return sketch_manager.get_sketch_constraints()
@@ -153,4 +195,6 @@ def register(mcp):
     mcp.tool()(draw_construction_line)
     mcp.tool()(project_edge)
     mcp.tool()(include_edge)
+    mcp.tool()(project_ref_plane)
+    mcp.tool()(offset_sketch_2d)
     mcp.tool()(get_sketch_constraints)

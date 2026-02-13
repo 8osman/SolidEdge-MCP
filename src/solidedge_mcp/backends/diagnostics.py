@@ -28,9 +28,9 @@ def get_available_methods(obj, filter_prefix=None):
                     methods.append(attr_name)
                 else:
                     properties.append(attr_name)
-            except:
+            except Exception:
                 pass
-    except:
+    except Exception:
         pass
 
     return {
@@ -75,7 +75,7 @@ def diagnose_document(doc):
                 # Get Add methods for this collection
                 add_methods = get_available_methods(collection, "Add")
                 info[f"{name}_add_methods"] = add_methods["methods"]
-            except:
+            except Exception:
                 pass
 
     # Get all methods on Models collection

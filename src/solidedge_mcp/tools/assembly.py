@@ -1,6 +1,6 @@
-from typing import Optional
 
 from solidedge_mcp.managers import assembly_manager
+
 
 def assembly_add_component(file_path: str, x: float = 0, y: float = 0, z: float = 0) -> dict:
     """Add a component (part/assembly) to the active assembly at coordinates."""
@@ -39,7 +39,10 @@ def assembly_update_component_position(component_index: int, x: float, y: float,
     """Update a component's position."""
     return assembly_manager.update_component_position(component_index, x, y, z)
 
-def assembly_pattern_component(component_index: int, count: int, spacing: float, direction: str = "X") -> dict:
+def assembly_pattern_component(
+    component_index: int, count: int,
+    spacing: float, direction: str = "X"
+) -> dict:
     """Create a linear pattern of a component."""
     return assembly_manager.pattern_component(component_index, count, spacing, direction)
 
@@ -75,7 +78,7 @@ def assembly_ground_component(component_index: int, ground: bool = True) -> dict
     """Ground (fix) or unground a component."""
     return assembly_manager.ground_component(component_index, ground)
 
-def assembly_check_interference(component_index: Optional[int] = None) -> dict:
+def assembly_check_interference(component_index: int | None = None) -> dict:
     """Run interference check."""
     return assembly_manager.check_interference(component_index)
 
@@ -99,9 +102,41 @@ def assembly_occurrence_move(component_index: int, dx: float, dy: float, dz: flo
     """Move a component by a relative delta."""
     return assembly_manager.occurrence_move(component_index, dx, dy, dz)
 
-def assembly_occurrence_rotate(component_index: int, axis_x1: float, axis_y1: float, axis_z1: float, axis_x2: float, axis_y2: float, axis_z2: float, angle: float) -> dict:
+def assembly_occurrence_rotate(
+    component_index: int,
+    axis_x1: float, axis_y1: float,
+    axis_z1: float,
+    axis_x2: float, axis_y2: float,
+    axis_z2: float, angle: float
+) -> dict:
     """Rotate a component around an axis (degrees)."""
-    return assembly_manager.occurrence_rotate(component_index, axis_x1, axis_y1, axis_z1, axis_x2, axis_y2, axis_z2, angle)
+    return assembly_manager.occurrence_rotate(
+        component_index,
+        axis_x1, axis_y1, axis_z1,
+        axis_x2, axis_y2, axis_z2, angle
+    )
+
+def assembly_set_component_transform(
+    component_index: int,
+    origin_x: float, origin_y: float,
+    origin_z: float,
+    angle_x: float, angle_y: float,
+    angle_z: float
+) -> dict:
+    """Set a component's full transform (position + rotation). Angles in degrees."""
+    return assembly_manager.set_component_transform(
+        component_index,
+        origin_x, origin_y, origin_z,
+        angle_x, angle_y, angle_z
+    )
+
+def assembly_set_component_origin(component_index: int, x: float, y: float, z: float) -> dict:
+    """Set a component's origin (position only)."""
+    return assembly_manager.set_component_origin(component_index, x, y, z)
+
+def assembly_mirror_component(component_index: int, plane_index: int) -> dict:
+    """Mirror a component across a reference plane (1-based plane index)."""
+    return assembly_manager.mirror_component(component_index, plane_index)
 
 def assembly_get_occurrence_count() -> dict:
     """Get the count of top-level occurrences."""
@@ -150,6 +185,9 @@ def register(mcp):
     mcp.tool()(assembly_set_component_color)
     mcp.tool()(assembly_occurrence_move)
     mcp.tool()(assembly_occurrence_rotate)
+    mcp.tool()(assembly_set_component_transform)
+    mcp.tool()(assembly_set_component_origin)
+    mcp.tool()(assembly_mirror_component)
     mcp.tool()(assembly_get_occurrence_count)
     mcp.tool()(assembly_is_subassembly)
     mcp.tool()(assembly_get_component_display_name)

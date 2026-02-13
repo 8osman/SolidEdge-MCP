@@ -65,13 +65,13 @@ src/solidedge_mcp/
 
 ### Current State
 
-**✅ FULLY IMPLEMENTED**: All 314 MCP tools are registered and operational!
+**✅ FULLY IMPLEMENTED**: All 326 MCP tools are registered and operational!
 
 - **Backend layer**: Complete COM automation using pywin32 (connection, documents, sketching, features, assembly, query, export, diagnostics)
-- **MCP tools**: All 241 tools registered in `server.py` using `@mcp.tool()` decorator
-- **Tool categories**: Connection (6), Documents (13), Sketching (22), Primitives (8), Extrusions (4), Revolves (5), Cutouts (9), Ref Planes (5), Rounds/Chamfers/Holes (9), Mirror (1), Loft (2), Sweep (2), Helix (4), Surfaces (3), Sheet Metal (8), Body Operations (9), Simplification (4), View (7), Variables (5), Custom Properties (3), Body Topology (3), Performance (2), Query/Analysis (20), Feature Management (5), Draft/Drawing (10), Export (10), Assembly (22), Part Features (10), Select Set (3), Diagnostics (2)
+- **MCP tools**: All 326 tools registered via `tools/*.py` modules using `@mcp.tool()` decorator
+- **Tool categories**: Connection (6), Documents (13), Sketching (24), Primitives (8), Extrusions (6), Revolves (5), Cutouts (10), Ref Planes (9), Rounds/Chamfers/Holes (9), Mirror (1), Loft (2), Sweep (2), Helix (4), Surfaces (3), Sheet Metal (8), Body Operations (9), Simplification (4), View (7), Variables (5), Custom Properties (3), Body Topology (3), Performance (2), Query/Analysis (20), Feature Management (5), Draft/Drawing (10), Export (10), Assembly (25), Part Features (10), Select Set (3), Diagnostics (2)
 - **Coverage**: 97% of core Solid Edge Part COM API feature collections implemented
-- **Test suite**: 545 unit tests across 5 test files
+- **Test suite**: 586 unit tests across 6 test files
 
 **Pending**: Resource providers (read-only state), prompt templates, session management/undo
 
@@ -79,11 +79,11 @@ src/solidedge_mcp/
 
 Following the MCP spec, the server exposes:
 
-- **Tools** ✅ (314 implemented): Actions that create/modify models (connect, create_sketch, extrude, cutout, round, chamfer, hole, mirror, place_component, export)
+- **Tools** ✅ (326 implemented): Actions that create/modify models (connect, create_sketch, extrude, cutout, round, chamfer, hole, mirror, place_component, export)
 - **Resources** ⏳ (pending): Read-only model data (feature list, component tree, mass properties, document info)
 - **Prompts** ⏳ (pending): Conversation templates (design review, manufacturability check, modeling guidance)
 
-### Tool Categories (314 total)
+### Tool Categories (326 total)
 
 See `reference/TYPELIB_IMPLEMENTATION_MAP.md` for the complete list. High-level categories:
 
@@ -91,10 +91,10 @@ See `reference/TYPELIB_IMPLEMENTATION_MAP.md` for the complete list. High-level 
 2. **Documents (11)**: Create (part, assembly, sheet metal), open, save, close, list, activate, undo, redo
 3. **Sketching (11)**: Lines, circles, arcs, rectangles, polygons, ellipses, splines, constraints, sketch on any plane
 4. **Primitives (5)**: Box (3 variants), cylinder, sphere
-5. **Extrusions (3)**: Finite, infinite, thin-wall
+5. **Extrusions (5)**: Finite, infinite, through-next, from-to, thin-wall
 6. **Revolves (5)**: Basic, finite, sync variants, thin-wall
-7. **Cutouts (5)**: Extruded (finite + through-all), revolved, normal, lofted
-8. **Reference Planes (2)**: Offset parallel plane, list planes
+7. **Cutouts (6)**: Extruded (finite + through-all + from-to), revolved, normal, lofted
+8. **Reference Planes (6)**: Offset, angle, 3-point, midplane, normal-to-curve (3 variants), tangent
 9. **Rounds/Chamfers/Holes (3)**: Round (fillet), chamfer, hole
 10. **Mirror (1)**: Mirror copy across plane
 11. **Loft (2)**: Basic and thin-wall

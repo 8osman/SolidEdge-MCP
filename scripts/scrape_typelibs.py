@@ -21,7 +21,7 @@ import argparse
 import json
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 try:
@@ -295,10 +295,8 @@ def extract_interface(typeinfo, typeattr) -> dict:
                 prop_entry["access"] = "get/putref" if "get" in access else "putref"
             else:
                 prop_entry["access"] = "get/put" if "get" in access else "put"
-            if params:
-                # Last param for PUT is the value being set
-                if "type" not in prop_entry and params:
-                    prop_entry["type"] = params[-1]["type"]
+            if params and "type" not in prop_entry:
+                prop_entry["type"] = params[-1]["type"]
 
     result = {"iid": iid}
 
@@ -527,7 +525,7 @@ def generate_summary(data: dict, output_path: Path) -> None:
     total_properties = 0
     total_coclasses = 0
 
-    for tlb_name, tlb_data in typelibs.items():
+    for _tlb_name, tlb_data in typelibs.items():
         enums = tlb_data.get("enums", {})
         ifaces = tlb_data.get("interfaces", {})
         coclasses = tlb_data.get("coclasses", {})
@@ -541,8 +539,8 @@ def generate_summary(data: dict, output_path: Path) -> None:
 
     lines.append("## Global Statistics")
     lines.append("")
-    lines.append(f"| Metric | Count |")
-    lines.append(f"|--------|-------|")
+    lines.append("| Metric | Count |")
+    lines.append("|--------|-------|")
     lines.append(f"| Type libraries | {meta['typelib_count']} |")
     lines.append(f"| Enums | {total_enums} |")
     lines.append(f"| Enum values | {total_enum_values} |")
@@ -568,9 +566,13 @@ def generate_summary(data: dict, output_path: Path) -> None:
     # Per-library details
     for tlb_name, tlb_data in sorted(typelibs.items()):
         desc = tlb_data.get("description", tlb_name)
-        lines.append(f"---")
+        lines.append("---")
         lines.append(f"## {tlb_name}")
-        lines.append(f"**{desc}** (GUID: `{tlb_data.get('guid', '?')}`, v{tlb_data.get('version', '?')})")
+        guid = tlb_data.get('guid', '?')
+        ver = tlb_data.get('version', '?')
+        lines.append(
+            f"**{desc}** (GUID: `{guid}`, v{ver})"
+        )
         lines.append("")
 
         # Enums
@@ -581,7 +583,17 @@ def generate_summary(data: dict, output_path: Path) -> None:
             for enum_name in sorted(enums.keys()):
                 members = enums[enum_name]
                 # Show first few members inline
-                member_strs = [f"{k}={v}" for k, v in sorted(members.items(), key=lambda x: (x[1] if isinstance(x[1], (int, float)) else 0))]
+                member_strs = [
+                    f"{k}={v}"
+                    for k, v in sorted(
+                        members.items(),
+                        key=lambda x: (
+                            x[1]
+                            if isinstance(x[1], (int, float))
+                            else 0
+                        ),
+                    )
+                ]
                 preview = ", ".join(member_strs[:5])
                 if len(member_strs) > 5:
                     preview += f", ... ({len(member_strs)} total)"
@@ -611,7 +623,12 @@ def generate_summary(data: dict, output_path: Path) -> None:
             for cc_name in sorted(coclasses.keys()):
                 cc = coclasses[cc_name]
                 iface_names = [i["name"] for i in cc.get("interfaces", [])]
-                lines.append(f"- **{cc_name}** (`{cc.get('clsid', '?')}`): {', '.join(iface_names)}")
+                clsid = cc.get('clsid', '?')
+                ifaces_str = ', '.join(iface_names)
+                lines.append(
+                    f"- **{cc_name}** (`{clsid}`): "
+                    f"{ifaces_str}"
+                )
             lines.append("")
 
         # Aliases
@@ -659,7 +676,7 @@ def main():
     output_path.parent.mkdir(parents=True, exist_ok=True)
     summary_path.parent.mkdir(parents=True, exist_ok=True)
 
-    print(f"Solid Edge Type Library Scraper")
+    print("Solid Edge Type Library Scraper")
     print(f"{'=' * 50}")
     print(f"Install dir: {args.install_dir}")
     print(f"Output JSON: {output_path}")
@@ -715,7 +732,7 @@ def main():
     # Build output
     data = {
         "metadata": {
-            "scraped_at": datetime.now(timezone.utc).isoformat(),
+            "scraped_at": datetime.now(UTC).isoformat(),
             "solid_edge_version": "2026",
             "install_path": args.install_dir,
             "typelib_count": len(typelibs),

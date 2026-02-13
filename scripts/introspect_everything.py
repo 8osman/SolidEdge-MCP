@@ -6,11 +6,14 @@ Discovers signatures, parameters, and available methods
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent / "src"))
+
+import inspect
 
 from solidedge_mcp.backends.connection import SolidEdgeConnection
 from solidedge_mcp.backends.documents import DocumentManager
-import inspect
+
 
 def print_section(title):
     print("\n" + "=" * 80)
@@ -34,7 +37,12 @@ def introspect_method(obj, method_name, show_params=True):
             if show_params and params:
                 print("\nParameter Details:")
                 for param_name, param in params:
-                    print(f"  - {param_name}: kind={param.kind.name}, default={type(param.default).__name__}")
+                    kind = param.kind.name
+                    default = type(param.default).__name__
+                    print(
+                        f"  - {param_name}: "
+                        f"kind={kind}, default={default}"
+                    )
         except Exception as e:
             print(f"Could not get signature: {e}")
 
@@ -78,7 +86,10 @@ for method_name in add_methods:
 # ============================================================================
 print_section("MODELS COLLECTION - OTHER METHODS")
 
-other_methods = sorted([m for m in dir(models) if not m.startswith('_') and not m.startswith('Add')])
+other_methods = sorted([
+    m for m in dir(models)
+    if not m.startswith('_') and not m.startswith('Add')
+])
 print(f"\nFound {len(other_methods)} other methods/properties\n")
 
 # Just list them for now
@@ -99,13 +110,19 @@ try:
     print(f"\nFound {len(window_methods)} methods/properties\n")
 
     # Introspect key methods
-    key_window_methods = [m for m in window_methods if any(x in m.lower() for x in ['view', 'orient', 'zoom', 'fit', 'display'])]
+    key_window_methods = [
+        m for m in window_methods
+        if any(
+            x in m.lower()
+            for x in ['view', 'orient', 'zoom', 'fit', 'display']
+        )
+    ]
     print(f"\nKey view-related methods ({len(key_window_methods)}):")
     for method_name in key_window_methods:
         introspect_method(window, method_name, show_params=True)
 
     # List all others
-    print(f"\n\nAll window methods/properties:")
+    print("\n\nAll window methods/properties:")
     for i, method in enumerate(window_methods):
         if i % 4 == 0:
             print()
@@ -131,11 +148,11 @@ try:
             # Only introspect if it looks like a method (callable)
             if callable(attr):
                 introspect_method(view, method_name, show_params=True)
-        except:
+        except Exception:
             pass
 
     # List all
-    print(f"\n\nAll view methods/properties:")
+    print("\n\nAll view methods/properties:")
     for i, method in enumerate(view_methods):
         if i % 4 == 0:
             print()
@@ -153,7 +170,16 @@ doc_methods = sorted([m for m in dir(doc) if not m.startswith('_')])
 print(f"\nFound {len(doc_methods)} methods/properties\n")
 
 # Show key methods
-key_doc_methods = [m for m in doc_methods if any(x in m.lower() for x in ['save', 'close', 'export', 'property', 'model', 'profile'])]
+key_doc_methods = [
+    m for m in doc_methods
+    if any(
+        x in m.lower()
+        for x in [
+            'save', 'close', 'export',
+            'property', 'model', 'profile',
+        ]
+    )
+]
 print(f"Key document methods ({len(key_doc_methods)}):")
 for i, method in enumerate(key_doc_methods):
     if i % 4 == 0:
@@ -232,7 +258,7 @@ try:
                 try:
                     value = getattr(constants, const)
                     print(f"  {const} = {value}")
-                except:
+                except Exception:
                     pass
             if len(matching) > 10:
                 print(f"  ... and {len(matching) - 10} more")

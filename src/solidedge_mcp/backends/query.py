@@ -4,9 +4,10 @@ Solid Edge Query and Inspection Operations
 Handles querying model data, measurements, and properties.
 """
 
-from typing import Dict, Any
+import contextlib
 import math
 import traceback
+from typing import Any
 
 from .constants import FaceQueryConstants, ModelingModeConstants
 
@@ -27,7 +28,7 @@ class QueryManager:
             raise Exception("No features in document")
         return doc, models.Item(1)
 
-    def get_mass_properties(self, density: float = 7850) -> Dict[str, Any]:
+    def get_mass_properties(self, density: float = 7850) -> dict[str, Any]:
         """
         Get mass properties of the part.
 
@@ -90,7 +91,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_bounding_box(self) -> Dict[str, Any]:
+    def get_bounding_box(self) -> dict[str, Any]:
         """
         Get the bounding box of the model.
 
@@ -125,7 +126,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def list_features(self) -> Dict[str, Any]:
+    def list_features(self) -> dict[str, Any]:
         """
         List all features in the active document.
 
@@ -177,7 +178,7 @@ class QueryManager:
             }
 
     def measure_distance(self, x1: float, y1: float, z1: float,
-                        x2: float, y2: float, z2: float) -> Dict[str, Any]:
+                        x2: float, y2: float, z2: float) -> dict[str, Any]:
         """
         Measure distance between two points.
 
@@ -212,7 +213,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_document_properties(self) -> Dict[str, Any]:
+    def get_document_properties(self) -> dict[str, Any]:
         """Get document properties and metadata"""
         try:
             doc = self.doc_manager.get_active_document()
@@ -236,7 +237,7 @@ class QueryManager:
                         properties["subject"] = summary.Subject
                     if hasattr(summary, 'Comments'):
                         properties["comments"] = summary.Comments
-            except:
+            except Exception:
                 pass
 
             # Add body topology info
@@ -245,7 +246,7 @@ class QueryManager:
                 if models.Count > 0:
                     body = models.Item(1).Body
                     properties["volume_m3"] = body.Volume
-            except:
+            except Exception:
                 pass
 
             return properties
@@ -255,7 +256,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_feature_count(self) -> Dict[str, Any]:
+    def get_feature_count(self) -> dict[str, Any]:
         """Get count of features in the document"""
         try:
             doc = self.doc_manager.get_active_document()
@@ -288,7 +289,7 @@ class QueryManager:
     # REFERENCE PLANES
     # =================================================================
 
-    def get_ref_planes(self) -> Dict[str, Any]:
+    def get_ref_planes(self) -> dict[str, Any]:
         """
         List all reference planes in the active document.
 
@@ -322,10 +323,8 @@ class QueryManager:
                     except Exception:
                         plane_info["name"] = default_names.get(i, f"RefPlane_{i}")
 
-                    try:
+                    with contextlib.suppress(Exception):
                         plane_info["visible"] = plane.Visible
-                    except Exception:
-                        pass
 
                     planes.append(plane_info)
                 except Exception:
@@ -334,7 +333,9 @@ class QueryManager:
             return {
                 "planes": planes,
                 "count": len(planes),
-                "note": "Use plane index (1-based) in create_sketch_on_plane or create_ref_plane_by_offset"
+                "note": "Use plane index (1-based) in "
+                "create_sketch_on_plane or "
+                "create_ref_plane_by_offset"
             }
         except Exception as e:
             return {
@@ -346,7 +347,7 @@ class QueryManager:
     # VARIABLES
     # =================================================================
 
-    def get_variables(self) -> Dict[str, Any]:
+    def get_variables(self) -> dict[str, Any]:
         """
         Get all variables from the active document.
 
@@ -368,18 +369,12 @@ class QueryManager:
                         "index": i - 1,
                         "name": var.DisplayName if hasattr(var, 'DisplayName') else f"Var_{i}",
                     }
-                    try:
+                    with contextlib.suppress(Exception):
                         var_info["value"] = var.Value
-                    except Exception:
-                        pass
-                    try:
+                    with contextlib.suppress(Exception):
                         var_info["formula"] = var.Formula
-                    except Exception:
-                        pass
-                    try:
+                    with contextlib.suppress(Exception):
                         var_info["units"] = var.Units
-                    except Exception:
-                        pass
                     var_list.append(var_info)
                 except Exception:
                     var_list.append({"index": i - 1, "name": f"Var_{i}"})
@@ -394,7 +389,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_variable(self, name: str) -> Dict[str, Any]:
+    def get_variable(self, name: str) -> dict[str, Any]:
         """
         Get a specific variable by name.
 
@@ -415,18 +410,12 @@ class QueryManager:
                     display_name = var.DisplayName if hasattr(var, 'DisplayName') else ""
                     if display_name == name:
                         result = {"name": name, "index": i - 1}
-                        try:
+                        with contextlib.suppress(Exception):
                             result["value"] = var.Value
-                        except Exception:
-                            pass
-                        try:
+                        with contextlib.suppress(Exception):
                             result["formula"] = var.Formula
-                        except Exception:
-                            pass
-                        try:
+                        with contextlib.suppress(Exception):
                             result["units"] = var.Units
-                        except Exception:
-                            pass
                         return result
                 except Exception:
                     continue
@@ -438,7 +427,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def set_variable(self, name: str, value: float) -> Dict[str, Any]:
+    def set_variable(self, name: str, value: float) -> dict[str, Any]:
         """
         Set a variable's value by name.
 
@@ -476,7 +465,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def add_variable(self, name: str, formula: str, units_type: str = None) -> Dict[str, Any]:
+    def add_variable(self, name: str, formula: str, units_type: str = None) -> dict[str, Any]:
         """
         Create a new user variable in the active document.
 
@@ -505,14 +494,10 @@ class QueryManager:
                 "name": name,
                 "formula": formula
             }
-            try:
+            with contextlib.suppress(Exception):
                 result["value"] = var.Value
-            except Exception:
-                pass
-            try:
+            with contextlib.suppress(Exception):
                 result["display_name"] = var.DisplayName
-            except Exception:
-                pass
 
             return result
         except Exception as e:
@@ -525,7 +510,7 @@ class QueryManager:
     # CUSTOM PROPERTIES
     # =================================================================
 
-    def get_custom_properties(self) -> Dict[str, Any]:
+    def get_custom_properties(self) -> dict[str, Any]:
         """
         Get all custom properties from the active document.
 
@@ -572,7 +557,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def set_custom_property(self, name: str, value: str) -> Dict[str, Any]:
+    def set_custom_property(self, name: str, value: str) -> dict[str, Any]:
         """
         Set or create a custom property.
 
@@ -632,7 +617,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def delete_custom_property(self, name: str) -> Dict[str, Any]:
+    def delete_custom_property(self, name: str) -> dict[str, Any]:
         """
         Delete a custom property by name.
 
@@ -677,7 +662,7 @@ class QueryManager:
     # BODY TOPOLOGY QUERIES
     # =================================================================
 
-    def get_body_faces(self) -> Dict[str, Any]:
+    def get_body_faces(self) -> dict[str, Any]:
         """
         Get all faces on the model body.
 
@@ -730,10 +715,8 @@ class QueryManager:
                 try:
                     face = faces.Item(i)
                     face_info = {"index": i - 1}
-                    try:
+                    with contextlib.suppress(Exception):
                         face_info["area"] = face.Area
-                    except Exception:
-                        pass
                     try:
                         edge_count = face.Edges.Count if hasattr(face.Edges, 'Count') else 0
                         face_info["edge_count"] = edge_count
@@ -759,7 +742,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_body_edges(self) -> Dict[str, Any]:
+    def get_body_edges(self) -> dict[str, Any]:
         """
         Get all unique edges on the model body.
 
@@ -802,7 +785,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_face_info(self, face_index: int) -> Dict[str, Any]:
+    def get_face_info(self, face_index: int) -> dict[str, Any]:
         """
         Get detailed information about a specific face.
 
@@ -824,14 +807,10 @@ class QueryManager:
 
             info = {"index": face_index}
 
-            try:
+            with contextlib.suppress(Exception):
                 info["type"] = face.Type
-            except Exception:
-                pass
-            try:
+            with contextlib.suppress(Exception):
                 info["area"] = face.Area
-            except Exception:
-                pass
             try:
                 edges = face.Edges
                 info["edge_count"] = edges.Count if hasattr(edges, 'Count') else 0
@@ -854,7 +833,7 @@ class QueryManager:
     # PERFORMANCE & RECOMPUTE
     # =================================================================
 
-    def get_body_facet_data(self, tolerance: float = 0.0) -> Dict[str, Any]:
+    def get_body_facet_data(self, tolerance: float = 0.0) -> dict[str, Any]:
         """
         Get tessellation/mesh data from the model body.
 
@@ -880,7 +859,9 @@ class QueryManager:
             import array as arr_mod
 
             # Prepare out parameters for COM call
-            # GetFacetData(Tolerance, FacetCount, Points, Normals, TextureCoords, StyleIDs, FaceIDs, bHonourPrefs)
+            # GetFacetData(Tolerance, FacetCount, Points,
+            # Normals, TextureCoords, StyleIDs, FaceIDs,
+            # bHonourPrefs)
             points = arr_mod.array('d', [])
             normals = arr_mod.array('d', [])
             texture_coords = arr_mod.array('d', [])
@@ -892,7 +873,9 @@ class QueryManager:
                     tolerance,     # Tolerance
                 )
 
-                # GetFacetData returns a tuple of (facetCount, points, normals, textureCoords, styleIds, faceIds)
+                # GetFacetData returns a tuple of
+                # (facetCount, points, normals,
+                # textureCoords, styleIds, faceIds)
                 if isinstance(result_data, tuple) and len(result_data) >= 2:
                     facet_count = result_data[0] if isinstance(result_data[0], int) else 0
                     pts = result_data[1] if len(result_data) > 1 else []
@@ -909,7 +892,11 @@ class QueryManager:
             # Alternative: try with explicit out params
             try:
                 facet_count = 0
-                body.GetFacetData(tolerance, facet_count, points, normals, texture_coords, style_ids, face_ids, False)
+                body.GetFacetData(
+                    tolerance, facet_count, points,
+                    normals, texture_coords,
+                    style_ids, face_ids, False
+                )
 
                 return {
                     "facet_count": facet_count,
@@ -920,7 +907,9 @@ class QueryManager:
             except Exception as e2:
                 return {
                     "error": f"GetFacetData failed: {e2}",
-                    "note": "Body facet data may require specific COM marshaling. Try export_stl() instead.",
+                    "note": "Body facet data may require "
+                    "specific COM marshaling. "
+                    "Try export_stl() instead.",
                     "traceback": traceback.format_exc()
                 }
 
@@ -930,7 +919,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_solid_bodies(self) -> Dict[str, Any]:
+    def get_solid_bodies(self) -> dict[str, Any]:
         """
         Report all solid bodies in the active part document.
 
@@ -961,10 +950,8 @@ class QueryManager:
                     except Exception:
                         body_info["is_solid"] = True  # Default assumption
 
-                    try:
+                    with contextlib.suppress(Exception):
                         body_info["volume"] = body.Volume
-                    except Exception:
-                        pass
 
                     # Count shells
                     try:
@@ -989,10 +976,8 @@ class QueryManager:
                             "type": "construction",
                             "name": cm.Name if hasattr(cm, 'Name') else f"Construction_{i}",
                         }
-                        try:
+                        with contextlib.suppress(Exception):
                             body_info["is_solid"] = body.IsSolid
-                        except Exception:
-                            pass
                         bodies.append(body_info)
                     except Exception:
                         pass
@@ -1009,7 +994,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_modeling_mode(self) -> Dict[str, Any]:
+    def get_modeling_mode(self) -> dict[str, Any]:
         """
         Get the current modeling mode (Ordered vs Synchronous).
 
@@ -1039,7 +1024,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def set_modeling_mode(self, mode: str) -> Dict[str, Any]:
+    def set_modeling_mode(self, mode: str) -> dict[str, Any]:
         """
         Set the modeling mode (Ordered vs Synchronous).
 
@@ -1067,8 +1052,16 @@ class QueryManager:
                 new_mode = doc.ModelingMode
                 return {
                     "status": "changed",
-                    "old_mode": "ordered" if old_mode == ModelingModeConstants.seModelingModeOrdered else "synchronous",
-                    "new_mode": "ordered" if new_mode == ModelingModeConstants.seModelingModeOrdered else "synchronous"
+                    "old_mode": (
+                        "ordered"
+                        if old_mode == ModelingModeConstants.seModelingModeOrdered
+                        else "synchronous"
+                    ),
+                    "new_mode": (
+                        "ordered"
+                        if new_mode == ModelingModeConstants.seModelingModeOrdered
+                        else "synchronous"
+                    )
                 }
             except Exception as e:
                 return {"error": f"Cannot change modeling mode: {e}"}
@@ -1078,7 +1071,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def suppress_feature(self, feature_name: str) -> Dict[str, Any]:
+    def suppress_feature(self, feature_name: str) -> dict[str, Any]:
         """
         Suppress a feature by name.
 
@@ -1113,7 +1106,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def unsuppress_feature(self, feature_name: str) -> Dict[str, Any]:
+    def unsuppress_feature(self, feature_name: str) -> dict[str, Any]:
         """
         Unsuppress a feature by name.
 
@@ -1146,7 +1139,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_select_set(self) -> Dict[str, Any]:
+    def get_select_set(self) -> dict[str, Any]:
         """
         Get the current selection set.
 
@@ -1167,10 +1160,8 @@ class QueryManager:
                     item = select_set.Item(i)
                     item_info = {"index": i - 1}
 
-                    try:
+                    with contextlib.suppress(Exception):
                         item_info["type"] = str(type(item).__name__)
-                    except Exception:
-                        pass
 
                     try:
                         if hasattr(item, 'Name'):
@@ -1192,7 +1183,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def clear_select_set(self) -> Dict[str, Any]:
+    def clear_select_set(self) -> dict[str, Any]:
         """
         Clear the current selection set.
 
@@ -1218,7 +1209,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def select_add(self, object_type: str, index: int) -> Dict[str, Any]:
+    def select_add(self, object_type: str, index: int) -> dict[str, Any]:
         """
         Add an object to the selection set programmatically.
 
@@ -1260,7 +1251,11 @@ class QueryManager:
                     return {"error": f"Invalid plane index: {index}. Count: {ref_planes.Count}"}
                 obj = ref_planes.Item(plane_idx)
             else:
-                return {"error": f"Unsupported object type: {object_type}. Use 'feature', 'face', or 'plane'."}
+                return {
+                    "error": f"Unsupported object type: "
+                    f"{object_type}. Use 'feature', "
+                    "'face', or 'plane'."
+                }
 
             if obj is None:
                 return {"error": "Could not resolve object to select"}
@@ -1279,7 +1274,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def select_remove(self, index: int) -> Dict[str, Any]:
+    def select_remove(self, index: int) -> dict[str, Any]:
         """
         Remove an object from the selection set by index.
 
@@ -1312,7 +1307,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def select_all(self) -> Dict[str, Any]:
+    def select_all(self) -> dict[str, Any]:
         """
         Select all objects in the active document.
 
@@ -1336,7 +1331,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def select_copy(self) -> Dict[str, Any]:
+    def select_copy(self) -> dict[str, Any]:
         """
         Copy the current selection to the clipboard.
 
@@ -1364,7 +1359,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def select_cut(self) -> Dict[str, Any]:
+    def select_cut(self) -> dict[str, Any]:
         """
         Cut the current selection to the clipboard.
 
@@ -1393,7 +1388,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def select_delete(self) -> Dict[str, Any]:
+    def select_delete(self) -> dict[str, Any]:
         """
         Delete the currently selected objects.
 
@@ -1422,7 +1417,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def select_suspend_display(self) -> Dict[str, Any]:
+    def select_suspend_display(self) -> dict[str, Any]:
         """
         Suspend display updates for the selection set.
 
@@ -1442,7 +1437,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def select_resume_display(self) -> Dict[str, Any]:
+    def select_resume_display(self) -> dict[str, Any]:
         """
         Resume display updates for the selection set.
 
@@ -1462,7 +1457,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def select_refresh_display(self) -> Dict[str, Any]:
+    def select_refresh_display(self) -> dict[str, Any]:
         """
         Refresh the display of the selection set.
 
@@ -1486,7 +1481,7 @@ class QueryManager:
     # BODY APPEARANCE & MATERIAL
     # =================================================================
 
-    def set_body_color(self, red: int, green: int, blue: int) -> Dict[str, Any]:
+    def set_body_color(self, red: int, green: int, blue: int) -> dict[str, Any]:
         """
         Set the body color of the active part.
 
@@ -1524,7 +1519,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def set_material_density(self, density: float) -> Dict[str, Any]:
+    def set_material_density(self, density: float) -> dict[str, Any]:
         """
         Set the material density for mass property calculations.
 
@@ -1564,7 +1559,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_edge_count(self) -> Dict[str, Any]:
+    def get_edge_count(self) -> dict[str, Any]:
         """
         Get total edge count on the model body.
 
@@ -1601,7 +1596,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def recompute(self) -> Dict[str, Any]:
+    def recompute(self) -> dict[str, Any]:
         """
         Recompute the active document and model.
 
@@ -1623,10 +1618,8 @@ class QueryManager:
                 pass
 
             # Also try document-level recompute
-            try:
+            with contextlib.suppress(Exception):
                 doc.Recompute()
-            except Exception:
-                pass
 
             return {"status": "recomputed"}
         except Exception as e:
@@ -1635,7 +1628,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_design_edgebar_features(self) -> Dict[str, Any]:
+    def get_design_edgebar_features(self) -> dict[str, Any]:
         """
         Get the full feature tree from DesignEdgebarFeatures.
 
@@ -1662,14 +1655,10 @@ class QueryManager:
                         entry["name"] = feat.Name
                     except Exception:
                         entry["name"] = f"Feature_{i}"
-                    try:
+                    with contextlib.suppress(Exception):
                         entry["type"] = feat.Type
-                    except Exception:
-                        pass
-                    try:
+                    with contextlib.suppress(Exception):
                         entry["suppressed"] = feat.IsSuppressed
-                    except Exception:
-                        pass
                     feature_list.append(entry)
                 except Exception:
                     feature_list.append({"index": i - 1, "name": f"Feature_{i}"})
@@ -1684,7 +1673,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def rename_feature(self, old_name: str, new_name: str) -> Dict[str, Any]:
+    def rename_feature(self, old_name: str, new_name: str) -> dict[str, Any]:
         """
         Rename a feature in the design tree.
 
@@ -1723,7 +1712,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def set_document_property(self, name: str, value: str) -> Dict[str, Any]:
+    def set_document_property(self, name: str, value: str) -> dict[str, Any]:
         """
         Set a summary/document property (Title, Subject, Author, etc.).
 
@@ -1775,7 +1764,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_face_area(self, face_index: int) -> Dict[str, Any]:
+    def get_face_area(self, face_index: int) -> dict[str, Any]:
         """
         Get the area of a specific face on the body.
 
@@ -1811,7 +1800,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_surface_area(self) -> Dict[str, Any]:
+    def get_surface_area(self) -> dict[str, Any]:
         """
         Get the total surface area of the body.
 
@@ -1854,7 +1843,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_volume(self) -> Dict[str, Any]:
+    def get_volume(self) -> dict[str, Any]:
         """
         Get the volume of the body.
 
@@ -1877,7 +1866,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_face_count(self) -> Dict[str, Any]:
+    def get_face_count(self) -> dict[str, Any]:
         """
         Get the total number of faces on the body.
 
@@ -1897,7 +1886,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_edge_info(self, face_index: int, edge_index: int) -> Dict[str, Any]:
+    def get_edge_info(self, face_index: int, edge_index: int) -> dict[str, Any]:
         """
         Get information about a specific edge on a face.
 
@@ -1935,10 +1924,8 @@ class QueryManager:
             except Exception:
                 pass
 
-            try:
+            with contextlib.suppress(Exception):
                 info["type"] = edge.Type
-            except Exception:
-                pass
 
             try:
                 start = edge.StartVertex
@@ -1955,7 +1942,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def set_face_color(self, face_index: int, red: int, green: int, blue: int) -> Dict[str, Any]:
+    def set_face_color(self, face_index: int, red: int, green: int, blue: int) -> dict[str, Any]:
         """
         Set the color of a specific face.
 
@@ -2001,7 +1988,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_center_of_gravity(self) -> Dict[str, Any]:
+    def get_center_of_gravity(self) -> dict[str, Any]:
         """
         Get the center of gravity (center of mass) of the part.
 
@@ -2055,7 +2042,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_moments_of_inertia(self) -> Dict[str, Any]:
+    def get_moments_of_inertia(self) -> dict[str, Any]:
         """
         Get the moments of inertia of the part.
 
@@ -2065,13 +2052,19 @@ class QueryManager:
         try:
             doc, model = self._get_first_model()
             result = model.ComputePhysicalPropertiesWithSpecifiedDensity(7850.0, 0.001)
-            # result: (volume, area, mass, cog, cov, moi, principal_moi, principal_axes, radii_of_gyration, ?, ?)
+            # result: (volume, area, mass, cog, cov, moi,
+            # principal_moi, principal_axes,
+            # radii_of_gyration, ?, ?)
             moi = result[5]
             principal_moi = result[6]
 
             return {
                 "moments_of_inertia": list(moi) if hasattr(moi, '__iter__') else moi,
-                "principal_moments": list(principal_moi) if hasattr(principal_moi, '__iter__') else principal_moi,
+                "principal_moments": (
+                    list(principal_moi)
+                    if hasattr(principal_moi, '__iter__')
+                    else principal_moi
+                ),
             }
         except Exception as e:
             return {
@@ -2079,7 +2072,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def delete_feature(self, feature_name: str) -> Dict[str, Any]:
+    def delete_feature(self, feature_name: str) -> dict[str, Any]:
         """
         Delete a feature by name.
 
@@ -2117,7 +2110,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_feature_status(self, feature_name: str) -> Dict[str, Any]:
+    def get_feature_status(self, feature_name: str) -> dict[str, Any]:
         """
         Get the status of a feature (OK, suppressed, failed, etc.).
 
@@ -2144,23 +2137,17 @@ class QueryManager:
                             "feature_name": feature_name,
                             "index": i - 1
                         }
-                        try:
+                        with contextlib.suppress(Exception):
                             result["status"] = feat.Status
-                        except Exception:
-                            pass
-                        try:
+                        with contextlib.suppress(Exception):
                             result["is_suppressed"] = feat.IsSuppressed
-                        except Exception:
-                            pass
                         try:
                             status_ex = feat.GetStatusEx()
                             result["status_ex"] = status_ex
                         except Exception:
                             pass
-                        try:
+                        with contextlib.suppress(Exception):
                             result["type"] = feat.Type
-                        except Exception:
-                            pass
                         return result
                 except Exception:
                     continue
@@ -2172,7 +2159,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_feature_profiles(self, feature_name: str) -> Dict[str, Any]:
+    def get_feature_profiles(self, feature_name: str) -> dict[str, Any]:
         """
         Get the sketch profiles associated with a feature.
 
@@ -2209,23 +2196,18 @@ class QueryManager:
                 result = target.GetProfiles()
                 if result is not None:
                     if isinstance(result, tuple) and len(result) >= 2:
-                        num_profiles = result[0]
+                        result[0]
                         profile_array = result[1]
                     else:
                         profile_array = result
-                        num_profiles = None
 
                     if profile_array is not None and hasattr(profile_array, '__iter__'):
                         for p in profile_array:
                             p_info = {}
-                            try:
+                            with contextlib.suppress(Exception):
                                 p_info["name"] = p.Name
-                            except Exception:
-                                pass
-                            try:
+                            with contextlib.suppress(Exception):
                                 p_info["status"] = p.Status
-                            except Exception:
-                                pass
                             profiles.append(p_info)
             except Exception as e:
                 return {
@@ -2245,7 +2227,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_vertex_count(self) -> Dict[str, Any]:
+    def get_vertex_count(self) -> dict[str, Any]:
         """
         Get the total vertex count on the model body.
 
@@ -2281,7 +2263,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_body_color(self) -> Dict[str, Any]:
+    def get_body_color(self) -> dict[str, Any]:
         """
         Get the current body color.
 
@@ -2319,7 +2301,7 @@ class QueryManager:
 
     def measure_angle(self, x1: float, y1: float, z1: float,
                       x2: float, y2: float, z2: float,
-                      x3: float, y3: float, z3: float) -> Dict[str, Any]:
+                      x3: float, y3: float, z3: float) -> dict[str, Any]:
         """
         Measure the angle between three points (vertex at point 2).
 
@@ -2365,7 +2347,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_material_table(self) -> Dict[str, Any]:
+    def get_material_table(self) -> dict[str, Any]:
         """
         Get the available material properties from the document variables.
 
@@ -2392,7 +2374,11 @@ class QueryManager:
                             try:
                                 material_vars[name] = var.Value
                             except Exception:
-                                material_vars[name] = str(var.Formula) if hasattr(var, 'Formula') else "N/A"
+                                material_vars[name] = (
+                                    str(var.Formula)
+                                    if hasattr(var, 'Formula')
+                                    else "N/A"
+                                )
                     except Exception:
                         continue
             except Exception:
@@ -2427,7 +2413,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_feature_dimensions(self, feature_name: str) -> Dict[str, Any]:
+    def get_feature_dimensions(self, feature_name: str) -> dict[str, Any]:
         """
         Get the dimensions/parameters of a specific feature.
 
@@ -2465,11 +2451,10 @@ class QueryManager:
                 if result is not None:
                     # result may be a tuple (count, array) or just an array
                     if isinstance(result, tuple) and len(result) >= 2:
-                        num_dims = result[0]
+                        result[0]
                         dim_array = result[1]
                     else:
                         dim_array = result
-                        num_dims = None
 
                     # Process dimension objects
                     if dim_array is not None:
@@ -2478,18 +2463,12 @@ class QueryManager:
                             if hasattr(dim_array, '__iter__'):
                                 for dim in dim_array:
                                     dim_info = {}
-                                    try:
+                                    with contextlib.suppress(Exception):
                                         dim_info["name"] = dim.Name
-                                    except Exception:
-                                        pass
-                                    try:
+                                    with contextlib.suppress(Exception):
                                         dim_info["value"] = dim.Value
-                                    except Exception:
-                                        pass
-                                    try:
+                                    with contextlib.suppress(Exception):
                                         dim_info["formula"] = dim.Formula
-                                    except Exception:
-                                        pass
                                     dimensions.append(dim_info)
                         except Exception:
                             dimensions.append({"raw": str(dim_array)})
@@ -2512,7 +2491,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_material_list(self) -> Dict[str, Any]:
+    def get_material_list(self) -> dict[str, Any]:
         """
         Get the list of available materials from the material table.
 
@@ -2522,8 +2501,7 @@ class QueryManager:
             Dict with list of material names
         """
         try:
-            doc = self.doc_manager.get_active_document()
-            import win32com.client
+            self.doc_manager.get_active_document()
 
             # Get MatTable from the application
             app = self.doc_manager.connection.get_application()
@@ -2532,11 +2510,10 @@ class QueryManager:
             result = mat_table.GetMaterialList()
             # Returns (count, list_of_materials) as out-params
             if isinstance(result, tuple) and len(result) >= 2:
-                num_materials = result[0]
+                result[0]
                 material_list = result[1]
             else:
                 material_list = result
-                num_materials = None
 
             materials = []
             if material_list is not None:
@@ -2555,7 +2532,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def set_material(self, material_name: str) -> Dict[str, Any]:
+    def set_material(self, material_name: str) -> dict[str, Any]:
         """
         Apply a named material to the active document.
 
@@ -2584,7 +2561,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_material_property(self, material_name: str, property_index: int) -> Dict[str, Any]:
+    def get_material_property(self, material_name: str, property_index: int) -> dict[str, Any]:
         """
         Get a specific property value for a material.
 
@@ -2620,7 +2597,7 @@ class QueryManager:
             }
 
     def query_variables(self, pattern: str = "*",
-                        case_insensitive: bool = True) -> Dict[str, Any]:
+                        case_insensitive: bool = True) -> dict[str, Any]:
         """
         Search variables by name pattern.
 
@@ -2657,14 +2634,10 @@ class QueryManager:
                             match = fnmatch.fnmatch(name, pattern)
                         if match:
                             entry = {"name": name}
-                            try:
+                            with contextlib.suppress(Exception):
                                 entry["value"] = var.Value
-                            except Exception:
-                                pass
-                            try:
+                            with contextlib.suppress(Exception):
                                 entry["formula"] = var.Formula
-                            except Exception:
-                                pass
                             matches.append(entry)
                     except Exception:
                         continue
@@ -2687,14 +2660,10 @@ class QueryManager:
                             entry["name"] = var.Name
                         except Exception:
                             entry["name"] = f"var_{i}"
-                        try:
+                        with contextlib.suppress(Exception):
                             entry["value"] = var.Value
-                        except Exception:
-                            pass
-                        try:
+                        with contextlib.suppress(Exception):
                             entry["formula"] = var.Formula
-                        except Exception:
-                            pass
                         matches.append(entry)
                 except Exception:
                     pass
@@ -2710,7 +2679,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_variable_formula(self, name: str) -> Dict[str, Any]:
+    def get_variable_formula(self, name: str) -> dict[str, Any]:
         """
         Get the formula of a variable by name.
 
@@ -2734,10 +2703,8 @@ class QueryManager:
                             result["formula"] = var.Formula
                         except Exception:
                             result["formula"] = None
-                        try:
+                        with contextlib.suppress(Exception):
                             result["value"] = var.Value
-                        except Exception:
-                            pass
                         return result
                 except Exception:
                     continue
@@ -2749,7 +2716,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def rename_variable(self, old_name: str, new_name: str) -> Dict[str, Any]:
+    def rename_variable(self, old_name: str, new_name: str) -> dict[str, Any]:
         """
         Rename a variable by changing its DisplayName.
 
@@ -2787,7 +2754,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_variable_names(self, name: str) -> Dict[str, Any]:
+    def get_variable_names(self, name: str) -> dict[str, Any]:
         """
         Get both the DisplayName and SystemName of a variable.
 
@@ -2814,10 +2781,8 @@ class QueryManager:
                             result["system_name"] = var.Name
                         except Exception:
                             result["system_name"] = None
-                        try:
+                        with contextlib.suppress(Exception):
                             result["value"] = var.Value
-                        except Exception:
-                            pass
                         return result
                 except Exception:
                     continue
@@ -2829,7 +2794,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def translate_variable(self, name: str) -> Dict[str, Any]:
+    def translate_variable(self, name: str) -> dict[str, Any]:
         """
         Translate (look up) a variable by name using Variables.Translate().
 
@@ -2848,22 +2813,14 @@ class QueryManager:
             var = variables.Translate(name)
 
             result = {"status": "success", "input_name": name}
-            try:
+            with contextlib.suppress(Exception):
                 result["name"] = var.Name
-            except Exception:
-                pass
-            try:
+            with contextlib.suppress(Exception):
                 result["display_name"] = var.DisplayName
-            except Exception:
-                pass
-            try:
+            with contextlib.suppress(Exception):
                 result["value"] = var.Value
-            except Exception:
-                pass
-            try:
+            with contextlib.suppress(Exception):
                 result["formula"] = var.Formula
-            except Exception:
-                pass
             return result
         except Exception as e:
             return {
@@ -2871,7 +2828,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def copy_variable_to_clipboard(self, name: str) -> Dict[str, Any]:
+    def copy_variable_to_clipboard(self, name: str) -> dict[str, Any]:
         """
         Copy a variable definition to the clipboard.
 
@@ -2895,7 +2852,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def add_variable_from_clipboard(self, name: str, units_type: str = None) -> Dict[str, Any]:
+    def add_variable_from_clipboard(self, name: str, units_type: str = None) -> dict[str, Any]:
         """
         Add a variable from the clipboard.
 
@@ -2919,10 +2876,8 @@ class QueryManager:
                 new_var = variables.AddFromClipboard(name)
 
             result = {"status": "added", "name": name}
-            try:
+            with contextlib.suppress(Exception):
                 result["value"] = new_var.Value
-            except Exception:
-                pass
             return result
         except Exception as e:
             return {
@@ -2934,7 +2889,7 @@ class QueryManager:
     # LAYER MANAGEMENT
     # =================================================================
 
-    def get_layers(self) -> Dict[str, Any]:
+    def get_layers(self) -> dict[str, Any]:
         """
         Get all layers in the active document.
 
@@ -2960,18 +2915,12 @@ class QueryManager:
                         info["name"] = layer.Name
                     except Exception:
                         info["name"] = f"Layer_{i}"
-                    try:
+                    with contextlib.suppress(Exception):
                         info["show"] = bool(layer.Show)
-                    except Exception:
-                        pass
-                    try:
+                    with contextlib.suppress(Exception):
                         info["locatable"] = bool(layer.Locatable)
-                    except Exception:
-                        pass
-                    try:
+                    with contextlib.suppress(Exception):
                         info["is_empty"] = bool(layer.IsEmpty)
-                    except Exception:
-                        pass
                     layers.append(info)
                 except Exception:
                     continue
@@ -2986,7 +2935,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def add_layer(self, name: str) -> Dict[str, Any]:
+    def add_layer(self, name: str) -> dict[str, Any]:
         """
         Add a new layer to the active document.
 
@@ -3005,7 +2954,7 @@ class QueryManager:
                 return {"error": "Active document does not support layers"}
 
             layers = doc.Layers
-            new_layer = layers.Add(name)
+            layers.Add(name)
 
             return {
                 "status": "added",
@@ -3018,7 +2967,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def activate_layer(self, name_or_index) -> Dict[str, Any]:
+    def activate_layer(self, name_or_index) -> dict[str, Any]:
         """
         Activate a layer by name or 0-based index.
 
@@ -3047,9 +2996,9 @@ class QueryManager:
                 layer = None
                 for i in range(1, layers.Count + 1):
                     try:
-                        l = layers.Item(i)
-                        if l.Name == name_or_index:
-                            layer = l
+                        lyr = layers.Item(i)
+                        if lyr.Name == name_or_index:
+                            layer = lyr
                             break
                     except Exception:
                         continue
@@ -3069,7 +3018,11 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def set_layer_properties(self, name_or_index, show: bool = None, selectable: bool = None) -> Dict[str, Any]:
+    def set_layer_properties(
+        self, name_or_index,
+        show: bool = None,
+        selectable: bool = None
+    ) -> dict[str, Any]:
         """
         Set layer visibility and selectability properties.
 
@@ -3097,9 +3050,9 @@ class QueryManager:
                 layer = None
                 for i in range(1, layers.Count + 1):
                     try:
-                        l = layers.Item(i)
-                        if l.Name == name_or_index:
-                            layer = l
+                        lyr = layers.Item(i)
+                        if lyr.Name == name_or_index:
+                            layer = lyr
                             break
                     except Exception:
                         continue
@@ -3131,7 +3084,7 @@ class QueryManager:
     # FACESTYLE / APPEARANCE
     # =================================================================
 
-    def set_body_opacity(self, opacity: float) -> Dict[str, Any]:
+    def set_body_opacity(self, opacity: float) -> dict[str, Any]:
         """
         Set the body opacity (transparency).
 
@@ -3160,7 +3113,7 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
-    def set_body_reflectivity(self, reflectivity: float) -> Dict[str, Any]:
+    def set_body_reflectivity(self, reflectivity: float) -> dict[str, Any]:
         """
         Set the body reflectivity.
 

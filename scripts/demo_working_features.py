@@ -4,17 +4,20 @@ Demo of Working SolidEdge MCP Features
 Shows all the functionality that's currently operational (~60% of tools)
 """
 
+import math
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent / "src"))
+
+import time
 
 from solidedge_mcp.backends.connection import SolidEdgeConnection
 from solidedge_mcp.backends.documents import DocumentManager
-from solidedge_mcp.backends.sketching import SketchManager
+from solidedge_mcp.backends.export import ViewModel
 from solidedge_mcp.backends.features import FeatureManager
 from solidedge_mcp.backends.query import QueryManager
-from solidedge_mcp.backends.export import ViewModel
-import time
+from solidedge_mcp.backends.sketching import SketchManager
 
 print("=" * 70)
 print("SOLID EDGE MCP - WORKING FEATURES DEMO")
@@ -51,7 +54,6 @@ sketch_manager.draw_circle(0, 0, 0.04)
 print("  [OK] Drew outer ring (circle)")
 
 # Add 6 cutout circles around the perimeter
-import math
 num_teeth = 6
 radius = 0.035
 cutout_radius = 0.008
@@ -103,7 +105,10 @@ if "error" not in mass_result:
     print(f"  • Surface area: {area:.6f} m²")
     com = mass_result.get('center_of_mass', {})
     if com:
-        print(f"  • Center of mass: ({com.get('x', 0):.4f}, {com.get('y', 0):.4f}, {com.get('z', 0):.4f})")
+        cx = com.get('x', 0)
+        cy = com.get('y', 0)
+        cz = com.get('z', 0)
+        print(f"  • Center of mass: ({cx:.4f}, {cy:.4f}, {cz:.4f})")
 
 # Bounding box
 bbox_result = query_manager.get_bounding_box()

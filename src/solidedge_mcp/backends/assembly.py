@@ -4,10 +4,10 @@ Solid Edge Assembly Operations
 Handles assembly creation and component management.
 """
 
-from typing import Dict, Any, Optional, List
+import contextlib
 import os
 import traceback
-from .constants import MateTypeConstants
+from typing import Any
 
 
 class AssemblyManager:
@@ -16,7 +16,10 @@ class AssemblyManager:
     def __init__(self, document_manager):
         self.doc_manager = document_manager
 
-    def add_component(self, file_path: str, x: float = 0, y: float = 0, z: float = 0) -> Dict[str, Any]:
+    def add_component(
+        self, file_path: str,
+        x: float = 0, y: float = 0, z: float = 0
+    ) -> dict[str, Any]:
         """
         Add a component (part) to the active assembly.
 
@@ -62,7 +65,11 @@ class AssemblyManager:
             return {
                 "status": "added",
                 "file_path": file_path,
-                "name": occurrence.Name if hasattr(occurrence, 'Name') else os.path.basename(file_path),
+                "name": (
+                    occurrence.Name
+                    if hasattr(occurrence, 'Name')
+                    else os.path.basename(file_path)
+                ),
                 "position": position,
                 "index": occurrences.Count - 1
             }
@@ -75,7 +82,7 @@ class AssemblyManager:
     # Alias for MCP tool compatibility
     place_component = add_component
 
-    def list_components(self) -> Dict[str, Any]:
+    def list_components(self) -> dict[str, Any]:
         """
         List all components in the active assembly.
 
@@ -134,7 +141,11 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_mate(self, mate_type: str, component1_index: int, component2_index: int) -> Dict[str, Any]:
+    def create_mate(
+        self, mate_type: str,
+        component1_index: int,
+        component2_index: int
+    ) -> dict[str, Any]:
         """
         Create a mate/assembly relationship between components.
 
@@ -162,7 +173,10 @@ class AssemblyManager:
 
             # Mate creation requires face/edge selection
             return {
-                "error": "Mate creation requires face/edge selection which is not available via COM automation. Use Solid Edge UI to create mates.",
+                "error": "Mate creation requires face/edge "
+                "selection which is not available via "
+                "COM automation. Use Solid Edge UI to "
+                "create mates.",
                 "mate_type": mate_type,
                 "component1": component1_index,
                 "component2": component2_index
@@ -173,7 +187,7 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_component_info(self, component_index: int) -> Dict[str, Any]:
+    def get_component_info(self, component_index: int) -> dict[str, Any]:
         """
         Get detailed information about a specific component.
 
@@ -190,7 +204,11 @@ class AssemblyManager:
             occurrences = doc.Occurrences
 
             if component_index < 0 or component_index >= occurrences.Count:
-                return {"error": f"Invalid component index: {component_index}. Count: {occurrences.Count}"}
+                return {
+                    "error": f"Invalid component index: "
+                    f"{component_index}. "
+                    f"Count: {occurrences.Count}"
+                }
 
             occurrence = occurrences.Item(component_index + 1)
 
@@ -221,10 +239,8 @@ class AssemblyManager:
                 pass
 
             # Visibility
-            try:
+            with contextlib.suppress(Exception):
                 info["visible"] = occurrence.Visible
-            except Exception:
-                pass
 
             # Occurrence document info
             try:
@@ -240,7 +256,10 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def update_component_position(self, component_index: int, x: float, y: float, z: float) -> Dict[str, Any]:
+    def update_component_position(
+        self, component_index: int,
+        x: float, y: float, z: float
+    ) -> dict[str, Any]:
         """
         Update a component's position using a transformation matrix.
 
@@ -284,7 +303,7 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def add_align_constraint(self, component1_index: int, component2_index: int) -> Dict[str, Any]:
+    def add_align_constraint(self, component1_index: int, component2_index: int) -> dict[str, Any]:
         """Add an align constraint between two components (requires UI for face selection)"""
         return {
             "error": "Constraint creation requires face/edge selection. Use Solid Edge UI.",
@@ -293,7 +312,10 @@ class AssemblyManager:
             "component2": component2_index
         }
 
-    def add_angle_constraint(self, component1_index: int, component2_index: int, angle: float) -> Dict[str, Any]:
+    def add_angle_constraint(
+        self, component1_index: int,
+        component2_index: int, angle: float
+    ) -> dict[str, Any]:
         """Add an angle constraint between two components (requires UI for face selection)"""
         return {
             "error": "Constraint creation requires face/edge selection. Use Solid Edge UI.",
@@ -303,7 +325,10 @@ class AssemblyManager:
             "angle": angle
         }
 
-    def add_planar_align_constraint(self, component1_index: int, component2_index: int) -> Dict[str, Any]:
+    def add_planar_align_constraint(
+        self, component1_index: int,
+        component2_index: int
+    ) -> dict[str, Any]:
         """Add a planar align constraint (requires UI for face selection)"""
         return {
             "error": "Constraint creation requires face/edge selection. Use Solid Edge UI.",
@@ -312,7 +337,10 @@ class AssemblyManager:
             "component2": component2_index
         }
 
-    def add_axial_align_constraint(self, component1_index: int, component2_index: int) -> Dict[str, Any]:
+    def add_axial_align_constraint(
+        self, component1_index: int,
+        component2_index: int
+    ) -> dict[str, Any]:
         """Add an axial align constraint (requires UI for face selection)"""
         return {
             "error": "Constraint creation requires face/edge selection. Use Solid Edge UI.",
@@ -321,7 +349,10 @@ class AssemblyManager:
             "component2": component2_index
         }
 
-    def pattern_component(self, component_index: int, count: int, spacing: float, direction: str = "X") -> Dict[str, Any]:
+    def pattern_component(
+        self, component_index: int, count: int,
+        spacing: float, direction: str = "X"
+    ) -> dict[str, Any]:
         """
         Create a linear pattern of a component by placing copies with offset.
 
@@ -379,7 +410,7 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def suppress_component(self, component_index: int, suppress: bool = True) -> Dict[str, Any]:
+    def suppress_component(self, component_index: int, suppress: bool = True) -> dict[str, Any]:
         """Suppress or unsuppress a component"""
         try:
             doc = self.doc_manager.get_active_document()
@@ -405,7 +436,7 @@ class AssemblyManager:
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def get_occurrence_bounding_box(self, component_index: int) -> Dict[str, Any]:
+    def get_occurrence_bounding_box(self, component_index: int) -> dict[str, Any]:
         """
         Get the bounding box of a specific component (occurrence) in the assembly.
 
@@ -426,7 +457,11 @@ class AssemblyManager:
             occurrences = doc.Occurrences
 
             if component_index < 0 or component_index >= occurrences.Count:
-                return {"error": f"Invalid component index: {component_index}. Count: {occurrences.Count}"}
+                return {
+                    "error": f"Invalid component index: "
+                    f"{component_index}. "
+                    f"Count: {occurrences.Count}"
+                }
 
             occurrence = occurrences.Item(component_index + 1)
 
@@ -453,7 +488,7 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_bom(self) -> Dict[str, Any]:
+    def get_bom(self) -> dict[str, Any]:
         """
         Get Bill of Materials from the active assembly.
 
@@ -470,7 +505,7 @@ class AssemblyManager:
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
-            bom_counts: Dict[str, Dict[str, Any]] = {}
+            bom_counts: dict[str, dict[str, Any]] = {}
 
             for i in range(1, occurrences.Count + 1):
                 occurrence = occurrences.Item(i)
@@ -495,7 +530,11 @@ class AssemblyManager:
                 except Exception:
                     file_path = f"Unknown_{i}"
 
-                name = occurrence.Name if hasattr(occurrence, 'Name') else os.path.basename(file_path)
+                name = (
+                    occurrence.Name
+                    if hasattr(occurrence, 'Name')
+                    else os.path.basename(file_path)
+                )
 
                 if file_path in bom_counts:
                     bom_counts[file_path]["quantity"] += 1
@@ -519,7 +558,7 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_assembly_relations(self) -> Dict[str, Any]:
+    def get_assembly_relations(self) -> dict[str, Any]:
         """
         Get all assembly relations (constraints) in the active assembly.
 
@@ -563,20 +602,14 @@ class AssemblyManager:
                     except Exception:
                         pass
 
-                    try:
+                    with contextlib.suppress(Exception):
                         rel_info["status"] = rel.Status
-                    except Exception:
-                        pass
 
-                    try:
+                    with contextlib.suppress(Exception):
                         rel_info["suppressed"] = rel.Suppressed
-                    except Exception:
-                        pass
 
-                    try:
+                    with contextlib.suppress(Exception):
                         rel_info["name"] = rel.Name
-                    except Exception:
-                        pass
 
                     relation_list.append(rel_info)
                 except Exception:
@@ -592,7 +625,7 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_document_tree(self) -> Dict[str, Any]:
+    def get_document_tree(self) -> dict[str, Any]:
         """
         Get the hierarchical document tree of the active assembly.
 
@@ -622,15 +655,11 @@ class AssemblyManager:
                 except Exception:
                     node["file"] = "Unknown"
 
-                try:
+                with contextlib.suppress(Exception):
                     node["visible"] = occ.Visible
-                except Exception:
-                    pass
 
-                try:
+                with contextlib.suppress(Exception):
                     node["suppressed"] = occ.IsSuppressed if hasattr(occ, 'IsSuppressed') else False
-                except Exception:
-                    pass
 
                 # Recurse into sub-occurrences
                 children = []
@@ -672,7 +701,7 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def set_component_visibility(self, component_index: int, visible: bool) -> Dict[str, Any]:
+    def set_component_visibility(self, component_index: int, visible: bool) -> dict[str, Any]:
         """
         Set the visibility of a component in the assembly.
 
@@ -692,7 +721,11 @@ class AssemblyManager:
             occurrences = doc.Occurrences
 
             if component_index < 0 or component_index >= occurrences.Count:
-                return {"error": f"Invalid component index: {component_index}. Count: {occurrences.Count}"}
+                return {
+                    "error": f"Invalid component index: "
+                    f"{component_index}. "
+                    f"Count: {occurrences.Count}"
+                }
 
             occurrence = occurrences.Item(component_index + 1)
             occurrence.Visible = visible
@@ -708,7 +741,7 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def is_subassembly(self, component_index: int) -> Dict[str, Any]:
+    def is_subassembly(self, component_index: int) -> dict[str, Any]:
         """
         Check if a component is a subassembly (vs a part).
 
@@ -726,7 +759,11 @@ class AssemblyManager:
 
             occurrences = doc.Occurrences
             if component_index < 0 or component_index >= occurrences.Count:
-                return {"error": f"Invalid component index: {component_index}. Count: {occurrences.Count}"}
+                return {
+                    "error": f"Invalid component index: "
+                    f"{component_index}. "
+                    f"Count: {occurrences.Count}"
+                }
 
             occurrence = occurrences.Item(component_index + 1)
 
@@ -738,14 +775,16 @@ class AssemblyManager:
                 # Fallback: check if it has SubOccurrences
                 try:
                     sub_occs = occurrence.SubOccurrences
-                    result["is_subassembly"] = sub_occs.Count > 0 if hasattr(sub_occs, 'Count') else False
+                    result["is_subassembly"] = (
+                        sub_occs.Count > 0
+                        if hasattr(sub_occs, 'Count')
+                        else False
+                    )
                 except Exception:
                     result["is_subassembly"] = False
 
-            try:
+            with contextlib.suppress(Exception):
                 result["name"] = occurrence.Name
-            except Exception:
-                pass
 
             return result
         except Exception as e:
@@ -754,7 +793,7 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_component_display_name(self, component_index: int) -> Dict[str, Any]:
+    def get_component_display_name(self, component_index: int) -> dict[str, Any]:
         """
         Get the display name of a component.
 
@@ -775,7 +814,11 @@ class AssemblyManager:
 
             occurrences = doc.Occurrences
             if component_index < 0 or component_index >= occurrences.Count:
-                return {"error": f"Invalid component index: {component_index}. Count: {occurrences.Count}"}
+                return {
+                    "error": f"Invalid component index: "
+                    f"{component_index}. "
+                    f"Count: {occurrences.Count}"
+                }
 
             occurrence = occurrences.Item(component_index + 1)
 
@@ -786,15 +829,11 @@ class AssemblyManager:
             except Exception:
                 result["display_name"] = None
 
-            try:
+            with contextlib.suppress(Exception):
                 result["name"] = occurrence.Name
-            except Exception:
-                pass
 
-            try:
+            with contextlib.suppress(Exception):
                 result["file_name"] = occurrence.OccurrenceFileName
-            except Exception:
-                pass
 
             return result
         except Exception as e:
@@ -803,7 +842,7 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_occurrence_document(self, component_index: int) -> Dict[str, Any]:
+    def get_occurrence_document(self, component_index: int) -> dict[str, Any]:
         """
         Get document info for a component's source file.
 
@@ -821,7 +860,11 @@ class AssemblyManager:
 
             occurrences = doc.Occurrences
             if component_index < 0 or component_index >= occurrences.Count:
-                return {"error": f"Invalid component index: {component_index}. Count: {occurrences.Count}"}
+                return {
+                    "error": f"Invalid component index: "
+                    f"{component_index}. "
+                    f"Count: {occurrences.Count}"
+                }
 
             occurrence = occurrences.Item(component_index + 1)
 
@@ -829,29 +872,19 @@ class AssemblyManager:
 
             try:
                 occ_doc = occurrence.OccurrenceDocument
-                try:
+                with contextlib.suppress(Exception):
                     result["document_name"] = occ_doc.Name
-                except Exception:
-                    pass
-                try:
+                with contextlib.suppress(Exception):
                     result["full_name"] = occ_doc.FullName
-                except Exception:
-                    pass
-                try:
+                with contextlib.suppress(Exception):
                     result["type"] = occ_doc.Type
-                except Exception:
-                    pass
-                try:
+                with contextlib.suppress(Exception):
                     result["read_only"] = occ_doc.ReadOnly
-                except Exception:
-                    pass
             except Exception:
                 result["error_note"] = "Could not access OccurrenceDocument"
 
-            try:
+            with contextlib.suppress(Exception):
                 result["file_name"] = occurrence.OccurrenceFileName
-            except Exception:
-                pass
 
             return result
         except Exception as e:
@@ -860,7 +893,7 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_sub_occurrences(self, component_index: int) -> Dict[str, Any]:
+    def get_sub_occurrences(self, component_index: int) -> dict[str, Any]:
         """
         Get sub-occurrences (children) of a component.
 
@@ -881,7 +914,11 @@ class AssemblyManager:
 
             occurrences = doc.Occurrences
             if component_index < 0 or component_index >= occurrences.Count:
-                return {"error": f"Invalid component index: {component_index}. Count: {occurrences.Count}"}
+                return {
+                    "error": f"Invalid component index: "
+                    f"{component_index}. "
+                    f"Count: {occurrences.Count}"
+                }
 
             occurrence = occurrences.Item(component_index + 1)
 
@@ -897,10 +934,8 @@ class AssemblyManager:
                                 child_info["name"] = child.Name
                             except Exception:
                                 child_info["name"] = f"SubOcc_{j}"
-                            try:
+                            with contextlib.suppress(Exception):
                                 child_info["file"] = child.OccurrenceFileName
-                            except Exception:
-                                pass
                             children.append(child_info)
                         except Exception:
                             children.append({"index": j - 1, "name": f"SubOcc_{j}"})
@@ -918,7 +953,7 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def delete_component(self, component_index: int) -> Dict[str, Any]:
+    def delete_component(self, component_index: int) -> dict[str, Any]:
         """
         Delete/remove a component from the assembly.
 
@@ -937,10 +972,18 @@ class AssemblyManager:
             occurrences = doc.Occurrences
 
             if component_index < 0 or component_index >= occurrences.Count:
-                return {"error": f"Invalid component index: {component_index}. Count: {occurrences.Count}"}
+                return {
+                    "error": f"Invalid component index: "
+                    f"{component_index}. "
+                    f"Count: {occurrences.Count}"
+                }
 
             occurrence = occurrences.Item(component_index + 1)
-            name = occurrence.Name if hasattr(occurrence, 'Name') else f"Component_{component_index}"
+            name = (
+                occurrence.Name
+                if hasattr(occurrence, 'Name')
+                else f"Component_{component_index}"
+            )
             occurrence.Delete()
 
             return {
@@ -954,7 +997,7 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def ground_component(self, component_index: int, ground: bool = True) -> Dict[str, Any]:
+    def ground_component(self, component_index: int, ground: bool = True) -> dict[str, Any]:
         """
         Ground (fix in place) or unground a component in the assembly.
 
@@ -974,7 +1017,11 @@ class AssemblyManager:
             occurrences = doc.Occurrences
 
             if component_index < 0 or component_index >= occurrences.Count:
-                return {"error": f"Invalid component index: {component_index}. Count: {occurrences.Count}"}
+                return {
+                    "error": f"Invalid component index: "
+                    f"{component_index}. "
+                    f"Count: {occurrences.Count}"
+                }
 
             occurrence = occurrences.Item(component_index + 1)
 
@@ -1009,7 +1056,7 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def check_interference(self, component_index: Optional[int] = None) -> Dict[str, Any]:
+    def check_interference(self, component_index: int | None = None) -> dict[str, Any]:
         """
         Run interference check on the active assembly.
 
@@ -1031,7 +1078,11 @@ class AssemblyManager:
             occurrences = doc.Occurrences
 
             if occurrences.Count < 2:
-                return {"status": "no_interference", "message": "Need at least 2 components for interference check"}
+                return {
+                    "status": "no_interference",
+                    "message": "Need at least 2 components"
+                    " for interference check"
+                }
 
             import ctypes
 
@@ -1072,7 +1123,9 @@ class AssemblyManager:
                 # CheckInterference has complex COM signature; report what we can
                 return {
                     "error": f"Interference check failed: {e}",
-                    "note": "CheckInterference COM signature is complex. Use Solid Edge UI for reliable results.",
+                    "note": "CheckInterference COM signature "
+                    "is complex. Use Solid Edge UI for "
+                    "reliable results.",
                     "traceback": traceback.format_exc()
                 }
 
@@ -1082,7 +1135,7 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def replace_component(self, component_index: int, new_file_path: str) -> Dict[str, Any]:
+    def replace_component(self, component_index: int, new_file_path: str) -> dict[str, Any]:
         """
         Replace a component in the assembly with a different part/assembly file.
 
@@ -1108,7 +1161,11 @@ class AssemblyManager:
             occurrences = doc.Occurrences
 
             if component_index < 0 or component_index >= occurrences.Count:
-                return {"error": f"Invalid component index: {component_index}. Count: {occurrences.Count}"}
+                return {
+                    "error": f"Invalid component index: "
+                    f"{component_index}. "
+                    f"Count: {occurrences.Count}"
+                }
 
             occurrence = occurrences.Item(component_index + 1)
             old_name = occurrence.Name
@@ -1131,7 +1188,7 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_component_transform(self, component_index: int) -> Dict[str, Any]:
+    def get_component_transform(self, component_index: int) -> dict[str, Any]:
         """
         Get the full transformation matrix of a component.
 
@@ -1153,7 +1210,11 @@ class AssemblyManager:
             occurrences = doc.Occurrences
 
             if component_index < 0 or component_index >= occurrences.Count:
-                return {"error": f"Invalid component index: {component_index}. Count: {occurrences.Count}"}
+                return {
+                    "error": f"Invalid component index: "
+                    f"{component_index}. "
+                    f"Count: {occurrences.Count}"
+                }
 
             occurrence = occurrences.Item(component_index + 1)
 
@@ -1184,7 +1245,7 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_structured_bom(self) -> Dict[str, Any]:
+    def get_structured_bom(self) -> dict[str, Any]:
         """
         Get a hierarchical Bill of Materials with subassembly structure.
 
@@ -1214,10 +1275,8 @@ class AssemblyManager:
                 except Exception:
                     item["file"] = "Unknown"
 
-                try:
+                with contextlib.suppress(Exception):
                     item["visible"] = occ.Visible
-                except Exception:
-                    pass
 
                 try:
                     item["suppressed"] = occ.IsSuppressed
@@ -1264,7 +1323,10 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def set_component_color(self, component_index: int, red: int, green: int, blue: int) -> Dict[str, Any]:
+    def set_component_color(
+        self, component_index: int,
+        red: int, green: int, blue: int
+    ) -> dict[str, Any]:
         """
         Set the color of a component in the assembly.
 
@@ -1286,7 +1348,11 @@ class AssemblyManager:
             occurrences = doc.Occurrences
 
             if component_index < 0 or component_index >= occurrences.Count:
-                return {"error": f"Invalid component index: {component_index}. Count: {occurrences.Count}"}
+                return {
+                    "error": f"Invalid component index: "
+                    f"{component_index}. "
+                    f"Count: {occurrences.Count}"
+                }
 
             occurrence = occurrences.Item(component_index + 1)
 
@@ -1314,7 +1380,10 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def occurrence_move(self, component_index: int, dx: float, dy: float, dz: float) -> Dict[str, Any]:
+    def occurrence_move(
+        self, component_index: int,
+        dx: float, dy: float, dz: float
+    ) -> dict[str, Any]:
         """
         Move a component by a relative delta.
 
@@ -1338,7 +1407,11 @@ class AssemblyManager:
             occurrences = doc.Occurrences
 
             if component_index < 0 or component_index >= occurrences.Count:
-                return {"error": f"Invalid component index: {component_index}. Count: {occurrences.Count}"}
+                return {
+                    "error": f"Invalid component index: "
+                    f"{component_index}. "
+                    f"Count: {occurrences.Count}"
+                }
 
             occurrence = occurrences.Item(component_index + 1)
             occurrence.Move(dx, dy, dz)
@@ -1357,7 +1430,7 @@ class AssemblyManager:
     def occurrence_rotate(self, component_index: int,
                           axis_x1: float, axis_y1: float, axis_z1: float,
                           axis_x2: float, axis_y2: float, axis_z2: float,
-                          angle: float) -> Dict[str, Any]:
+                          angle: float) -> dict[str, Any]:
         """
         Rotate a component around an axis.
 
@@ -1384,7 +1457,11 @@ class AssemblyManager:
             occurrences = doc.Occurrences
 
             if component_index < 0 or component_index >= occurrences.Count:
-                return {"error": f"Invalid component index: {component_index}. Count: {occurrences.Count}"}
+                return {
+                    "error": f"Invalid component index: "
+                    f"{component_index}. "
+                    f"Count: {occurrences.Count}"
+                }
 
             occurrence = occurrences.Item(component_index + 1)
             angle_rad = math.radians(angle)
@@ -1404,7 +1481,156 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_occurrence_count(self) -> Dict[str, Any]:
+    def set_component_transform(self, component_index: int,
+                                 origin_x: float, origin_y: float, origin_z: float,
+                                 angle_x: float, angle_y: float, angle_z: float) -> dict[str, Any]:
+        """
+        Set a component's full transform (position + rotation).
+
+        Uses Occurrence.PutTransform(OriginX, OriginY, OriginZ, AngleX, AngleY, AngleZ).
+        Angles are in degrees (converted to radians internally).
+
+        Args:
+            component_index: 0-based index of the component
+            origin_x: X position in meters
+            origin_y: Y position in meters
+            origin_z: Z position in meters
+            angle_x: Rotation around X axis in degrees
+            angle_y: Rotation around Y axis in degrees
+            angle_z: Rotation around Z axis in degrees
+
+        Returns:
+            Dict with status
+        """
+        try:
+            import math
+
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Occurrences'):
+                return {"error": "Active document is not an assembly"}
+
+            occurrences = doc.Occurrences
+
+            if component_index < 0 or component_index >= occurrences.Count:
+                return {
+                    "error": f"Invalid component index: "
+                    f"{component_index}. "
+                    f"Count: {occurrences.Count}"
+                }
+
+            occurrence = occurrences.Item(component_index + 1)
+            ax_rad = math.radians(angle_x)
+            ay_rad = math.radians(angle_y)
+            az_rad = math.radians(angle_z)
+            occurrence.PutTransform(origin_x, origin_y, origin_z, ax_rad, ay_rad, az_rad)
+
+            return {
+                "status": "updated",
+                "component_index": component_index,
+                "origin": [origin_x, origin_y, origin_z],
+                "angles_degrees": [angle_x, angle_y, angle_z]
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def set_component_origin(self, component_index: int,
+                              x: float, y: float, z: float) -> dict[str, Any]:
+        """
+        Set a component's origin (position only, no rotation change).
+
+        Uses Occurrence.PutOrigin(OriginX, OriginY, OriginZ).
+
+        Args:
+            component_index: 0-based index of the component
+            x: X position in meters
+            y: Y position in meters
+            z: Z position in meters
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Occurrences'):
+                return {"error": "Active document is not an assembly"}
+
+            occurrences = doc.Occurrences
+
+            if component_index < 0 or component_index >= occurrences.Count:
+                return {
+                    "error": f"Invalid component index: "
+                    f"{component_index}. "
+                    f"Count: {occurrences.Count}"
+                }
+
+            occurrence = occurrences.Item(component_index + 1)
+            occurrence.PutOrigin(x, y, z)
+
+            return {
+                "status": "updated",
+                "component_index": component_index,
+                "origin": [x, y, z]
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def mirror_component(self, component_index: int,
+                          plane_index: int) -> dict[str, Any]:
+        """
+        Mirror a component across a reference plane.
+
+        Uses Occurrence.Mirror(pPlane).
+
+        Args:
+            component_index: 0-based index of the component
+            plane_index: 1-based index of the reference plane
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Occurrences'):
+                return {"error": "Active document is not an assembly"}
+
+            occurrences = doc.Occurrences
+
+            if component_index < 0 or component_index >= occurrences.Count:
+                return {
+                    "error": f"Invalid component index: "
+                    f"{component_index}. "
+                    f"Count: {occurrences.Count}"
+                }
+
+            ref_planes = doc.RefPlanes
+            if plane_index < 1 or plane_index > ref_planes.Count:
+                return {"error": f"Invalid plane_index: {plane_index}. Count: {ref_planes.Count}"}
+
+            occurrence = occurrences.Item(component_index + 1)
+            plane = ref_planes.Item(plane_index)
+            occurrence.Mirror(plane)
+
+            return {
+                "status": "mirrored",
+                "component_index": component_index,
+                "plane_index": plane_index
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def get_occurrence_count(self) -> dict[str, Any]:
         """
         Get the count of top-level occurrences in the assembly.
 

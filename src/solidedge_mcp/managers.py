@@ -1,13 +1,13 @@
 """Global manager instances for Solid Edge MCP."""
 
-from solidedge_mcp.backends.connection import SolidEdgeConnection
-from solidedge_mcp.backends.documents import DocumentManager
-from solidedge_mcp.backends.sketching import SketchManager
-from solidedge_mcp.backends.features import FeatureManager
 from solidedge_mcp.backends.assembly import AssemblyManager
-from solidedge_mcp.backends.query import QueryManager
-from solidedge_mcp.backends.export import ExportManager, ViewModel
+from solidedge_mcp.backends.connection import SolidEdgeConnection
 from solidedge_mcp.backends.diagnostics import diagnose_document, diagnose_feature
+from solidedge_mcp.backends.documents import DocumentManager
+from solidedge_mcp.backends.export import ExportManager, ViewModel
+from solidedge_mcp.backends.features import FeatureManager
+from solidedge_mcp.backends.query import QueryManager
+from solidedge_mcp.backends.sketching import SketchManager
 
 # Initialize managers (global state)
 connection = SolidEdgeConnection()

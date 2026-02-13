@@ -1,17 +1,18 @@
 """Document management tools for Solid Edge MCP."""
 
-from typing import Optional
+
 from solidedge_mcp.managers import doc_manager
 
-def create_part_document(template: Optional[str] = None) -> dict:
+
+def create_part_document(template: str | None = None) -> dict:
     """Create a new part document."""
     return doc_manager.create_part(template)
 
-def create_assembly_document(template: Optional[str] = None) -> dict:
+def create_assembly_document(template: str | None = None) -> dict:
     """Create a new assembly document."""
     return doc_manager.create_assembly(template)
 
-def create_sheet_metal_document(template: Optional[str] = None) -> dict:
+def create_sheet_metal_document(template: str | None = None) -> dict:
     """Create a new sheet metal document."""
     return doc_manager.create_sheet_metal(template)
 
@@ -19,7 +20,7 @@ def open_document(file_path: str) -> dict:
     """Open an existing document (.par, .asm, .dft)."""
     return doc_manager.open_document(file_path)
 
-def save_document(file_path: Optional[str] = None) -> dict:
+def save_document(file_path: str | None = None) -> dict:
     """Save the active document. If file_path is not provided, saves to current location."""
     return doc_manager.save_document(file_path)
 
@@ -39,7 +40,7 @@ def redo() -> dict:
     """Redo the last undone operation on the active document."""
     return doc_manager.redo()
 
-def create_draft_document(template: Optional[str] = None) -> dict:
+def create_draft_document(template: str | None = None) -> dict:
     """Create a new draft (drawing) document."""
     return doc_manager.create_draft(template)
 
@@ -51,7 +52,7 @@ def get_active_document_type() -> dict:
     """Get the type of the currently active document."""
     return doc_manager.get_active_document_type()
 
-def create_weldment_document(template: Optional[str] = None) -> dict:
+def create_weldment_document(template: str | None = None) -> dict:
     """Create a new weldment document."""
     return doc_manager.create_weldment(template)
 

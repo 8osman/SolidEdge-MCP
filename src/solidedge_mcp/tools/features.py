@@ -1,8 +1,7 @@
 """Feature modeling tools for Solid Edge MCP."""
 
-from typing import Optional, List
-from solidedge_mcp.managers import feature_manager, diagnose_feature
 
+from solidedge_mcp.managers import diagnose_feature, feature_manager
 
 # === Extrusions ===
 
@@ -14,7 +13,18 @@ def create_extrude_infinite(direction: str = "Normal") -> dict:
     """Create an infinite extrusion (extends through all)."""
     return feature_manager.create_extrude_infinite(direction)
 
-def create_extrude_thin_wall(distance: float, wall_thickness: float, direction: str = "Normal") -> dict:
+def create_extrude_through_next(direction: str = "Normal") -> dict:
+    """Create an extrusion that extends to the next face encountered."""
+    return feature_manager.create_extrude_through_next(direction)
+
+def create_extrude_from_to(from_plane_index: int, to_plane_index: int) -> dict:
+    """Create an extrusion between two reference planes (1-based indices)."""
+    return feature_manager.create_extrude_from_to(from_plane_index, to_plane_index)
+
+def create_extrude_thin_wall(
+    distance: float, wall_thickness: float,
+    direction: str = "Normal"
+) -> dict:
     """Create a thin-walled extrusion."""
     return feature_manager.create_extrude_thin_wall(distance, wall_thickness, direction)
 
@@ -68,13 +78,17 @@ def create_normal_cutout_through_all(direction: str = "Normal") -> dict:
     """Create a normal cutout through all material."""
     return feature_manager.create_normal_cutout_through_all(direction)
 
-def create_lofted_cutout(profile_indices: Optional[List[int]] = None) -> dict:
+def create_lofted_cutout(profile_indices: list[int] | None = None) -> dict:
     """Create a lofted cutout between multiple profiles."""
     return feature_manager.create_lofted_cutout(profile_indices)
 
 def create_swept_cutout() -> dict:
     """Create a swept cutout along a path."""
     return feature_manager.create_swept_cutout()
+
+def create_extruded_cutout_from_to(from_plane_index: int, to_plane_index: int) -> dict:
+    """Create an extruded cutout between two reference planes (1-based indices)."""
+    return feature_manager.create_extruded_cutout_from_to(from_plane_index, to_plane_index)
 
 def create_drawn_cutout(depth: float, direction: str = "Normal") -> dict:
     """Create a drawn cutout (sheet metal)."""
@@ -83,46 +97,65 @@ def create_drawn_cutout(depth: float, direction: str = "Normal") -> dict:
 
 # === Loft / Sweep / Helix ===
 
-def create_loft(profile_indices: Optional[list] = None) -> dict:
+def create_loft(profile_indices: list | None = None) -> dict:
     """Create a loft feature between multiple profiles."""
     return feature_manager.create_loft(profile_indices)
 
-def create_loft_thin_wall(wall_thickness: float, profile_indices: Optional[list] = None) -> dict:
+def create_loft_thin_wall(wall_thickness: float, profile_indices: list | None = None) -> dict:
     """Create a thin-walled loft feature."""
     return feature_manager.create_loft_thin_wall(wall_thickness, profile_indices)
 
-def create_sweep(path_profile_index: Optional[int] = None) -> dict:
+def create_sweep(path_profile_index: int | None = None) -> dict:
     """Create a sweep feature along a path."""
     return feature_manager.create_sweep(path_profile_index)
 
-def create_sweep_thin_wall(wall_thickness: float, path_profile_index: Optional[int] = None) -> dict:
+def create_sweep_thin_wall(wall_thickness: float, path_profile_index: int | None = None) -> dict:
     """Create a thin-walled sweep feature."""
     return feature_manager.create_sweep_thin_wall(wall_thickness, path_profile_index)
 
-def create_helix(pitch: float, height: float, revolutions: Optional[float] = None, direction: str = "Right") -> dict:
+def create_helix(
+    pitch: float, height: float,
+    revolutions: float | None = None,
+    direction: str = "Right"
+) -> dict:
     """Create a helical feature (springs, threads)."""
     return feature_manager.create_helix(pitch, height, revolutions, direction)
 
-def create_helix_sync(pitch: float, height: float, revolutions: Optional[float] = None) -> dict:
+def create_helix_sync(pitch: float, height: float, revolutions: float | None = None) -> dict:
     """Create a synchronous helical feature."""
     return feature_manager.create_helix_sync(pitch, height, revolutions)
 
-def create_helix_thin_wall(pitch: float, height: float, wall_thickness: float, revolutions: float = None) -> dict:
+def create_helix_thin_wall(
+    pitch: float, height: float,
+    wall_thickness: float,
+    revolutions: float = None
+) -> dict:
     """Create a thin-walled helix feature."""
     return feature_manager.create_helix_thin_wall(pitch, height, wall_thickness, revolutions)
 
-def create_helix_sync_thin_wall(pitch: float, height: float, wall_thickness: float, revolutions: float = None) -> dict:
+def create_helix_sync_thin_wall(
+    pitch: float, height: float,
+    wall_thickness: float,
+    revolutions: float = None
+) -> dict:
     """Create a synchronous thin-walled helix feature."""
     return feature_manager.create_helix_sync_thin_wall(pitch, height, wall_thickness, revolutions)
 
-def create_helix_cutout(pitch: float, height: float, revolutions: float = None, direction: str = "Right") -> dict:
+def create_helix_cutout(
+    pitch: float, height: float,
+    revolutions: float = None,
+    direction: str = "Right"
+) -> dict:
     """Create a helical cutout."""
     return feature_manager.create_helix_cutout(pitch, height, revolutions, direction)
 
 
 # === Surfaces ===
 
-def create_extruded_surface(distance: float, direction: str = "Normal", end_caps: bool = True) -> dict:
+def create_extruded_surface(
+    distance: float, direction: str = "Normal",
+    end_caps: bool = True
+) -> dict:
     """Create an extruded surface."""
     return feature_manager.create_extruded_surface(distance, direction, end_caps)
 
@@ -134,7 +167,10 @@ def create_lofted_surface(want_end_caps: bool = False) -> dict:
     """Create a lofted surface."""
     return feature_manager.create_lofted_surface(want_end_caps)
 
-def create_swept_surface(path_profile_index: Optional[int] = None, want_end_caps: bool = False) -> dict:
+def create_swept_surface(
+    path_profile_index: int | None = None,
+    want_end_caps: bool = False
+) -> dict:
     """Create a swept surface."""
     return feature_manager.create_swept_surface(path_profile_index, want_end_caps)
 
@@ -145,21 +181,39 @@ def thicken_surface(thickness: float, direction: str = "Both") -> dict:
 
 # === Primitives ===
 
-def create_box_by_center(x: float, y: float, z: float, length: float, width: float, height: float) -> dict:
+def create_box_by_center(
+    x: float, y: float, z: float,
+    length: float, width: float, height: float
+) -> dict:
     """Create a box primitive by center point and dimensions."""
     return feature_manager.create_box_by_center(x, y, z, length, width, height)
 
-def create_box_by_two_points(x1: float, y1: float, z1: float, x2: float, y2: float, z2: float) -> dict:
+def create_box_by_two_points(
+    x1: float, y1: float, z1: float,
+    x2: float, y2: float, z2: float
+) -> dict:
     """Create a box primitive by two opposite corners."""
     return feature_manager.create_box_by_two_points(x1, y1, z1, x2, y2, z2)
 
-def create_box_by_three_points(x1: float, y1: float, z1: float, x2: float, y2: float, z2: float, x3: float, y3: float, z3: float) -> dict:
+def create_box_by_three_points(
+    x1: float, y1: float, z1: float,
+    x2: float, y2: float, z2: float,
+    x3: float, y3: float, z3: float
+) -> dict:
     """Create a box primitive by three points."""
     return feature_manager.create_box_by_three_points(x1, y1, z1, x2, y2, z2, x3, y3, z3)
 
-def create_cylinder(base_center_x: float, base_center_y: float, base_center_z: float, radius: float, height: float) -> dict:
+def create_cylinder(
+    base_center_x: float,
+    base_center_y: float,
+    base_center_z: float,
+    radius: float, height: float
+) -> dict:
     """Create a cylinder primitive."""
-    return feature_manager.create_cylinder(base_center_x, base_center_y, base_center_z, radius, height)
+    return feature_manager.create_cylinder(
+        base_center_x, base_center_y,
+        base_center_z, radius, height
+    )
 
 def create_sphere(center_x: float, center_y: float, center_z: float, radius: float) -> dict:
     """Create a sphere primitive."""
@@ -172,7 +226,11 @@ def create_box_cutout(x1: float, y1: float, z1: float, x2: float, y2: float, z2:
     """Create a box-shaped cutout by two opposite corners."""
     return feature_manager.create_box_cutout_by_two_points(x1, y1, z1, x2, y2, z2)
 
-def create_cylinder_cutout(center_x: float, center_y: float, center_z: float, radius: float, height: float) -> dict:
+def create_cylinder_cutout(
+    center_x: float, center_y: float,
+    center_z: float,
+    radius: float, height: float
+) -> dict:
     """Create a cylindrical cutout."""
     return feature_manager.create_cylinder_cutout(center_x, center_y, center_z, radius, height)
 
@@ -183,11 +241,21 @@ def create_sphere_cutout(center_x: float, center_y: float, center_z: float, radi
 
 # === Holes ===
 
-def create_hole(x: float, y: float, diameter: float, depth: float = 0.0, hole_type: str = "Simple", plane_index: int = 1, direction: str = "Normal") -> dict:
+def create_hole(
+    x: float, y: float, diameter: float,
+    depth: float = 0.0,
+    hole_type: str = "Simple",
+    plane_index: int = 1,
+    direction: str = "Normal"
+) -> dict:
     """Create a hole at coordinates (meters)."""
     return feature_manager.create_hole(x, y, diameter, depth, direction)
 
-def create_hole_through_all(x: float, y: float, diameter: float, plane_index: int = 1, direction: str = "Normal") -> dict:
+def create_hole_through_all(
+    x: float, y: float, diameter: float,
+    plane_index: int = 1,
+    direction: str = "Normal"
+) -> dict:
     """Create a hole through all material."""
     return feature_manager.create_hole_through_all(x, y, diameter, plane_index, direction)
 
@@ -210,7 +278,7 @@ def create_round_on_face(radius: float, face_index: int) -> dict:
     """Round all edges of a specific face."""
     return feature_manager.create_round_on_face(radius, face_index)
 
-def create_variable_round(radii: list, face_index: Optional[int] = None) -> dict:
+def create_variable_round(radii: list, face_index: int | None = None) -> dict:
     """Create a variable-radius round."""
     return feature_manager.create_variable_round(radii, face_index)
 
@@ -233,7 +301,7 @@ def create_chamfer_angle(distance: float, angle: float, face_index: int = 0) -> 
 
 # === Blends / Draft / Mirror ===
 
-def create_blend(radius: float, face_index: Optional[int] = None) -> dict:
+def create_blend(radius: float, face_index: int | None = None) -> dict:
     """Create a blend (face-to-face fillet)."""
     return feature_manager.create_blend(radius, face_index)
 
@@ -256,7 +324,7 @@ def create_thin_wall(thickness: float) -> dict:
     """Convert a solid body to a thin wall (shell)."""
     return feature_manager.create_shell(thickness)
 
-def create_thin_wall_with_open_faces(thickness: float, open_face_indices: List[int]) -> dict:
+def create_thin_wall_with_open_faces(thickness: float, open_face_indices: list[int]) -> dict:
     """Create a thin wall with specified open faces."""
     return feature_manager.create_shell(thickness, open_face_indices)
 
@@ -283,7 +351,12 @@ def create_thread(face_index: int, depth: float) -> dict:
     """Create a thread on a cylindrical face."""
     return feature_manager.create_thread(face_index, depth)
 
-def create_emboss(face_indices: list, clearance: float = 0.001, thickness: float = 0.0, thicken: bool = False, default_side: bool = True) -> dict:
+def create_emboss(
+    face_indices: list, clearance: float = 0.001,
+    thickness: float = 0.0,
+    thicken: bool = False,
+    default_side: bool = True
+) -> dict:
     """Create an emboss feature."""
     return feature_manager.create_emboss(face_indices, clearance, thickness, thicken, default_side)
 
@@ -291,9 +364,18 @@ def create_etch() -> dict:
     """Create an etch feature from the active profile."""
     return feature_manager.create_etch()
 
-def create_flange(face_index: int, edge_index: int, flange_length: float, side: str = "Right", inside_radius: float = None, bend_angle: float = None) -> dict:
+def create_flange(
+    face_index: int, edge_index: int,
+    flange_length: float,
+    side: str = "Right",
+    inside_radius: float = None,
+    bend_angle: float = None
+) -> dict:
     """Create a flange on an edge."""
-    return feature_manager.create_flange(face_index, edge_index, flange_length, side, inside_radius, bend_angle)
+    return feature_manager.create_flange(
+        face_index, edge_index, flange_length,
+        side, inside_radius, bend_angle
+    )
 
 def create_dimple(depth: float, direction: str = "Normal") -> dict:
     """Create a dimple feature."""
@@ -314,7 +396,11 @@ def create_gusset(depth: float) -> dict:
 
 # === Patterns ===
 
-def create_pattern_rectangular(feature_index: int, x_count: int, y_count: int, x_gap: float, y_gap: float) -> dict:
+def create_pattern_rectangular(
+    feature_index: int,
+    x_count: int, y_count: int,
+    x_gap: float, y_gap: float
+) -> dict:
     """Create a rectangular pattern of a feature."""
     return feature_manager.create_pattern_rectangular(feature_index, x_count, y_count, x_gap, y_gap)
 
@@ -325,13 +411,19 @@ def create_pattern_circular(feature_index: int, count: int, angle: float, radius
 
 # === Face Operations ===
 
-def delete_faces(face_indices: List[int]) -> dict:
+def delete_faces(face_indices: list[int]) -> dict:
     """Delete specified faces from the body."""
     return feature_manager.delete_faces(face_indices)
 
-def create_face_rotate_by_points(face_index: int, vertex1_index: int, vertex2_index: int, angle: float) -> dict:
+def create_face_rotate_by_points(
+    face_index: int, vertex1_index: int,
+    vertex2_index: int, angle: float
+) -> dict:
     """Rotate a face around an axis defined by two vertices."""
-    return feature_manager.create_face_rotate_by_points(face_index, vertex1_index, vertex2_index, angle)
+    return feature_manager.create_face_rotate_by_points(
+        face_index, vertex1_index,
+        vertex2_index, angle
+    )
 
 def create_face_rotate_by_edge(face_index: int, edge_index: int, angle: float) -> dict:
     """Rotate a face around an edge."""
@@ -340,15 +432,25 @@ def create_face_rotate_by_edge(face_index: int, edge_index: int, angle: float) -
 
 # === Reference Planes ===
 
-def create_ref_plane_by_offset(parent_plane_index: int, distance: float, normal_side: str = "Normal") -> dict:
+def create_ref_plane_by_offset(
+    parent_plane_index: int, distance: float,
+    normal_side: str = "Normal"
+) -> dict:
     """Create a reference plane offset from an existing plane."""
     return feature_manager.create_ref_plane_by_offset(parent_plane_index, distance, normal_side)
 
-def create_ref_plane_by_angle(parent_plane_index: int, angle: float, normal_side: str = "Normal") -> dict:
+def create_ref_plane_by_angle(
+    parent_plane_index: int, angle: float,
+    normal_side: str = "Normal"
+) -> dict:
     """Create a reference plane at an angle to an existing plane."""
     return feature_manager.create_ref_plane_by_angle(parent_plane_index, angle, normal_side)
 
-def create_ref_plane_by_3_points(x1: float, y1: float, z1: float, x2: float, y2: float, z2: float, x3: float, y3: float, z3: float) -> dict:
+def create_ref_plane_by_3_points(
+    x1: float, y1: float, z1: float,
+    x2: float, y2: float, z2: float,
+    x3: float, y3: float, z3: float
+) -> dict:
     """Create a reference plane defined by three points."""
     return feature_manager.create_ref_plane_by_3_points(x1, y1, z1, x2, y2, z2, x3, y3, z3)
 
@@ -359,6 +461,43 @@ def create_ref_plane_midplane(plane1_index: int, plane2_index: int) -> dict:
 def create_ref_plane_normal_to_curve(curve_end: str = "End", pivot_plane_index: int = 2) -> dict:
     """Create a reference plane normal to a curve endpoint."""
     return feature_manager.create_ref_plane_normal_to_curve(curve_end, pivot_plane_index)
+
+def create_ref_plane_normal_at_distance(
+    distance: float, curve_end: str = "End",
+    pivot_plane_index: int = 2
+) -> dict:
+    """Create a reference plane normal to a curve at a distance from an endpoint."""
+    return feature_manager.create_ref_plane_normal_at_distance(
+        distance, curve_end, pivot_plane_index
+    )
+
+def create_ref_plane_normal_at_arc_ratio(
+    ratio: float, curve_end: str = "End",
+    pivot_plane_index: int = 2
+) -> dict:
+    """Create a reference plane normal to a curve at an arc-length ratio (0.0 to 1.0)."""
+    return feature_manager.create_ref_plane_normal_at_arc_ratio(ratio, curve_end, pivot_plane_index)
+
+def create_ref_plane_normal_at_distance_along(
+    distance_along: float,
+    curve_end: str = "End",
+    pivot_plane_index: int = 2
+) -> dict:
+    """Create a reference plane normal to a curve at a distance along the curve."""
+    return feature_manager.create_ref_plane_normal_at_distance_along(
+        distance_along, curve_end,
+        pivot_plane_index
+    )
+
+def create_ref_plane_parallel_by_tangent(
+    parent_plane_index: int, face_index: int,
+    normal_side: str = "Normal"
+) -> dict:
+    """Create a reference plane parallel to a parent plane and tangent to a face."""
+    return feature_manager.create_ref_plane_parallel_by_tangent(
+        parent_plane_index, face_index,
+        normal_side
+    )
 
 
 # === Body Operations ===
@@ -440,11 +579,11 @@ def convert_feature_type(feature_name: str, target_type: str) -> dict:
 
 # === Sheet Metal (lofted flange, web network, advanced SM) ===
 
-def create_base_flange(width: float, thickness: float, bend_radius: Optional[float] = None) -> dict:
+def create_base_flange(width: float, thickness: float, bend_radius: float | None = None) -> dict:
     """Create a base contour flange (sheet metal)."""
     return feature_manager.create_base_flange(width, thickness, bend_radius)
 
-def create_base_tab(thickness: float, width: Optional[float] = None) -> dict:
+def create_base_tab(thickness: float, width: float | None = None) -> dict:
     """Create a base tab (sheet metal)."""
     return feature_manager.create_base_tab(thickness, width)
 
@@ -456,7 +595,10 @@ def create_web_network() -> dict:
     """Create a web network (sheet metal)."""
     return feature_manager.create_web_network()
 
-def create_base_contour_flange_advanced(thickness: float, bend_radius: float, relief_type: str = "Default") -> dict:
+def create_base_contour_flange_advanced(
+    thickness: float, bend_radius: float,
+    relief_type: str = "Default"
+) -> dict:
     """Create a base contour flange with bend deduction (advanced sheet metal)."""
     return feature_manager.create_base_contour_flange_advanced(thickness, bend_radius, relief_type)
 
@@ -487,6 +629,8 @@ def register(mcp):
     # Extrusions
     mcp.tool()(create_extrude)
     mcp.tool()(create_extrude_infinite)
+    mcp.tool()(create_extrude_through_next)
+    mcp.tool()(create_extrude_from_to)
     mcp.tool()(create_extrude_thin_wall)
     # Revolves
     mcp.tool()(create_revolve)
@@ -501,6 +645,7 @@ def register(mcp):
     mcp.tool()(create_revolved_cutout)
     mcp.tool()(create_normal_cutout)
     mcp.tool()(create_normal_cutout_through_all)
+    mcp.tool()(create_extruded_cutout_from_to)
     mcp.tool()(create_lofted_cutout)
     mcp.tool()(create_swept_cutout)
     mcp.tool()(create_drawn_cutout)
@@ -577,6 +722,10 @@ def register(mcp):
     mcp.tool()(create_ref_plane_by_3_points)
     mcp.tool()(create_ref_plane_midplane)
     mcp.tool()(create_ref_plane_normal_to_curve)
+    mcp.tool()(create_ref_plane_normal_at_distance)
+    mcp.tool()(create_ref_plane_normal_at_arc_ratio)
+    mcp.tool()(create_ref_plane_normal_at_distance_along)
+    mcp.tool()(create_ref_plane_parallel_by_tangent)
     # Body Operations
     mcp.tool()(add_body)
     mcp.tool()(add_body_by_mesh)

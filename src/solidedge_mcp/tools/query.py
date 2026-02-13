@@ -2,14 +2,17 @@
 
 from solidedge_mcp.managers import query_manager
 
-
 # === Measurement ===
 
 def measure_distance(x1: float, y1: float, z1: float, x2: float, y2: float, z2: float) -> dict:
     """Measure distance between two 3D points."""
     return query_manager.measure_distance(x1, y1, z1, x2, y2, z2)
 
-def measure_angle(x1: float, y1: float, z1: float, x2: float, y2: float, z2: float, x3: float, y3: float, z3: float) -> dict:
+def measure_angle(
+    x1: float, y1: float, z1: float,
+    x2: float, y2: float, z2: float,
+    x3: float, y3: float, z3: float
+) -> dict:
     """Measure angle between three 3D points (vertex at point 2)."""
     return query_manager.measure_angle(x1, y1, z1, x2, y2, z2, x3, y3, z3)
 

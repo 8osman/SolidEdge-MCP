@@ -17,15 +17,6 @@ def test_imports():
     """Test that all modules can be imported"""
     print("Testing imports...")
     try:
-        from solidedge_mcp.backends import connection
-        from solidedge_mcp.backends import documents
-        from solidedge_mcp.backends import sketching
-        from solidedge_mcp.backends import features
-        from solidedge_mcp.backends import assembly
-        from solidedge_mcp.backends import query
-        from solidedge_mcp.backends import export as export_module
-        from solidedge_mcp.backends import constants
-        from solidedge_mcp.backends import diagnostics
         print("[OK] All backend modules imported successfully")
         return True
     except Exception as e:
@@ -40,7 +31,7 @@ def test_server_structure():
     try:
         # Read server.py and count tools
         server_path = Path(__file__).parent / "src" / "solidedge_mcp" / "server.py"
-        with open(server_path, 'r', encoding='utf-8') as f:
+        with open(server_path, encoding='utf-8') as f:
             content = f.read()
 
         # Count @mcp.tool() decorators
@@ -81,7 +72,7 @@ def test_tool_names():
     print("\nExtracting tool names...")
     try:
         server_path = Path(__file__).parent / "src" / "solidedge_mcp" / "server.py"
-        with open(server_path, 'r', encoding='utf-8') as f:
+        with open(server_path, encoding='utf-8') as f:
             lines = f.readlines()
 
         tools = []
@@ -134,7 +125,13 @@ def test_tool_names():
                 categories['Query'].append(tool)
             elif 'export' in tool or 'screenshot' in tool or 'drawing' in tool:
                 categories['Export'].append(tool)
-            elif any(x in tool for x in ['component', 'mate', 'assembly', 'place', 'pattern', 'suppress']):
+            elif any(
+                x in tool
+                for x in [
+                    'component', 'mate', 'assembly',
+                    'place', 'pattern', 'suppress',
+                ]
+            ):
                 categories['Assembly'].append(tool)
             elif 'diagnose' in tool:
                 categories['Diagnostics'].append(tool)
@@ -142,7 +139,12 @@ def test_tool_names():
         print()
         for category, tool_list in categories.items():
             if tool_list:
-                print(f"  {category} ({len(tool_list)}): {', '.join(tool_list[:3])}{'...' if len(tool_list) > 3 else ''}")
+                preview = ', '.join(tool_list[:3])
+                suffix = '...' if len(tool_list) > 3 else ''
+                print(
+                    f"  {category} ({len(tool_list)}): "
+                    f"{preview}{suffix}"
+                )
 
         return True
     except Exception as e:

@@ -7,8 +7,8 @@ Usage:
     python comprehensive_test.py
 """
 
-import sys
 import os
+import sys
 import tempfile
 from pathlib import Path
 
@@ -49,13 +49,13 @@ def main():
     failed = []
 
     # Import all managers
+    from solidedge_mcp.backends.assembly import AssemblyManager
     from solidedge_mcp.backends.connection import SolidEdgeConnection
     from solidedge_mcp.backends.documents import DocumentManager
-    from solidedge_mcp.backends.sketching import SketchManager
-    from solidedge_mcp.backends.features import FeatureManager
-    from solidedge_mcp.backends.assembly import AssemblyManager
-    from solidedge_mcp.backends.query import QueryManager
     from solidedge_mcp.backends.export import ExportManager, ViewModel
+    from solidedge_mcp.backends.features import FeatureManager
+    from solidedge_mcp.backends.query import QueryManager
+    from solidedge_mcp.backends.sketching import SketchManager
 
     # Initialize managers
     connection = SolidEdgeConnection()
@@ -127,7 +127,10 @@ def main():
     else:
         failed.append("draw_arc")
 
-    if test_step("Draw polygon (hexagon)", lambda: sketch_manager.draw_polygon(0.4, 0.05, 0.025, 6)):
+    if test_step(
+        "Draw polygon (hexagon)",
+        lambda: sketch_manager.draw_polygon(0.4, 0.05, 0.025, 6)
+    ):
         passed.append("draw_polygon")
     else:
         failed.append("draw_polygon")
@@ -137,7 +140,12 @@ def main():
     else:
         failed.append("draw_ellipse")
 
-    if test_step("Draw spline", lambda: sketch_manager.draw_spline([[0.6, 0], [0.65, 0.05], [0.7, 0.02]])):
+    if test_step(
+        "Draw spline",
+        lambda: sketch_manager.draw_spline(
+            [[0.6, 0], [0.65, 0.05], [0.7, 0.02]]
+        )
+    ):
         passed.append("draw_spline")
     else:
         failed.append("draw_spline")
@@ -152,7 +160,12 @@ def main():
     # ========================================================================
     test_category("3D FEATURES - Primitives")
 
-    if test_step("Create box by center", lambda: feature_manager.create_box_by_center(0, 0, 0, 0.1, 0.1, 0.1)):
+    if test_step(
+        "Create box by center",
+        lambda: feature_manager.create_box_by_center(
+            0, 0, 0, 0.1, 0.1, 0.1
+        )
+    ):
         passed.append("box_center")
     else:
         failed.append("box_center")
@@ -177,7 +190,12 @@ def main():
     sketch_manager.draw_rectangle(0, 0, 0.05, 0.05)
     sketch_manager.close_sketch()
 
-    if test_step("Create extrude (finite)", lambda: feature_manager.create_extrude(0.03, "Add", "Normal")):
+    if test_step(
+        "Create extrude (finite)",
+        lambda: feature_manager.create_extrude(
+            0.03, "Add", "Normal"
+        )
+    ):
         passed.append("extrude")
     else:
         failed.append("extrude")
@@ -195,7 +213,10 @@ def main():
     sketch_manager.draw_line(0, 0.04, 0, 0)
     sketch_manager.close_sketch()
 
-    if test_step("Create revolve (360 degrees)", lambda: feature_manager.create_revolve(360, "Add")):
+    if test_step(
+        "Create revolve (360 degrees)",
+        lambda: feature_manager.create_revolve(360, "Add")
+    ):
         passed.append("revolve")
     else:
         failed.append("revolve")
@@ -225,7 +246,12 @@ def main():
     else:
         failed.append("bounding_box")
 
-    if test_step("Measure distance", lambda: query_manager.measure_distance(0, 0, 0, 0.1, 0.1, 0.1)):
+    if test_step(
+        "Measure distance",
+        lambda: query_manager.measure_distance(
+            0, 0, 0, 0.1, 0.1, 0.1
+        )
+    ):
         passed.append("measure_distance")
     else:
         failed.append("measure_distance")
@@ -267,17 +293,29 @@ def main():
     else:
         failed.append("save_document")
 
-    if test_step("Export to STEP", lambda: export_manager.export_step(os.path.join(temp_dir, "test.step"))):
+    step_path = os.path.join(temp_dir, "test.step")
+    if test_step(
+        "Export to STEP",
+        lambda: export_manager.export_step(step_path),
+    ):
         passed.append("export_step")
     else:
         failed.append("export_step")
 
-    if test_step("Export to STL", lambda: export_manager.export_stl(os.path.join(temp_dir, "test.stl"))):
+    stl_path = os.path.join(temp_dir, "test.stl")
+    if test_step(
+        "Export to STL",
+        lambda: export_manager.export_stl(stl_path),
+    ):
         passed.append("export_stl")
     else:
         failed.append("export_stl")
 
-    if test_step("Capture screenshot", lambda: export_manager.capture_screenshot(os.path.join(temp_dir, "test.png"))):
+    png_path = os.path.join(temp_dir, "test.png")
+    if test_step(
+        "Capture screenshot",
+        lambda: export_manager.capture_screenshot(png_path),
+    ):
         passed.append("screenshot")
     else:
         failed.append("screenshot")
@@ -317,7 +355,9 @@ def main():
     print("TEST SUMMARY")
     print("=" * 70)
     print(f"\nTotal Tests: {len(passed) + len(failed)}")
-    print(f"Passed: {len(passed)} ({100*len(passed)//(len(passed)+len(failed)) if passed or failed else 0}%)")
+    total = len(passed) + len(failed)
+    pct = 100 * len(passed) // total if total else 0
+    print(f"Passed: {len(passed)} ({pct}%)")
     print(f"Failed: {len(failed)}")
 
     if passed:

@@ -1,8 +1,7 @@
 """Export, drawing, and view tools for Solid Edge MCP."""
 
-from typing import Optional, List
-from solidedge_mcp.managers import export_manager, view_manager
 
+from solidedge_mcp.managers import export_manager, view_manager
 
 # === Export Formats ===
 
@@ -41,7 +40,7 @@ def export_flat_dxf(file_path: str) -> dict:
 
 # === Drawing / Draft ===
 
-def create_drawing(template: Optional[str] = None, views: Optional[List[str]] = None) -> dict:
+def create_drawing(template: str | None = None, views: list[str] | None = None) -> dict:
     """Create a 2D drawing from the active 3D model."""
     return export_manager.create_drawing(template, views)
 
@@ -49,7 +48,11 @@ def add_draft_sheet() -> dict:
     """Add a new sheet to the active draft document."""
     return export_manager.add_draft_sheet()
 
-def add_assembly_drawing_view(x: float = 0.15, y: float = 0.15, orientation: str = "Isometric", scale: float = 1.0) -> dict:
+def add_assembly_drawing_view(
+    x: float = 0.15, y: float = 0.15,
+    orientation: str = "Isometric",
+    scale: float = 1.0
+) -> dict:
     """Add an assembly drawing view to the active draft."""
     return export_manager.add_assembly_drawing_view(x, y, orientation, scale)
 
@@ -72,11 +75,20 @@ def add_leader(x1: float, y1: float, x2: float, y2: float, text: str = "") -> di
     """Add a leader annotation to the active draft."""
     return export_manager.add_leader(x1, y1, x2, y2, text)
 
-def add_dimension(x1: float, y1: float, x2: float, y2: float, dim_x: Optional[float] = None, dim_y: Optional[float] = None) -> dict:
+def add_dimension(
+    x1: float, y1: float,
+    x2: float, y2: float,
+    dim_x: float | None = None,
+    dim_y: float | None = None
+) -> dict:
     """Add a linear dimension to the active draft."""
     return export_manager.add_dimension(x1, y1, x2, y2, dim_x, dim_y)
 
-def add_balloon(x: float, y: float, text: str = "", leader_x: Optional[float] = None, leader_y: Optional[float] = None) -> dict:
+def add_balloon(
+    x: float, y: float, text: str = "",
+    leader_x: float | None = None,
+    leader_y: float | None = None
+) -> dict:
     """Add a balloon annotation to the active draft."""
     return export_manager.add_balloon(x, y, text, leader_x, leader_y)
 

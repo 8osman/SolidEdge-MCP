@@ -1,9 +1,9 @@
 """Solid Edge MCP Server"""
 
 from fastmcp import FastMCP
-from solidedge_mcp.tools import register_tools
+
 # Import managers to ensure they are initialized (though tools import them too)
-from solidedge_mcp import managers
+from solidedge_mcp.tools import register_tools
 
 # Create the FastMCP server
 mcp = FastMCP("Solid Edge MCP Server")

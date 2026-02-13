@@ -1,9 +1,11 @@
 """
 Standalone diagnostic script to explore Solid Edge COM API
 """
-import sys
-import win32com.client
 import json
+import sys
+
+import win32com.client
+
 
 def check_collections(doc):
     """Check which collections are available on the document"""
@@ -26,24 +28,28 @@ def check_collections(doc):
                 # Try to get count
                 try:
                     count = coll.Count
-                except:
+                except Exception:
                     count = "N/A"
 
                 # Get Add methods
                 try:
-                    methods = [m for m in dir(coll) if m.startswith('Add') and not m.startswith('_')]
+                    methods = [
+                    m for m in dir(coll)
+                    if m.startswith('Add')
+                    and not m.startswith('_')
+                ]
                     available[name] = {
                         "exists": True,
                         "count": count,
                         "add_methods": methods
                     }
-                except:
+                except Exception:
                     available[name] = {
                         "exists": True,
                         "count": count,
                         "add_methods": []
                     }
-        except Exception as e:
+        except Exception:
             pass
 
     return available
@@ -83,12 +89,12 @@ def main():
             for method in info['add_methods']:
                 print(f"    - {method}")
         else:
-            print(f"  Add Methods: None found")
+            print("  Add Methods: None found")
 
     # Save to file
     with open('collections_diagnostic.json', 'w') as f:
         json.dump(collections, f, indent=2)
-    print(f"\n\nFull results saved to collections_diagnostic.json")
+    print("\n\nFull results saved to collections_diagnostic.json")
 
     return 0
 

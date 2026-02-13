@@ -4,23 +4,26 @@ Solid Edge Feature Operations
 Handles creating 3D features like extrusions, revolves, holes, fillets, etc.
 """
 
-from typing import Dict, Any, Optional, List
+import contextlib
 import traceback
+from typing import Any
+
 import pythoncom
 from win32com.client import VARIANT
+
 from .constants import (
     DirectionConstants,
+    DraftSideConstants,
     ExtentTypeConstants,
     FaceQueryConstants,
     FeatureOperationConstants,
     KeyPointExtentConstants,
     LoftSweepConstants,
     OffsetSideConstants,
-    TreatmentTypeConstants,
-    DraftSideConstants,
-    TreatmentCrownTypeConstants,
-    TreatmentCrownSideConstants,
     TreatmentCrownCurvatureSideConstants,
+    TreatmentCrownSideConstants,
+    TreatmentCrownTypeConstants,
+    TreatmentTypeConstants,
 )
 
 
@@ -32,7 +35,7 @@ class FeatureManager:
         self.sketch_manager = sketch_manager
 
     def create_extrude(self, distance: float, operation: str = "Add",
-                      direction: str = "Normal") -> Dict[str, Any]:
+                      direction: str = "Normal") -> dict[str, Any]:
         """
         Create an extrusion feature from the active sketch profile.
 
@@ -60,7 +63,7 @@ class FeatureManager:
                 "Cut": FeatureOperationConstants.igFeatureCut,
                 "Intersect": FeatureOperationConstants.igFeatureIntersect
             }
-            op_const = operation_map.get(operation, FeatureOperationConstants.igFeatureAdd)
+            operation_map.get(operation, FeatureOperationConstants.igFeatureAdd)
 
             # Map direction string to constant
             direction_map = {
@@ -71,7 +74,7 @@ class FeatureManager:
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
 
             # AddFiniteExtrudedProtrusion: NumProfiles, ProfileArray, ProfilePlaneSide, Distance
-            model = models.AddFiniteExtrudedProtrusion(
+            models.AddFiniteExtrudedProtrusion(
                 1, (profile,), dir_const, distance
             )
 
@@ -91,7 +94,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_revolve(self, angle: float = 360, operation: str = "Add") -> Dict[str, Any]:
+    def create_revolve(self, angle: float = 360, operation: str = "Add") -> dict[str, Any]:
         """
         Create a revolve feature from the active sketch profile.
 
@@ -114,16 +117,21 @@ class FeatureManager:
                 return {"error": "No active sketch profile. Create and close a sketch first."}
 
             if not refaxis:
-                return {"error": "No axis of revolution set. Use set_axis_of_revolution() before closing the sketch."}
+                return {
+                    "error": "No axis of revolution set. "
+                    "Use set_axis_of_revolution() before "
+                    "closing the sketch."
+                }
 
             models = doc.Models
 
             import math
             angle_rad = math.radians(angle)
 
-            # AddFiniteRevolvedProtrusion: NumProfiles, ProfileArray, ReferenceAxis, ProfilePlaneSide, Angle
+            # AddFiniteRevolvedProtrusion: NumProfiles,
+            # ProfileArray, ReferenceAxis, ProfilePlaneSide, Angle
             # Do NOT pass None for optional params (KeyPointOrTangentFace, KeyPointFlags)
-            model = models.AddFiniteRevolvedProtrusion(
+            models.AddFiniteRevolvedProtrusion(
                 1,                              # NumberOfProfiles
                 (profile,),                     # ProfileArray
                 refaxis,                        # ReferenceAxis
@@ -148,7 +156,7 @@ class FeatureManager:
 
     def create_hole(self, x: float, y: float, diameter: float, depth: float,
                    hole_type: str = "Simple", plane_index: int = 1,
-                   direction: str = "Normal") -> Dict[str, Any]:
+                   direction: str = "Normal") -> dict[str, Any]:
         """
         Create a hole feature (circular cutout).
 
@@ -190,7 +198,7 @@ class FeatureManager:
 
             # Use ExtrudedCutouts.AddFiniteMulti for reliable hole creation
             cutouts = model.ExtrudedCutouts
-            cutout = cutouts.AddFiniteMulti(1, (profile,), dir_const, depth)
+            cutouts.AddFiniteMulti(1, (profile,), dir_const, depth)
 
             return {
                 "status": "created",
@@ -206,7 +214,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_round(self, radius: float) -> Dict[str, Any]:
+    def create_round(self, radius: float) -> dict[str, Any]:
         """
         Create a round (fillet) feature on all body edges.
 
@@ -220,8 +228,8 @@ class FeatureManager:
             Dict with status and round info
         """
         try:
-            from win32com.client import VARIANT
             import pythoncom
+            from win32com.client import VARIANT
 
             doc = self.doc_manager.get_active_document()
             models = doc.Models
@@ -254,7 +262,7 @@ class FeatureManager:
             radius_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8, [radius])
 
             rounds = model.Rounds
-            rnd = rounds.Add(1, edge_arr, radius_arr)
+            rounds.Add(1, edge_arr, radius_arr)
 
             return {
                 "status": "created",
@@ -268,7 +276,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_chamfer(self, distance: float) -> Dict[str, Any]:
+    def create_chamfer(self, distance: float) -> dict[str, Any]:
         """
         Create an equal-setback chamfer on all body edges.
 
@@ -281,8 +289,6 @@ class FeatureManager:
             Dict with status and chamfer info
         """
         try:
-            from win32com.client import VARIANT
-            import pythoncom
 
             doc = self.doc_manager.get_active_document()
             models = doc.Models
@@ -311,7 +317,7 @@ class FeatureManager:
                 return {"error": "No edges found on body"}
 
             chamfers = model.Chamfers
-            chamfer = chamfers.AddEqualSetback(len(edge_list), edge_list, distance)
+            chamfers.AddEqualSetback(len(edge_list), edge_list, distance)
 
             return {
                 "status": "created",
@@ -325,7 +331,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_pattern(self, pattern_type: str, **kwargs) -> Dict[str, Any]:
+    def create_pattern(self, pattern_type: str, **kwargs) -> dict[str, Any]:
         """
         Create a pattern of features.
 
@@ -347,7 +353,10 @@ class FeatureManager:
             "pattern_type": pattern_type
         }
 
-    def create_shell(self, thickness: float, remove_face_indices: Optional[List[int]] = None) -> Dict[str, Any]:
+    def create_shell(
+        self, thickness: float,
+        remove_face_indices: list[int] | None = None
+    ) -> dict[str, Any]:
         """
         Create a shell feature (hollow out the part).
 
@@ -369,7 +378,7 @@ class FeatureManager:
             "thickness": thickness
         }
 
-    def list_features(self) -> Dict[str, Any]:
+    def list_features(self) -> dict[str, Any]:
         """List all features in the active part"""
         try:
             doc = self.doc_manager.get_active_document()
@@ -394,7 +403,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_feature_info(self, feature_index: int) -> Dict[str, Any]:
+    def get_feature_info(self, feature_index: int) -> dict[str, Any]:
         """Get detailed information about a specific feature"""
         try:
             doc = self.doc_manager.get_active_document()
@@ -417,7 +426,7 @@ class FeatureManager:
                     info["visible"] = model.Visible
                 if hasattr(model, 'Suppressed'):
                     info["suppressed"] = model.Suppressed
-            except:
+            except Exception:
                 pass
 
             return info
@@ -443,7 +452,7 @@ class FeatureManager:
         length: float,
         width: float,
         height: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a box primitive by center point and dimensions.
 
@@ -463,7 +472,7 @@ class FeatureManager:
 
             # AddBoxByCenter: x, y, z, dWidth, dHeight, dAngle, dDepth, pPlane,
             #                  ExtentSide, vbKeyPointExtent, pKeyPointObj, pKeyPointFlags
-            model = models.AddBoxByCenter(
+            models.AddBoxByCenter(
                 center_x, center_y, center_z,
                 length,                         # dWidth
                 width,                          # dHeight
@@ -493,7 +502,7 @@ class FeatureManager:
         self,
         x1: float, y1: float, z1: float,
         x2: float, y2: float, z2: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a box primitive by two opposite corners.
 
@@ -514,7 +523,7 @@ class FeatureManager:
 
             # AddBoxByTwoPoints: x1, y1, z1, x2, y2, z2, dAngle, dDepth, pPlane,
             #                     ExtentSide, vbKeyPointExtent, pKeyPointObj, pKeyPointFlags
-            model = models.AddBoxByTwoPoints(
+            models.AddBoxByTwoPoints(
                 x1, y1, z1,
                 x2, y2, z2,
                 0,                              # dAngle
@@ -544,7 +553,7 @@ class FeatureManager:
         x1: float, y1: float, z1: float,
         x2: float, y2: float, z2: float,
         x3: float, y3: float, z3: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a box primitive by three points.
 
@@ -571,7 +580,7 @@ class FeatureManager:
 
             # AddBoxByThreePoints: x1,y1,z1, x2,y2,z2, x3,y3,z3, dDepth, pPlane,
             #                       ExtentSide, vbKeyPointExtent, pKeyPointObj, pKeyPointFlags
-            model = models.AddBoxByThreePoints(
+            models.AddBoxByThreePoints(
                 x1, y1, z1,
                 x2, y2, z2,
                 x3, y3, z3,
@@ -604,7 +613,7 @@ class FeatureManager:
         base_center_z: float,
         radius: float,
         height: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a cylinder primitive.
 
@@ -621,9 +630,10 @@ class FeatureManager:
             models = doc.Models
             top_plane = self._get_ref_plane(doc, 1)
 
-            # AddCylinderByCenterAndRadius: x, y, z, dRadius, dDepth, pPlane,
-            #                                ExtentSide, vbKeyPointExtent, pKeyPointObj, pKeyPointFlags
-            model = models.AddCylinderByCenterAndRadius(
+            # AddCylinderByCenterAndRadius: x, y, z, dRadius,
+            # dDepth, pPlane, ExtentSide, vbKeyPointExtent,
+            # pKeyPointObj, pKeyPointFlags
+            models.AddCylinderByCenterAndRadius(
                 base_center_x, base_center_y, base_center_z,
                 radius,
                 height,                         # dDepth
@@ -653,7 +663,7 @@ class FeatureManager:
         center_y: float,
         center_z: float,
         radius: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a sphere primitive.
 
@@ -669,9 +679,10 @@ class FeatureManager:
             models = doc.Models
             top_plane = self._get_ref_plane(doc, 1)
 
-            # AddSphereByCenterAndRadius: x, y, z, dRadius, pPlane, ExtentSide,
-            #                              vbKeyPointExtent, vbCreateLiveSection, pKeyPointObj, pKeyPointFlags
-            model = models.AddSphereByCenterAndRadius(
+            # AddSphereByCenterAndRadius: x, y, z, dRadius,
+            # pPlane, ExtentSide, vbKeyPointExtent,
+            # vbCreateLiveSection, pKeyPointObj, pKeyPointFlags
+            models.AddSphereByCenterAndRadius(
                 center_x, center_y, center_z,
                 radius,
                 top_plane,                      # pPlane
@@ -718,7 +729,7 @@ class FeatureManager:
         )
         return v_profiles, v_types, v_origins
 
-    def create_loft(self, profile_indices: list = None) -> Dict[str, Any]:
+    def create_loft(self, profile_indices: list = None) -> dict[str, Any]:
         """
         Create a loft feature between multiple profiles.
 
@@ -746,8 +757,10 @@ class FeatureManager:
 
             if len(profiles) < 2:
                 return {
-                    "error": f"Loft requires at least 2 profiles, got {len(profiles)}. "
-                    "Create sketches on different planes and close each one before calling create_loft()."
+                    "error": f"Loft requires at least 2 profiles"
+                    f", got {len(profiles)}. Create sketches"
+                    " on different planes and close each"
+                    " one before calling create_loft()."
                 }
 
             v_profiles, v_types, v_origins = self._make_loft_variant_arrays(profiles)
@@ -756,9 +769,12 @@ class FeatureManager:
             try:
                 model = models.Item(1)
                 lp = model.LoftedProtrusions
-                loft = lp.AddSimple(
-                    len(profiles), v_profiles, v_types, v_origins,
-                    DirectionConstants.igRight, ExtentTypeConstants.igNone, ExtentTypeConstants.igNone
+                lp.AddSimple(
+                    len(profiles), v_profiles,
+                    v_types, v_origins,
+                    DirectionConstants.igRight,
+                    ExtentTypeConstants.igNone,
+                    ExtentTypeConstants.igNone
                 )
                 self.sketch_manager.clear_accumulated_profiles()
                 return {
@@ -795,7 +811,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_sweep(self, path_profile_index: int = None) -> Dict[str, Any]:
+    def create_sweep(self, path_profile_index: int = None) -> dict[str, Any]:
         """
         Create a sweep feature along a path.
 
@@ -819,8 +835,11 @@ class FeatureManager:
 
             if len(all_profiles) < 2:
                 return {
-                    "error": f"Sweep requires at least 2 profiles (path + cross-section), "
-                    f"got {len(all_profiles)}. Create a path sketch and a cross-section sketch first."
+                    "error": "Sweep requires at least 2 "
+                    "profiles (path + cross-section), "
+                    f"got {len(all_profiles)}. Create a "
+                    "path sketch and a cross-section "
+                    "sketch first."
                 }
 
             path_idx = path_profile_index if path_profile_index is not None else 0
@@ -847,7 +866,7 @@ class FeatureManager:
             v_seg = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_VARIANT, [])
 
             # AddSweptProtrusion: 15 required params
-            model = models.AddSweptProtrusion(
+            models.AddSweptProtrusion(
                 1, v_paths, v_path_types,                   # Path (1 curve)
                 len(cross_sections), v_sections, v_section_types, v_origins, v_seg,  # Sections
                 DirectionConstants.igRight,                  # MaterialSide
@@ -877,7 +896,7 @@ class FeatureManager:
         distance: float,
         wall_thickness: float,
         direction: str = "Normal"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a thin-walled extrusion.
 
@@ -907,7 +926,7 @@ class FeatureManager:
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
 
             # AddExtrudedProtrusionWithThinWall
-            model = models.AddExtrudedProtrusionWithThinWall(
+            models.AddExtrudedProtrusionWithThinWall(
                 NumberOfProfiles=1,
                 ProfileArray=(profile,),
                 ProfilePlaneSide=dir_const,
@@ -932,7 +951,7 @@ class FeatureManager:
         self,
         angle: float,
         axis_type: str = "CenterLine"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a finite revolve feature.
 
@@ -954,14 +973,18 @@ class FeatureManager:
                 return {"error": "No active sketch profile"}
 
             if not refaxis:
-                return {"error": "No axis of revolution set. Use set_axis_of_revolution() before closing the sketch."}
+                return {
+                    "error": "No axis of revolution set. "
+                    "Use set_axis_of_revolution() before "
+                    "closing the sketch."
+                }
 
             models = doc.Models
 
             import math
             angle_rad = math.radians(angle)
 
-            model = models.AddFiniteRevolvedProtrusion(
+            models.AddFiniteRevolvedProtrusion(
                 1,                              # NumberOfProfiles
                 (profile,),                     # ProfileArray
                 refaxis,                        # ReferenceAxis
@@ -984,7 +1007,7 @@ class FeatureManager:
         self,
         angle: float,
         wall_thickness: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a thin-walled revolve feature.
 
@@ -1006,14 +1029,18 @@ class FeatureManager:
                 return {"error": "No active sketch profile"}
 
             if not refaxis:
-                return {"error": "No axis of revolution set. Use set_axis_of_revolution() before closing the sketch."}
+                return {
+                    "error": "No axis of revolution set. "
+                    "Use set_axis_of_revolution() before "
+                    "closing the sketch."
+                }
 
             models = doc.Models
 
             import math
             angle_rad = math.radians(angle)
 
-            model = models.AddRevolvedProtrusionWithThinWall(
+            models.AddRevolvedProtrusionWithThinWall(
                 1,                              # NumberOfProfiles
                 (profile,),                     # ProfileArray
                 refaxis,                        # ReferenceAxis
@@ -1037,7 +1064,7 @@ class FeatureManager:
     def create_extrude_infinite(
         self,
         direction: str = "Normal"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create an infinite extrusion (extends through all).
 
@@ -1064,7 +1091,7 @@ class FeatureManager:
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
 
             # AddExtrudedProtrusion (infinite)
-            model = models.AddExtrudedProtrusion(
+            models.AddExtrudedProtrusion(
                 NumberOfProfiles=1,
                 ProfileArray=(profile,),
                 ProfilePlaneSide=dir_const
@@ -1081,9 +1108,181 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
+    def create_extrude_through_next(self, direction: str = "Normal") -> dict[str, Any]:
+        """
+        Create an extrusion that extends to the next face encountered.
+
+        Uses ExtrudedProtrusions.AddThroughNext(Profile, ProfilePlaneSide) on the
+        collection. Extrudes from the sketch plane until it meets the first face.
+
+        Args:
+            direction: 'Normal' or 'Reverse'
+
+        Returns:
+            Dict with status and extrusion info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+
+            if not profile:
+                return {"error": "No active sketch profile. Create and close a sketch first."}
+
+            models = doc.Models
+            if models.Count == 0:
+                return {"error": "No base feature exists. Create a base feature first."}
+
+            model = models.Item(1)
+
+            direction_map = {
+                "Normal": DirectionConstants.igRight,
+                "Reverse": DirectionConstants.igLeft,
+            }
+            dir_const = direction_map.get(direction, DirectionConstants.igRight)
+
+            protrusions = model.ExtrudedProtrusions
+            protrusions.AddThroughNext(profile, dir_const)
+
+            self.sketch_manager.clear_accumulated_profiles()
+
+            return {
+                "status": "created",
+                "type": "extrude_through_next",
+                "direction": direction
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def create_extrude_from_to(self, from_plane_index: int,
+                                to_plane_index: int) -> dict[str, Any]:
+        """
+        Create an extrusion between two reference planes.
+
+        Uses ExtrudedProtrusions.AddFromTo(Profile, FromFaceOrRefPlane, ToFaceOrRefPlane)
+        on the collection. Extrudes from one plane to another.
+
+        Args:
+            from_plane_index: 1-based index of the starting reference plane
+            to_plane_index: 1-based index of the ending reference plane
+
+        Returns:
+            Dict with status and extrusion info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+
+            if not profile:
+                return {"error": "No active sketch profile. Create and close a sketch first."}
+
+            models = doc.Models
+            if models.Count == 0:
+                return {"error": "No base feature exists. Create a base feature first."}
+
+            model = models.Item(1)
+            ref_planes = doc.RefPlanes
+
+            if from_plane_index < 1 or from_plane_index > ref_planes.Count:
+                return {
+                    "error": f"Invalid from_plane_index: "
+                    f"{from_plane_index}. "
+                    f"Count: {ref_planes.Count}"
+                }
+            if to_plane_index < 1 or to_plane_index > ref_planes.Count:
+                return {
+                    "error": f"Invalid to_plane_index: "
+                    f"{to_plane_index}. "
+                    f"Count: {ref_planes.Count}"
+                }
+
+            from_plane = ref_planes.Item(from_plane_index)
+            to_plane = ref_planes.Item(to_plane_index)
+
+            protrusions = model.ExtrudedProtrusions
+            protrusions.AddFromTo(profile, from_plane, to_plane)
+
+            self.sketch_manager.clear_accumulated_profiles()
+
+            return {
+                "status": "created",
+                "type": "extrude_from_to",
+                "from_plane_index": from_plane_index,
+                "to_plane_index": to_plane_index
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def create_extruded_cutout_from_to(self, from_plane_index: int,
+                                        to_plane_index: int) -> dict[str, Any]:
+        """
+        Create an extruded cutout between two reference planes.
+
+        Uses ExtrudedCutouts.AddFromToMulti(NumProfiles, ProfileArray,
+        FromFaceOrRefPlane, ToFaceOrRefPlane) on the collection.
+
+        Args:
+            from_plane_index: 1-based index of the starting reference plane
+            to_plane_index: 1-based index of the ending reference plane
+
+        Returns:
+            Dict with status and cutout info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+
+            if not profile:
+                return {"error": "No active sketch profile. Create and close a sketch first."}
+
+            models = doc.Models
+            if models.Count == 0:
+                return {"error": "No base feature exists. Create a base feature first."}
+
+            model = models.Item(1)
+            ref_planes = doc.RefPlanes
+
+            if from_plane_index < 1 or from_plane_index > ref_planes.Count:
+                return {
+                    "error": f"Invalid from_plane_index: "
+                    f"{from_plane_index}. "
+                    f"Count: {ref_planes.Count}"
+                }
+            if to_plane_index < 1 or to_plane_index > ref_planes.Count:
+                return {
+                    "error": f"Invalid to_plane_index: "
+                    f"{to_plane_index}. "
+                    f"Count: {ref_planes.Count}"
+                }
+
+            from_plane = ref_planes.Item(from_plane_index)
+            to_plane = ref_planes.Item(to_plane_index)
+
+            cutouts = model.ExtrudedCutouts
+            cutouts.AddFromToMulti(1, (profile,), from_plane, to_plane)
+
+            self.sketch_manager.clear_accumulated_profiles()
+
+            return {
+                "status": "created",
+                "type": "extruded_cutout_from_to",
+                "from_plane_index": from_plane_index,
+                "to_plane_index": to_plane_index
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     def create_extruded_surface(self, distance: float,
                                 direction: str = "Normal",
-                                end_caps: bool = True) -> Dict[str, Any]:
+                                end_caps: bool = True) -> dict[str, Any]:
         """
         Create an extruded surface (construction geometry, not solid body).
 
@@ -1115,9 +1314,13 @@ class FeatureManager:
             depth1 = distance
             depth2 = distance if direction == "Symmetric" else 0.0
             side1 = DirectionConstants.igRight
-            side2 = DirectionConstants.igLeft if direction == "Symmetric" else DirectionConstants.igRight
+            side2 = (
+                DirectionConstants.igLeft
+                if direction == "Symmetric"
+                else DirectionConstants.igRight
+            )
 
-            extruded_surface = extruded_surfaces.Add(
+            extruded_surfaces.Add(
                 1,                      # NumberOfProfiles
                 profile_array,          # ProfileArray
                 ExtentTypeConstants.igFinite,  # ExtentType1
@@ -1133,7 +1336,8 @@ class FeatureManager:
                 0.0,                                             # TreatmentDraftAngle1
                 TreatmentCrownTypeConstants.seTreatmentCrownByOffset,       # TreatmentCrownType1
                 TreatmentCrownSideConstants.seTreatmentCrownSideInside,     # TreatmentCrownSide1
-                TreatmentCrownCurvatureSideConstants.seTreatmentCrownCurvatureInside,  # TreatmentCrownCurvatureSide1
+                # TreatmentCrownCurvatureSide1
+                TreatmentCrownCurvatureSideConstants.seTreatmentCrownCurvatureInside,
                 0.0,                                             # TreatmentCrownRadiusOrOffset1
                 0.0,                                             # TreatmentCrownTakeOffAngle1
                 ExtentTypeConstants.igFinite,                    # ExtentType2
@@ -1149,7 +1353,8 @@ class FeatureManager:
                 0.0,                                             # TreatmentDraftAngle2
                 TreatmentCrownTypeConstants.seTreatmentCrownByOffset,       # TreatmentCrownType2
                 TreatmentCrownSideConstants.seTreatmentCrownSideInside,     # TreatmentCrownSide2
-                TreatmentCrownCurvatureSideConstants.seTreatmentCrownCurvatureInside,  # TreatmentCrownCurvatureSide2
+                # TreatmentCrownCurvatureSide2
+                TreatmentCrownCurvatureSideConstants.seTreatmentCrownCurvatureInside,
                 0.0,                                             # TreatmentCrownRadiusOrOffset2
                 0.0,                                             # TreatmentCrownTakeOffAngle2
                 end_caps                                         # WantEndCaps
@@ -1178,7 +1383,7 @@ class FeatureManager:
         height: float,
         revolutions: float = None,
         direction: str = "Right"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a helical feature.
 
@@ -1205,7 +1410,7 @@ class FeatureManager:
                 revolutions = height / pitch
 
             # AddFiniteBaseHelix
-            model = models.AddFiniteBaseHelix(
+            models.AddFiniteBaseHelix(
                 NumberOfProfiles=1,
                 ProfileArray=(profile,),
                 Pitch=pitch,
@@ -1236,7 +1441,7 @@ class FeatureManager:
         width: float,
         thickness: float,
         bend_radius: float = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a base contour flange (sheet metal).
 
@@ -1261,7 +1466,7 @@ class FeatureManager:
                 bend_radius = thickness * 2
 
             # AddBaseContourFlange
-            model = models.AddBaseContourFlange(
+            models.AddBaseContourFlange(
                 NumberOfProfiles=1,
                 ProfileArray=(profile,),
                 Thickness=thickness,
@@ -1284,7 +1489,7 @@ class FeatureManager:
         self,
         thickness: float,
         width: float = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a base tab (sheet metal).
 
@@ -1305,7 +1510,7 @@ class FeatureManager:
             models = doc.Models
 
             # AddBaseTab
-            model = models.AddBaseTab(
+            models.AddBaseTab(
                 NumberOfProfiles=1,
                 ProfileArray=(profile,),
                 Thickness=thickness
@@ -1326,7 +1531,7 @@ class FeatureManager:
     # BODY OPERATIONS
     # =================================================================
 
-    def add_body(self, body_type: str = "Solid") -> Dict[str, Any]:
+    def add_body(self, body_type: str = "Solid") -> dict[str, Any]:
         """
         Add a body to the part.
 
@@ -1341,7 +1546,7 @@ class FeatureManager:
             models = doc.Models
 
             # AddBody
-            body = models.AddBody()
+            models.AddBody()
 
             return {
                 "status": "created",
@@ -1358,7 +1563,7 @@ class FeatureManager:
         self,
         thickness: float,
         direction: str = "Both"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Thicken a surface to create a solid.
 
@@ -1374,7 +1579,7 @@ class FeatureManager:
             models = doc.Models
 
             # AddThickenFeature
-            model = models.AddThickenFeature(
+            models.AddThickenFeature(
                 Thickness=thickness
             )
 
@@ -1394,7 +1599,7 @@ class FeatureManager:
         self,
         wall_thickness: float,
         profile_indices: list = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a thin-walled loft feature between multiple profiles.
 
@@ -1426,7 +1631,7 @@ class FeatureManager:
             v_profiles, v_types, v_origins = self._make_loft_variant_arrays(profiles)
             v_seg = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_VARIANT, [])
 
-            model = models.AddLoftedProtrusionWithThinWall(
+            models.AddLoftedProtrusionWithThinWall(
                 len(profiles), v_profiles, v_types, v_origins,
                 v_seg,                                          # SegmentMaps
                 DirectionConstants.igRight,                     # MaterialSide
@@ -1454,7 +1659,7 @@ class FeatureManager:
         self,
         wall_thickness: float,
         path_profile_index: int = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a thin-walled sweep feature along a path.
 
@@ -1499,7 +1704,7 @@ class FeatureManager:
             )
             v_seg = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_VARIANT, [])
 
-            model = models.AddSweptProtrusionWithThinWall(
+            models.AddSweptProtrusionWithThinWall(
                 1, v_paths, v_path_types,
                 len(cross_sections), v_sections, v_section_types, v_origins, v_seg,
                 DirectionConstants.igRight,
@@ -1525,13 +1730,13 @@ class FeatureManager:
     # SIMPLIFICATION FEATURES
     # =================================================================
 
-    def auto_simplify(self) -> Dict[str, Any]:
+    def auto_simplify(self) -> dict[str, Any]:
         """Auto-simplify the model"""
         try:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            model = models.AddAutoSimplify()
+            models.AddAutoSimplify()
 
             return {
                 "status": "created",
@@ -1543,13 +1748,13 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def simplify_enclosure(self) -> Dict[str, Any]:
+    def simplify_enclosure(self) -> dict[str, Any]:
         """Create simplified enclosure"""
         try:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            model = models.AddSimplifyEnclosure()
+            models.AddSimplifyEnclosure()
 
             return {
                 "status": "created",
@@ -1561,13 +1766,13 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def simplify_duplicate(self) -> Dict[str, Any]:
+    def simplify_duplicate(self) -> dict[str, Any]:
         """Create simplified duplicate"""
         try:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            model = models.AddSimplifyDuplicate()
+            models.AddSimplifyDuplicate()
 
             return {
                 "status": "created",
@@ -1579,13 +1784,13 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def local_simplify_enclosure(self) -> Dict[str, Any]:
+    def local_simplify_enclosure(self) -> dict[str, Any]:
         """Create local simplified enclosure"""
         try:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            model = models.AddLocalSimplifyEnclosure()
+            models.AddLocalSimplifyEnclosure()
 
             return {
                 "status": "created",
@@ -1601,7 +1806,7 @@ class FeatureManager:
     # ADDITIONAL REVOLVE VARIANTS
     # =================================================================
 
-    def create_revolve_sync(self, angle: float) -> Dict[str, Any]:
+    def create_revolve_sync(self, angle: float) -> dict[str, Any]:
         """Create synchronous revolve feature"""
         try:
             doc = self.doc_manager.get_active_document()
@@ -1611,14 +1816,18 @@ class FeatureManager:
             if not profile:
                 return {"error": "No active sketch profile"}
             if not refaxis:
-                return {"error": "No axis of revolution set. Use set_axis_of_revolution() before closing the sketch."}
+                return {
+                    "error": "No axis of revolution set. "
+                    "Use set_axis_of_revolution() before "
+                    "closing the sketch."
+                }
 
             models = doc.Models
 
             import math
             angle_rad = math.radians(angle)
 
-            model = models.AddRevolvedProtrusionSync(
+            models.AddRevolvedProtrusionSync(
                 1,                              # NumberOfProfiles
                 (profile,),                     # ProfileArray
                 refaxis,                        # ReferenceAxis
@@ -1637,7 +1846,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_revolve_finite_sync(self, angle: float) -> Dict[str, Any]:
+    def create_revolve_finite_sync(self, angle: float) -> dict[str, Any]:
         """Create finite synchronous revolve feature"""
         try:
             doc = self.doc_manager.get_active_document()
@@ -1647,14 +1856,18 @@ class FeatureManager:
             if not profile:
                 return {"error": "No active sketch profile"}
             if not refaxis:
-                return {"error": "No axis of revolution set. Use set_axis_of_revolution() before closing the sketch."}
+                return {
+                    "error": "No axis of revolution set. "
+                    "Use set_axis_of_revolution() before "
+                    "closing the sketch."
+                }
 
             models = doc.Models
 
             import math
             angle_rad = math.radians(angle)
 
-            model = models.AddFiniteRevolvedProtrusionSync(
+            models.AddFiniteRevolvedProtrusionSync(
                 1,                              # NumberOfProfiles
                 (profile,),                     # ProfileArray
                 refaxis,                        # ReferenceAxis
@@ -1677,7 +1890,10 @@ class FeatureManager:
     # ADDITIONAL HELIX VARIANTS
     # =================================================================
 
-    def create_helix_sync(self, pitch: float, height: float, revolutions: float = None) -> Dict[str, Any]:
+    def create_helix_sync(
+        self, pitch: float, height: float,
+        revolutions: float = None
+    ) -> dict[str, Any]:
         """Create synchronous helix feature"""
         try:
             doc = self.doc_manager.get_active_document()
@@ -1691,7 +1907,7 @@ class FeatureManager:
             if revolutions is None:
                 revolutions = height / pitch
 
-            model = models.AddFiniteBaseHelixSync(
+            models.AddFiniteBaseHelixSync(
                 NumberOfProfiles=1,
                 ProfileArray=(profile,),
                 Pitch=pitch,
@@ -1718,7 +1934,7 @@ class FeatureManager:
         height: float,
         wall_thickness: float,
         revolutions: float = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create thin-walled helix feature"""
         try:
             doc = self.doc_manager.get_active_document()
@@ -1732,7 +1948,7 @@ class FeatureManager:
             if revolutions is None:
                 revolutions = height / pitch
 
-            model = models.AddFiniteBaseHelixWithThinWall(
+            models.AddFiniteBaseHelixWithThinWall(
                 NumberOfProfiles=1,
                 ProfileArray=(profile,),
                 Pitch=pitch,
@@ -1760,7 +1976,7 @@ class FeatureManager:
         height: float,
         wall_thickness: float,
         revolutions: float = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create synchronous thin-walled helix feature"""
         try:
             doc = self.doc_manager.get_active_document()
@@ -1774,7 +1990,7 @@ class FeatureManager:
             if revolutions is None:
                 revolutions = height / pitch
 
-            model = models.AddFiniteBaseHelixSyncWithThinWall(
+            models.AddFiniteBaseHelixSyncWithThinWall(
                 NumberOfProfiles=1,
                 ProfileArray=(profile,),
                 Pitch=pitch,
@@ -1800,7 +2016,7 @@ class FeatureManager:
     # CUTOUT OPERATIONS
     # =================================================================
 
-    def create_extruded_cutout(self, distance: float, direction: str = "Normal") -> Dict[str, Any]:
+    def create_extruded_cutout(self, distance: float, direction: str = "Normal") -> dict[str, Any]:
         """
         Create an extruded cutout (cut) through the part using the active sketch profile.
 
@@ -1834,7 +2050,7 @@ class FeatureManager:
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
 
             cutouts = model.ExtrudedCutouts
-            cutout = cutouts.AddFiniteMulti(1, (profile,), dir_const, distance)
+            cutouts.AddFiniteMulti(1, (profile,), dir_const, distance)
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -1850,7 +2066,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_extruded_cutout_through_all(self, direction: str = "Normal") -> Dict[str, Any]:
+    def create_extruded_cutout_through_all(self, direction: str = "Normal") -> dict[str, Any]:
         """
         Create an extruded cutout that goes through the entire part.
 
@@ -1883,7 +2099,7 @@ class FeatureManager:
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
 
             cutouts = model.ExtrudedCutouts
-            cutout = cutouts.AddThroughAllMulti(1, (profile,), dir_const)
+            cutouts.AddThroughAllMulti(1, (profile,), dir_const)
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -1898,11 +2114,13 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_revolved_cutout(self, angle: float = 360) -> Dict[str, Any]:
+    def create_revolved_cutout(self, angle: float = 360) -> dict[str, Any]:
         """
         Create a revolved cutout (cut) in the part using the active sketch profile.
 
-        Uses model.RevolvedCutouts.AddFiniteMulti(NumProfiles, ProfileArray, RefAxis, PlaneSide, Angle).
+        Uses model.RevolvedCutouts.AddFiniteMulti(
+        NumProfiles, ProfileArray, RefAxis,
+        PlaneSide, Angle).
         Requires an existing base feature, a closed sketch profile, and an axis of revolution.
 
         Args:
@@ -1919,7 +2137,11 @@ class FeatureManager:
             if not profile:
                 return {"error": "No active sketch profile. Create and close a sketch first."}
             if not refaxis:
-                return {"error": "No axis of revolution set. Use set_axis_of_revolution() before closing the sketch."}
+                return {
+                    "error": "No axis of revolution set. "
+                    "Use set_axis_of_revolution() before "
+                    "closing the sketch."
+                }
 
             models = doc.Models
             if models.Count == 0:
@@ -1931,7 +2153,7 @@ class FeatureManager:
             angle_rad = math.radians(angle)
 
             cutouts = model.RevolvedCutouts
-            cutout = cutouts.AddFiniteMulti(
+            cutouts.AddFiniteMulti(
                 1,                              # NumberOfProfiles
                 (profile,),                     # ProfileArray
                 refaxis,                        # ReferenceAxis
@@ -1952,7 +2174,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_normal_cutout(self, distance: float, direction: str = "Normal") -> Dict[str, Any]:
+    def create_normal_cutout(self, distance: float, direction: str = "Normal") -> dict[str, Any]:
         """
         Create a normal cutout (cut) through the part using the active sketch profile.
 
@@ -1988,7 +2210,7 @@ class FeatureManager:
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
 
             cutouts = model.NormalCutouts
-            cutout = cutouts.AddFiniteMulti(1, (profile,), dir_const, distance)
+            cutouts.AddFiniteMulti(1, (profile,), dir_const, distance)
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -2004,7 +2226,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_lofted_cutout(self, profile_indices: list = None) -> Dict[str, Any]:
+    def create_lofted_cutout(self, profile_indices: list = None) -> dict[str, Any]:
         """
         Create a lofted cutout between multiple profiles.
 
@@ -2040,14 +2262,17 @@ class FeatureManager:
 
             if len(profiles) < 2:
                 return {
-                    "error": f"Lofted cutout requires at least 2 profiles, got {len(profiles)}. "
-                    "Create sketches on different planes and close each one before calling create_lofted_cutout()."
+                    "error": "Lofted cutout requires at "
+                    "least 2 profiles, got "
+                    f"{len(profiles)}. Create sketches on "
+                    "different planes and close each one "
+                    "before calling create_lofted_cutout()."
                 }
 
             v_profiles, v_types, v_origins = self._make_loft_variant_arrays(profiles)
 
             lc = model.LoftedCutouts
-            cutout = lc.AddSimple(
+            lc.AddSimple(
                 len(profiles), v_profiles, v_types, v_origins,
                 DirectionConstants.igRight, ExtentTypeConstants.igNone, ExtentTypeConstants.igNone
             )
@@ -2070,7 +2295,7 @@ class FeatureManager:
     # MIRROR COPY
     # =================================================================
 
-    def create_mirror(self, feature_name: str, mirror_plane_index: int) -> Dict[str, Any]:
+    def create_mirror(self, feature_name: str, mirror_plane_index: int) -> dict[str, Any]:
         """
         Create a mirror copy of a feature across a reference plane.
 
@@ -2119,7 +2344,11 @@ class FeatureManager:
             # Get the mirror plane
             ref_planes = doc.RefPlanes
             if mirror_plane_index < 1 or mirror_plane_index > ref_planes.Count:
-                return {"error": f"Invalid plane index: {mirror_plane_index}. Count: {ref_planes.Count}"}
+                return {
+                    "error": f"Invalid plane index: "
+                    f"{mirror_plane_index}. "
+                    f"Count: {ref_planes.Count}"
+                }
 
             mirror_plane = ref_planes.Item(mirror_plane_index)
 
@@ -2133,7 +2362,9 @@ class FeatureManager:
                 "feature": feature_name,
                 "mirror_plane": mirror_plane_index,
                 "name": mirror.Name if hasattr(mirror, 'Name') else None,
-                "note": "Mirror feature created via AddSync. Geometry may require manual verification in Solid Edge UI."
+                "note": "Mirror feature created via AddSync. "
+                "Geometry may require manual verification "
+                "in Solid Edge UI."
             }
         except Exception as e:
             return {
@@ -2146,7 +2377,7 @@ class FeatureManager:
     # =================================================================
 
     def create_ref_plane_by_offset(self, parent_plane_index: int, distance: float,
-                                    normal_side: str = "Normal") -> Dict[str, Any]:
+                                    normal_side: str = "Normal") -> dict[str, Any]:
         """
         Create a reference plane parallel to an existing plane at an offset distance.
 
@@ -2167,7 +2398,11 @@ class FeatureManager:
             ref_planes = doc.RefPlanes
 
             if parent_plane_index < 1 or parent_plane_index > ref_planes.Count:
-                return {"error": f"Invalid plane index: {parent_plane_index}. Count: {ref_planes.Count}"}
+                return {
+                    "error": f"Invalid plane index: "
+                    f"{parent_plane_index}. "
+                    f"Count: {ref_planes.Count}"
+                }
 
             parent = ref_planes.Item(parent_plane_index)
 
@@ -2177,7 +2412,7 @@ class FeatureManager:
             }
             side_const = side_map.get(normal_side, DirectionConstants.igRight)
 
-            new_plane = ref_planes.AddParallelByDistance(parent, distance, side_const)
+            ref_planes.AddParallelByDistance(parent, distance, side_const)
 
             return {
                 "status": "created",
@@ -2194,11 +2429,224 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
+    def create_ref_plane_normal_at_distance(self, distance: float,
+                                              curve_end: str = "End",
+                                              pivot_plane_index: int = 2) -> dict[str, Any]:
+        """
+        Create a reference plane normal to a curve at a specified distance from an endpoint.
+
+        Uses RefPlanes.AddNormalToCurveAtDistance(pCurve, Distance, bIgnoreNatural,
+        NormalSide, [bFlip], [bOrient], [orientSurface]).
+        Requires an active sketch profile that defines the curve.
+
+        Args:
+            distance: Distance from the curve endpoint in meters
+            curve_end: Which end to measure from - 'Start' or 'End'
+            pivot_plane_index: 1-based index of the pivot reference plane (default: 2 = Front)
+
+        Returns:
+            Dict with status and new plane index
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+
+            if not profile:
+                return {"error": "No active sketch profile. Create and close a sketch first."}
+
+            ref_planes = doc.RefPlanes
+
+            # igCurveEnd = 2, igCurveStart = 1
+            ignore_natural = curve_end == "End"
+            # NormalSide: igRight = 2
+            normal_side = DirectionConstants.igRight
+
+            ref_planes.AddNormalToCurveAtDistance(
+                profile, distance, ignore_natural, normal_side)
+
+            return {
+                "status": "created",
+                "type": "ref_plane_normal_at_distance",
+                "distance": distance,
+                "curve_end": curve_end,
+                "new_plane_index": ref_planes.Count
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def create_ref_plane_normal_at_arc_ratio(self, ratio: float,
+                                               curve_end: str = "End",
+                                               pivot_plane_index: int = 2) -> dict[str, Any]:
+        """
+        Create a reference plane normal to a curve at an arc-length ratio.
+
+        Uses RefPlanes.AddNormalToCurveAtArcLengthRatio(pCurve, Ratio, bIgnoreNatural,
+        NormalSide, PivotPlane, PivotEnd, [bFlip], [bOrient]).
+        Ratio is 0.0 (start) to 1.0 (end) of the curve arc length.
+
+        Args:
+            ratio: Arc length ratio (0.0 to 1.0)
+            curve_end: Which end is pivot - 'Start' or 'End'
+            pivot_plane_index: 1-based index of the pivot reference plane (default: 2 = Front)
+
+        Returns:
+            Dict with status and new plane index
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+
+            if not profile:
+                return {"error": "No active sketch profile. Create and close a sketch first."}
+
+            if ratio < 0.0 or ratio > 1.0:
+                return {"error": f"Ratio must be between 0.0 and 1.0, got {ratio}"}
+
+            ref_planes = doc.RefPlanes
+            pivot_plane = ref_planes.Item(pivot_plane_index)
+
+            ignore_natural = curve_end == "End"
+            normal_side = DirectionConstants.igRight
+            # igPivotEnd = 2
+            pivot_end_const = 2
+
+            ref_planes.AddNormalToCurveAtArcLengthRatio(
+                profile, ratio, ignore_natural, normal_side,
+                pivot_plane, pivot_end_const)
+
+            return {
+                "status": "created",
+                "type": "ref_plane_normal_at_arc_ratio",
+                "ratio": ratio,
+                "curve_end": curve_end,
+                "new_plane_index": ref_planes.Count
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def create_ref_plane_normal_at_distance_along(self, distance_along: float,
+                                                    curve_end: str = "End",
+                                                    pivot_plane_index: int = 2) -> dict[str, Any]:
+        """
+        Create a reference plane normal to a curve at a distance along the curve.
+
+        Uses RefPlanes.AddNormalToCurveAtDistanceAlongCurve(pCurve, DistAlong,
+        bIgnoreNatural, NormalSide, PivotPlane, PivotEnd, [bFlip], [bOrient]).
+
+        Args:
+            distance_along: Distance along the curve in meters
+            curve_end: Which end to measure from - 'Start' or 'End'
+            pivot_plane_index: 1-based index of the pivot reference plane (default: 2 = Front)
+
+        Returns:
+            Dict with status and new plane index
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+
+            if not profile:
+                return {"error": "No active sketch profile. Create and close a sketch first."}
+
+            ref_planes = doc.RefPlanes
+            pivot_plane = ref_planes.Item(pivot_plane_index)
+
+            ignore_natural = curve_end == "End"
+            normal_side = DirectionConstants.igRight
+            pivot_end_const = 2
+
+            ref_planes.AddNormalToCurveAtDistanceAlongCurve(
+                profile, distance_along, ignore_natural, normal_side,
+                pivot_plane, pivot_end_const)
+
+            return {
+                "status": "created",
+                "type": "ref_plane_normal_at_distance_along",
+                "distance_along": distance_along,
+                "curve_end": curve_end,
+                "new_plane_index": ref_planes.Count
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def create_ref_plane_parallel_by_tangent(self, parent_plane_index: int,
+                                               face_index: int,
+                                               normal_side: str = "Normal") -> dict[str, Any]:
+        """
+        Create a reference plane parallel to a parent plane and tangent to a face.
+
+        Uses RefPlanes.AddParallelByTangent(pParentPlane, pFace, NormalSide,
+        [bFlip], [bOrient], [orientSurface]).
+
+        Args:
+            parent_plane_index: 1-based index of the parent reference plane
+            face_index: 0-based index of the face to be tangent to
+            normal_side: 'Normal' (igRight=2) or 'Reverse' (igLeft=1)
+
+        Returns:
+            Dict with status and new plane index
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            ref_planes = doc.RefPlanes
+
+            if parent_plane_index < 1 or parent_plane_index > ref_planes.Count:
+                return {
+                    "error": "Invalid parent_plane_index: "
+                    f"{parent_plane_index}. "
+                    f"Count: {ref_planes.Count}"
+                }
+
+            models = doc.Models
+            if models.Count == 0:
+                return {"error": "No base feature exists."}
+
+            model = models.Item(1)
+            body = model.Body
+            faces = body.Faces(FaceQueryConstants.igQueryAll)
+
+            if face_index < 0 or face_index >= faces.Count:
+                return {"error": f"Invalid face_index: {face_index}. Body has {faces.Count} faces."}
+
+            parent_plane = ref_planes.Item(parent_plane_index)
+            face = faces.Item(face_index + 1)
+
+            side_map = {
+                "Normal": DirectionConstants.igRight,
+                "Reverse": DirectionConstants.igLeft,
+            }
+            side_const = side_map.get(normal_side, DirectionConstants.igRight)
+
+            ref_planes.AddParallelByTangent(parent_plane, face, side_const)
+
+            return {
+                "status": "created",
+                "type": "ref_plane_parallel_by_tangent",
+                "parent_plane_index": parent_plane_index,
+                "face_index": face_index,
+                "normal_side": normal_side,
+                "new_plane_index": ref_planes.Count
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     # =================================================================
     # SELECTIVE ROUNDS AND CHAMFERS (ON SPECIFIC FACE)
     # =================================================================
 
-    def create_round_on_face(self, radius: float, face_index: int) -> Dict[str, Any]:
+    def create_round_on_face(self, radius: float, face_index: int) -> dict[str, Any]:
         """
         Create a round (fillet) on edges of a specific face.
 
@@ -2213,8 +2661,8 @@ class FeatureManager:
             Dict with status and round info
         """
         try:
-            from win32com.client import VARIANT
             import pythoncom
+            from win32com.client import VARIANT
 
             doc = self.doc_manager.get_active_document()
             models = doc.Models
@@ -2227,7 +2675,11 @@ class FeatureManager:
 
             faces = body.Faces(FaceQueryConstants.igQueryAll)
             if face_index < 0 or face_index >= faces.Count:
-                return {"error": f"Invalid face index: {face_index}. Body has {faces.Count} faces."}
+                return {
+                    "error": f"Invalid face index: "
+                    f"{face_index}. Body has "
+                    f"{faces.Count} faces."
+                }
 
             face = faces.Item(face_index + 1)
             face_edges = face.Edges
@@ -2242,7 +2694,7 @@ class FeatureManager:
             radius_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8, [radius])
 
             rounds = model.Rounds
-            rnd = rounds.Add(1, edge_arr, radius_arr)
+            rounds.Add(1, edge_arr, radius_arr)
 
             return {
                 "status": "created",
@@ -2257,7 +2709,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_chamfer_on_face(self, distance: float, face_index: int) -> Dict[str, Any]:
+    def create_chamfer_on_face(self, distance: float, face_index: int) -> dict[str, Any]:
         """
         Create a chamfer on edges of a specific face.
 
@@ -2283,7 +2735,11 @@ class FeatureManager:
 
             faces = body.Faces(FaceQueryConstants.igQueryAll)
             if face_index < 0 or face_index >= faces.Count:
-                return {"error": f"Invalid face index: {face_index}. Body has {faces.Count} faces."}
+                return {
+                    "error": f"Invalid face index: "
+                    f"{face_index}. Body has "
+                    f"{faces.Count} faces."
+                }
 
             face = faces.Item(face_index + 1)
             face_edges = face.Edges
@@ -2295,7 +2751,7 @@ class FeatureManager:
                 edge_list.append(face_edges.Item(ei))
 
             chamfers = model.Chamfers
-            chamfer = chamfers.AddEqualSetback(len(edge_list), edge_list, distance)
+            chamfers.AddEqualSetback(len(edge_list), edge_list, distance)
 
             return {
                 "status": "created",
@@ -2310,7 +2766,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def delete_faces(self, face_indices: List[int]) -> Dict[str, Any]:
+    def delete_faces(self, face_indices: list[int]) -> dict[str, Any]:
         """
         Delete faces from the model body.
 
@@ -2324,8 +2780,6 @@ class FeatureManager:
             Dict with status and deletion info
         """
         try:
-            from win32com.client import VARIANT
-            import pythoncom
 
             doc = self.doc_manager.get_active_document()
             models = doc.Models
@@ -2347,7 +2801,7 @@ class FeatureManager:
                 face_objs.append(faces.Item(idx + 1))
 
             delete_faces = model.DeleteFaces
-            result = delete_faces.Add(len(face_objs), face_objs)
+            delete_faces.Add(len(face_objs), face_objs)
 
             return {
                 "status": "created",
@@ -2361,7 +2815,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def delete_faces_no_heal(self, face_indices: List[int]) -> Dict[str, Any]:
+    def delete_faces_no_heal(self, face_indices: list[int]) -> dict[str, Any]:
         """
         Delete faces from the model body without healing.
 
@@ -2396,7 +2850,7 @@ class FeatureManager:
                 face_objs.append(faces.Item(idx + 1))
 
             delete_faces = model.DeleteFaces
-            result = delete_faces.AddNoHeal(len(face_objs), face_objs)
+            delete_faces.AddNoHeal(len(face_objs), face_objs)
 
             return {
                 "status": "created",
@@ -2410,7 +2864,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def delete_hole_by_face(self, face_index: int) -> Dict[str, Any]:
+    def delete_hole_by_face(self, face_index: int) -> dict[str, Any]:
         """
         Delete a specific hole by selecting its face.
 
@@ -2435,12 +2889,16 @@ class FeatureManager:
 
             faces = body.Faces(FaceQueryConstants.igQueryAll)
             if face_index < 0 or face_index >= faces.Count:
-                return {"error": f"Invalid face index: {face_index}. Body has {faces.Count} faces."}
+                return {
+                    "error": f"Invalid face index: "
+                    f"{face_index}. Body has "
+                    f"{faces.Count} faces."
+                }
 
             face = faces.Item(face_index + 1)
 
             delete_holes = model.DeleteHoles
-            result_feat = delete_holes.AddByFace(face)
+            delete_holes.AddByFace(face)
 
             return {
                 "status": "created",
@@ -2457,13 +2915,13 @@ class FeatureManager:
     # ADDITIONAL SHEET METAL FEATURES
     # =================================================================
 
-    def create_lofted_flange(self, thickness: float) -> Dict[str, Any]:
+    def create_lofted_flange(self, thickness: float) -> dict[str, Any]:
         """Create lofted flange (sheet metal)"""
         try:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            model = models.AddLoftedFlange(thickness)  # Positional arg
+            models.AddLoftedFlange(thickness)  # Positional arg
 
             return {
                 "status": "created",
@@ -2476,13 +2934,13 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_web_network(self) -> Dict[str, Any]:
+    def create_web_network(self) -> dict[str, Any]:
         """Create web network (sheet metal)"""
         try:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            model = models.AddWebNetwork()
+            models.AddWebNetwork()
 
             return {
                 "status": "created",
@@ -2498,13 +2956,13 @@ class FeatureManager:
     # ADDITIONAL BODY OPERATIONS
     # =================================================================
 
-    def add_body_by_mesh(self) -> Dict[str, Any]:
+    def add_body_by_mesh(self) -> dict[str, Any]:
         """Add body by mesh facets"""
         try:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            model = models.AddBodyByMeshFacets()
+            models.AddBodyByMeshFacets()
 
             return {
                 "status": "created",
@@ -2516,13 +2974,13 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def add_body_feature(self) -> Dict[str, Any]:
+    def add_body_feature(self) -> dict[str, Any]:
         """Add body feature"""
         try:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            model = models.AddBodyFeature()
+            models.AddBodyFeature()
 
             return {
                 "status": "created",
@@ -2534,13 +2992,13 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def add_by_construction(self) -> Dict[str, Any]:
+    def add_by_construction(self) -> dict[str, Any]:
         """Add construction body"""
         try:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            model = models.AddByConstruction()
+            models.AddByConstruction()
 
             return {
                 "status": "created",
@@ -2552,13 +3010,13 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def add_body_by_tag(self, tag: str) -> Dict[str, Any]:
+    def add_body_by_tag(self, tag: str) -> dict[str, Any]:
         """Add body by tag reference"""
         try:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            model = models.AddBodyByTag(tag)
+            models.AddBodyByTag(tag)
 
             return {
                 "status": "created",
@@ -2580,7 +3038,7 @@ class FeatureManager:
         thickness: float,
         bend_radius: float,
         relief_type: str = "Default"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create base contour flange with bend deduction or bend allowance"""
         try:
             doc = self.doc_manager.get_active_document()
@@ -2592,7 +3050,7 @@ class FeatureManager:
             models = doc.Models
 
             # AddBaseContourFlangeByBendDeductionOrBendAllowance
-            model = models.AddBaseContourFlangeByBendDeductionOrBendAllowance(
+            models.AddBaseContourFlangeByBendDeductionOrBendAllowance(
                 Profile=profile,
                 NormalSide=1,
                 Thickness=thickness,
@@ -2611,7 +3069,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_base_tab_multi_profile(self, thickness: float) -> Dict[str, Any]:
+    def create_base_tab_multi_profile(self, thickness: float) -> dict[str, Any]:
         """Create base tab with multiple profiles"""
         try:
             doc = self.doc_manager.get_active_document()
@@ -2623,7 +3081,7 @@ class FeatureManager:
             models = doc.Models
 
             # AddBaseTabWithMultipleProfiles
-            model = models.AddBaseTabWithMultipleProfiles(
+            models.AddBaseTabWithMultipleProfiles(
                 NumberOfProfiles=1,
                 ProfileArray=(profile,),
                 Thickness=thickness
@@ -2640,14 +3098,14 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_lofted_flange_advanced(self, thickness: float, bend_radius: float) -> Dict[str, Any]:
+    def create_lofted_flange_advanced(self, thickness: float, bend_radius: float) -> dict[str, Any]:
         """Create lofted flange with bend deduction or bend allowance"""
         try:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
             # AddLoftedFlangeByBendDeductionOrBendAllowance
-            model = models.AddLoftedFlangeByBendDeductionOrBendAllowance(
+            models.AddLoftedFlangeByBendDeductionOrBendAllowance(
                 Thickness=thickness,
                 BendRadius=bend_radius
             )
@@ -2664,14 +3122,14 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_lofted_flange_ex(self, thickness: float) -> Dict[str, Any]:
+    def create_lofted_flange_ex(self, thickness: float) -> dict[str, Any]:
         """Create extended lofted flange"""
         try:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
             # AddLoftedFlangeEx
-            model = models.AddLoftedFlangeEx(thickness)  # Positional arg
+            models.AddLoftedFlangeEx(thickness)  # Positional arg
 
             return {
                 "status": "created",
@@ -2695,7 +3153,7 @@ class FeatureManager:
         thickness: float = 0.0,
         thicken: bool = False,
         default_side: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create an emboss feature using face geometry as tools.
 
@@ -2713,8 +3171,8 @@ class FeatureManager:
             Dict with status and emboss info
         """
         try:
-            from win32com.client import VARIANT
             import pythoncom
+            from win32com.client import VARIANT
 
             doc = self.doc_manager.get_active_document()
             models = doc.Models
@@ -2739,7 +3197,7 @@ class FeatureManager:
             tools_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, face_list)
 
             emboss_features = model.EmbossFeatures
-            emboss = emboss_features.Add(
+            emboss_features.Add(
                 body, len(face_list), tools_arr,
                 thicken, default_side, clearance, thickness
             )
@@ -2766,7 +3224,7 @@ class FeatureManager:
         side: str = "Right",
         inside_radius: float = None,
         bend_angle: float = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a flange feature on a sheet metal edge.
 
@@ -2798,7 +3256,11 @@ class FeatureManager:
 
             faces = body.Faces(FaceQueryConstants.igQueryAll)
             if face_index < 0 or face_index >= faces.Count:
-                return {"error": f"Invalid face index: {face_index}. Body has {faces.Count} faces."}
+                return {
+                    "error": f"Invalid face index: "
+                    f"{face_index}. Body has "
+                    f"{faces.Count} faces."
+                }
 
             face = faces.Item(face_index + 1)
             face_edges = face.Edges
@@ -2806,7 +3268,11 @@ class FeatureManager:
                 return {"error": f"Face {face_index} has no edges."}
 
             if edge_index < 0 or edge_index >= face_edges.Count:
-                return {"error": f"Invalid edge index: {edge_index}. Face has {face_edges.Count} edges."}
+                return {
+                    "error": f"Invalid edge index: "
+                    f"{edge_index}. Face has "
+                    f"{face_edges.Count} edges."
+                }
 
             edge = face_edges.Item(edge_index + 1)
 
@@ -2820,8 +3286,6 @@ class FeatureManager:
             flanges = model.Flanges
 
             # Build optional args
-            args = [edge, side_const, flange_length]
-            kwargs_to_add = []
 
             # Optional params: ThicknessSide, InsideRadius, DimSide, BRType, BRWidth,
             # BRLength, CRType, NeutralFactor, BnParamType, BendAngle
@@ -2831,25 +3295,25 @@ class FeatureManager:
                 # In late binding, pass them positionally
                 if inside_radius is not None and bend_angle is not None:
                     bend_angle_rad = math.radians(bend_angle)
-                    flange = flanges.Add(
+                    flanges.Add(
                         edge, side_const, flange_length,
                         None, inside_radius, None, None, None, None, None, None, None,
                         bend_angle_rad
                     )
                 elif inside_radius is not None:
-                    flange = flanges.Add(
+                    flanges.Add(
                         edge, side_const, flange_length,
                         None, inside_radius
                     )
                 else:
                     bend_angle_rad = math.radians(bend_angle)
-                    flange = flanges.Add(
+                    flanges.Add(
                         edge, side_const, flange_length,
                         None, None, None, None, None, None, None, None, None,
                         bend_angle_rad
                     )
             else:
-                flange = flanges.Add(edge, side_const, flange_length)
+                flanges.Add(edge, side_const, flange_length)
 
             result = {
                 "status": "created",
@@ -2875,7 +3339,7 @@ class FeatureManager:
     # ADDITIONAL FEATURE TYPES (Dimple, Etch, Rib, Lip, Slot, etc.)
     # =================================================================
 
-    def create_dimple(self, depth: float, direction: str = "Normal") -> Dict[str, Any]:
+    def create_dimple(self, depth: float, direction: str = "Normal") -> dict[str, Any]:
         """
         Create a dimple feature (sheet metal).
 
@@ -2907,7 +3371,7 @@ class FeatureManager:
             depth_side = 2 if direction == "Normal" else 1
 
             dimples = model.Dimples
-            dimple = dimples.Add(profile, depth, profile_side, depth_side)
+            dimples.Add(profile, depth, profile_side, depth_side)
 
             return {
                 "status": "created",
@@ -2921,7 +3385,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_etch(self) -> Dict[str, Any]:
+    def create_etch(self) -> dict[str, Any]:
         """
         Create an etch feature (sheet metal).
 
@@ -2945,7 +3409,7 @@ class FeatureManager:
             model = models.Item(1)
 
             etches = model.Etches
-            etch = etches.Add(profile)
+            etches.Add(profile)
 
             return {
                 "status": "created",
@@ -2957,7 +3421,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_rib(self, thickness: float, direction: str = "Normal") -> Dict[str, Any]:
+    def create_rib(self, thickness: float, direction: str = "Normal") -> dict[str, Any]:
         """
         Create a rib feature from the active sketch profile.
 
@@ -2992,7 +3456,7 @@ class FeatureManager:
             side = dir_map.get(direction, DirectionConstants.igRight)
 
             ribs = model.Ribs
-            rib = ribs.Add(profile, 1, 0, side, thickness)
+            ribs.Add(profile, 1, 0, side, thickness)
 
             return {
                 "status": "created",
@@ -3006,7 +3470,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_lip(self, depth: float, direction: str = "Normal") -> Dict[str, Any]:
+    def create_lip(self, depth: float, direction: str = "Normal") -> dict[str, Any]:
         """
         Create a lip feature from the active sketch profile.
 
@@ -3033,10 +3497,14 @@ class FeatureManager:
 
             model = models.Item(1)
 
-            side = DirectionConstants.igRight if direction == "Normal" else DirectionConstants.igLeft
+            side = (
+                DirectionConstants.igRight
+                if direction == "Normal"
+                else DirectionConstants.igLeft
+            )
 
             lips = model.Lips
-            lip = lips.Add(profile, side, depth)
+            lips.Add(profile, side, depth)
 
             return {
                 "status": "created",
@@ -3050,7 +3518,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_drawn_cutout(self, depth: float, direction: str = "Normal") -> Dict[str, Any]:
+    def create_drawn_cutout(self, depth: float, direction: str = "Normal") -> dict[str, Any]:
         """
         Create a drawn cutout feature (sheet metal).
 
@@ -3082,7 +3550,7 @@ class FeatureManager:
             side = 2 if direction == "Normal" else 1
 
             drawn_cutouts = model.DrawnCutouts
-            cutout = drawn_cutouts.Add(profile, side, depth)
+            drawn_cutouts.Add(profile, side, depth)
 
             return {
                 "status": "created",
@@ -3096,7 +3564,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_bead(self, depth: float, direction: str = "Normal") -> Dict[str, Any]:
+    def create_bead(self, depth: float, direction: str = "Normal") -> dict[str, Any]:
         """
         Create a bead feature (sheet metal stiffener).
 
@@ -3127,7 +3595,7 @@ class FeatureManager:
             side = 2 if direction == "Normal" else 1
 
             beads = model.Beads
-            bead = beads.Add(profile, side, depth)
+            beads.Add(profile, side, depth)
 
             return {
                 "status": "created",
@@ -3141,7 +3609,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_louver(self, depth: float, direction: str = "Normal") -> Dict[str, Any]:
+    def create_louver(self, depth: float, direction: str = "Normal") -> dict[str, Any]:
         """
         Create a louver feature (sheet metal vent).
 
@@ -3172,7 +3640,7 @@ class FeatureManager:
             side = 2 if direction == "Normal" else 1
 
             louvers = model.Louvers
-            louver = louvers.Add(profile, side, depth)
+            louvers.Add(profile, side, depth)
 
             return {
                 "status": "created",
@@ -3186,7 +3654,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_gusset(self, thickness: float, direction: str = "Normal") -> Dict[str, Any]:
+    def create_gusset(self, thickness: float, direction: str = "Normal") -> dict[str, Any]:
         """
         Create a gusset feature (sheet metal reinforcement).
 
@@ -3217,7 +3685,7 @@ class FeatureManager:
             side = 2 if direction == "Normal" else 1
 
             gussets = model.Gussets
-            gusset = gussets.Add(profile, side, thickness)
+            gussets.Add(profile, side, thickness)
 
             return {
                 "status": "created",
@@ -3232,7 +3700,7 @@ class FeatureManager:
             }
 
     def create_thread(self, face_index: int, pitch: float = 0.001,
-                      thread_type: str = "External") -> Dict[str, Any]:
+                      thread_type: str = "External") -> dict[str, Any]:
         """
         Create a thread feature on a cylindrical face.
 
@@ -3262,7 +3730,7 @@ class FeatureManager:
             face = faces.Item(face_index + 1)
 
             threads = model.Threads
-            thread = threads.Add(face, pitch)
+            threads.Add(face, pitch)
 
             return {
                 "status": "created",
@@ -3278,7 +3746,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_slot(self, depth: float, direction: str = "Normal") -> Dict[str, Any]:
+    def create_slot(self, depth: float, direction: str = "Normal") -> dict[str, Any]:
         """
         Create a slot feature from the active sketch profile.
 
@@ -3309,7 +3777,7 @@ class FeatureManager:
             side = 2 if direction == "Normal" else 1
 
             slots = model.Slots
-            slot = slots.Add(profile, side, depth)
+            slots.Add(profile, side, depth)
 
             return {
                 "status": "created",
@@ -3323,7 +3791,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_split(self, direction: str = "Normal") -> Dict[str, Any]:
+    def create_split(self, direction: str = "Normal") -> dict[str, Any]:
         """
         Create a split feature to divide a body along the active sketch profile.
 
@@ -3352,7 +3820,7 @@ class FeatureManager:
             side = 2 if direction == "Normal" else 1
 
             splits = model.Splits
-            split = splits.Add(profile, side)
+            splits.Add(profile, side)
 
             return {
                 "status": "created",
@@ -3370,7 +3838,7 @@ class FeatureManager:
     # =================================================================
 
     def create_chamfer_unequal(self, distance1: float, distance2: float,
-                               face_index: int = 0) -> Dict[str, Any]:
+                               face_index: int = 0) -> dict[str, Any]:
         """
         Create a chamfer with two different setback distances.
 
@@ -3397,7 +3865,11 @@ class FeatureManager:
 
             faces = body.Faces(FaceQueryConstants.igQueryAll)
             if face_index < 0 or face_index >= faces.Count:
-                return {"error": f"Invalid face index: {face_index}. Body has {faces.Count} faces."}
+                return {
+                    "error": f"Invalid face index: "
+                    f"{face_index}. Body has "
+                    f"{faces.Count} faces."
+                }
 
             face = faces.Item(face_index + 1)
             face_edges = face.Edges
@@ -3409,7 +3881,7 @@ class FeatureManager:
                 edge_list.append(face_edges.Item(ei))
 
             chamfers = model.Chamfers
-            chamfer = chamfers.AddUnequalSetback(
+            chamfers.AddUnequalSetback(
                 face, len(edge_list), edge_list, distance1, distance2)
 
             return {
@@ -3431,7 +3903,7 @@ class FeatureManager:
     # =================================================================
 
     def create_chamfer_angle(self, distance: float, angle: float,
-                             face_index: int = 0) -> Dict[str, Any]:
+                             face_index: int = 0) -> dict[str, Any]:
         """
         Create a chamfer defined by a setback distance and an angle.
 
@@ -3457,7 +3929,11 @@ class FeatureManager:
 
             faces = body.Faces(FaceQueryConstants.igQueryAll)
             if face_index < 0 or face_index >= faces.Count:
-                return {"error": f"Invalid face index: {face_index}. Body has {faces.Count} faces."}
+                return {
+                    "error": f"Invalid face index: "
+                    f"{face_index}. Body has "
+                    f"{faces.Count} faces."
+                }
 
             face = faces.Item(face_index + 1)
             face_edges = face.Edges
@@ -3470,7 +3946,7 @@ class FeatureManager:
 
             chamfers = model.Chamfers
             angle_rad = math.radians(angle)
-            chamfer = chamfers.AddSetbackAngle(
+            chamfers.AddSetbackAngle(
                 face, len(edge_list), edge_list, distance, angle_rad)
 
             return {
@@ -3492,7 +3968,7 @@ class FeatureManager:
     # =================================================================
 
     def create_face_rotate_by_edge(self, face_index: int, edge_index: int,
-                                    angle: float) -> Dict[str, Any]:
+                                    angle: float) -> dict[str, Any]:
         """
         Rotate a face around an edge axis.
 
@@ -3521,7 +3997,11 @@ class FeatureManager:
 
             faces = body.Faces(FaceQueryConstants.igQueryAll)
             if face_index < 0 or face_index >= faces.Count:
-                return {"error": f"Invalid face index: {face_index}. Body has {faces.Count} faces."}
+                return {
+                    "error": f"Invalid face index: "
+                    f"{face_index}. Body has "
+                    f"{faces.Count} faces."
+                }
 
             face = faces.Item(face_index + 1)
 
@@ -3530,7 +4010,11 @@ class FeatureManager:
             if not hasattr(face_edges, 'Count') or face_edges.Count == 0:
                 return {"error": f"Face {face_index} has no edges"}
             if edge_index < 0 or edge_index >= face_edges.Count:
-                return {"error": f"Invalid edge index: {edge_index}. Face has {face_edges.Count} edges."}
+                return {
+                    "error": f"Invalid edge index: "
+                    f"{edge_index}. Face has "
+                    f"{face_edges.Count} edges."
+                }
 
             edge = face_edges.Item(edge_index + 1)
 
@@ -3538,7 +4022,7 @@ class FeatureManager:
 
             face_rotates = model.FaceRotates
             # igFaceRotateByGeometry = 1, igFaceRotateRecreateBlends = 1, igFaceRotateAxisEnd = 2
-            face_rotate = face_rotates.Add(
+            face_rotates.Add(
                 face, 1, 1, None, None, edge, 2, angle_rad)
 
             return {
@@ -3557,7 +4041,7 @@ class FeatureManager:
 
     def create_face_rotate_by_points(self, face_index: int,
                                       vertex1_index: int, vertex2_index: int,
-                                      angle: float) -> Dict[str, Any]:
+                                      angle: float) -> dict[str, Any]:
         """
         Rotate a face around an axis defined by two vertex points.
 
@@ -3584,16 +4068,28 @@ class FeatureManager:
 
             faces = body.Faces(FaceQueryConstants.igQueryAll)
             if face_index < 0 or face_index >= faces.Count:
-                return {"error": f"Invalid face index: {face_index}. Body has {faces.Count} faces."}
+                return {
+                    "error": f"Invalid face index: "
+                    f"{face_index}. Body has "
+                    f"{faces.Count} faces."
+                }
 
             face = faces.Item(face_index + 1)
 
             # Get vertices from the face
             vertices = face.Vertices
             if vertex1_index < 0 or vertex1_index >= vertices.Count:
-                return {"error": f"Invalid vertex1 index: {vertex1_index}. Face has {vertices.Count} vertices."}
+                return {
+                    "error": f"Invalid vertex1 index: "
+                    f"{vertex1_index}. Face has "
+                    f"{vertices.Count} vertices."
+                }
             if vertex2_index < 0 or vertex2_index >= vertices.Count:
-                return {"error": f"Invalid vertex2 index: {vertex2_index}. Face has {vertices.Count} vertices."}
+                return {
+                    "error": f"Invalid vertex2 index: "
+                    f"{vertex2_index}. Face has "
+                    f"{vertices.Count} vertices."
+                }
 
             point1 = vertices.Item(vertex1_index + 1)
             point2 = vertices.Item(vertex2_index + 1)
@@ -3602,7 +4098,7 @@ class FeatureManager:
 
             face_rotates = model.FaceRotates
             # igFaceRotateByPoints = 2, igFaceRotateRecreateBlends = 1, igFaceRotateNone = 0
-            face_rotate = face_rotates.Add(
+            face_rotates.Add(
                 face, 2, 1, point1, point2, None, 0, angle_rad)
 
             return {
@@ -3625,7 +4121,7 @@ class FeatureManager:
     # =================================================================
 
     def create_draft_angle(self, face_index: int, angle: float,
-                           plane_index: int = 1) -> Dict[str, Any]:
+                           plane_index: int = 1) -> dict[str, Any]:
         """
         Add a draft angle to a face.
 
@@ -3654,7 +4150,11 @@ class FeatureManager:
 
             faces = body.Faces(FaceQueryConstants.igQueryAll)
             if face_index < 0 or face_index >= faces.Count:
-                return {"error": f"Invalid face index: {face_index}. Body has {faces.Count} faces."}
+                return {
+                    "error": f"Invalid face index: "
+                    f"{face_index}. Body has "
+                    f"{faces.Count} faces."
+                }
 
             face = faces.Item(face_index + 1)
             ref_plane = doc.RefPlanes.Item(plane_index)
@@ -3663,7 +4163,7 @@ class FeatureManager:
 
             # igRight = 2 (draft direction side)
             drafts = model.Drafts
-            draft = drafts.Add(ref_plane, 1, [face], [angle_rad], 2)
+            drafts.Add(ref_plane, 1, [face], [angle_rad], 2)
 
             return {
                 "status": "created",
@@ -3683,7 +4183,7 @@ class FeatureManager:
     # =================================================================
 
     def create_ref_plane_normal_to_curve(self, curve_end: str = "End",
-                                         pivot_plane_index: int = 2) -> Dict[str, Any]:
+                                         pivot_plane_index: int = 2) -> dict[str, Any]:
         """
         Create a reference plane normal (perpendicular) to a curve at its endpoint.
 
@@ -3712,7 +4212,7 @@ class FeatureManager:
             # igPivotEnd = 2
             pivot_end_const = 2
 
-            new_plane = ref_planes.AddNormalToCurve(
+            ref_planes.AddNormalToCurve(
                 profile, curve_end_const, pivot_plane, pivot_end_const, True)
 
             new_index = ref_planes.Count
@@ -3734,7 +4234,7 @@ class FeatureManager:
     # TIER 1: SWEPT CUTOUT
     # =================================================================
 
-    def create_swept_cutout(self, path_profile_index: int = None) -> Dict[str, Any]:
+    def create_swept_cutout(self, path_profile_index: int = None) -> dict[str, Any]:
         """
         Create a swept cutout (cut) along a path.
 
@@ -3762,8 +4262,12 @@ class FeatureManager:
 
             if len(all_profiles) < 2:
                 return {
-                    "error": f"Swept cutout requires at least 2 profiles (path + cross-section), "
-                    f"got {len(all_profiles)}. Create a path sketch and a cross-section sketch first."
+                    "error": "Swept cutout requires at "
+                    "least 2 profiles (path + "
+                    "cross-section), got "
+                    f"{len(all_profiles)}. Create a path "
+                    "sketch and a cross-section "
+                    "sketch first."
                 }
 
             path_idx = path_profile_index if path_profile_index is not None else 0
@@ -3791,7 +4295,7 @@ class FeatureManager:
 
             # SweptCutouts.Add: same 15 params as SweptProtrusions
             swept_cutouts = model.SweptCutouts
-            cutout = swept_cutouts.Add(
+            swept_cutouts.Add(
                 1, v_paths, v_path_types,                        # Path (1 curve)
                 len(cross_sections), v_sections, v_section_types, v_origins, v_seg,
                 DirectionConstants.igRight,                      # MaterialSide
@@ -3822,7 +4326,7 @@ class FeatureManager:
         height: float,
         revolutions: float = None,
         direction: str = "Right"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a helical cutout (cut) in the part.
 
@@ -3855,19 +4359,27 @@ class FeatureManager:
                 return {"error": "No active sketch profile. Create and close a sketch first."}
 
             if not refaxis:
-                return {"error": "No axis of revolution set. Use set_axis_of_revolution() in the sketch."}
+                return {
+                    "error": "No axis of revolution set. "
+                    "Use set_axis_of_revolution() "
+                    "in the sketch."
+                }
 
             if revolutions is None:
                 revolutions = height / pitch
 
             axis_start = DirectionConstants.igRight
-            dir_const = DirectionConstants.igRight if direction == "Right" else DirectionConstants.igLeft
+            dir_const = (
+                DirectionConstants.igRight
+                if direction == "Right"
+                else DirectionConstants.igLeft
+            )
 
             # Wrap cross-section profile in SAFEARRAY
             v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
             helix_cutouts = model.HelixCutouts
-            cutout = helix_cutouts.AddFinite(
+            helix_cutouts.AddFinite(
                 refaxis,        # HelixAxis
                 axis_start,     # AxisStart
                 1,              # NumCrossSections
@@ -3899,7 +4411,7 @@ class FeatureManager:
     # TIER 1: VARIABLE ROUND (FILLET)
     # =================================================================
 
-    def create_variable_round(self, radii: list, face_index: int = None) -> Dict[str, Any]:
+    def create_variable_round(self, radii: list, face_index: int = None) -> dict[str, Any]:
         """
         Create a variable-radius round (fillet) on body edges.
 
@@ -3933,7 +4445,11 @@ class FeatureManager:
             edge_list = []
             if face_index is not None:
                 if face_index < 0 or face_index >= faces.Count:
-                    return {"error": f"Invalid face index: {face_index}. Body has {faces.Count} faces."}
+                    return {
+                    "error": f"Invalid face index: "
+                    f"{face_index}. Body has "
+                    f"{faces.Count} faces."
+                }
                 face = faces.Item(face_index + 1)
                 face_edges = face.Edges
                 if hasattr(face_edges, 'Count'):
@@ -3958,10 +4474,13 @@ class FeatureManager:
 
             # VARIANT wrappers required for Rounds methods
             edge_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, edge_list)
-            radius_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8, radius_values[:len(edge_list)])
+            radius_arr = VARIANT(
+                pythoncom.VT_ARRAY | pythoncom.VT_R8,
+                radius_values[:len(edge_list)]
+            )
 
             rounds = model.Rounds
-            rnd = rounds.AddVariable(1, edge_arr, radius_arr)
+            rounds.AddVariable(1, edge_arr, radius_arr)
 
             return {
                 "status": "created",
@@ -3979,7 +4498,7 @@ class FeatureManager:
     # TIER 1: BLEND (FACE-TO-FACE FILLET)
     # =================================================================
 
-    def create_blend(self, radius: float, face_index: int = None) -> Dict[str, Any]:
+    def create_blend(self, radius: float, face_index: int = None) -> dict[str, Any]:
         """
         Create a blend (face-to-face fillet) feature.
 
@@ -4012,7 +4531,11 @@ class FeatureManager:
             edge_list = []
             if face_index is not None:
                 if face_index < 0 or face_index >= faces.Count:
-                    return {"error": f"Invalid face index: {face_index}. Body has {faces.Count} faces."}
+                    return {
+                    "error": f"Invalid face index: "
+                    f"{face_index}. Body has "
+                    f"{faces.Count} faces."
+                }
                 face = faces.Item(face_index + 1)
                 face_edges = face.Edges
                 if hasattr(face_edges, 'Count'):
@@ -4035,7 +4558,7 @@ class FeatureManager:
             radius_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8, [radius])
 
             blends = model.Blends
-            blend = blends.Add(1, edge_arr, radius_arr)
+            blends.Add(1, edge_arr, radius_arr)
 
             return {
                 "status": "created",
@@ -4058,7 +4581,7 @@ class FeatureManager:
         parent_plane_index: int,
         angle: float,
         normal_side: str = "Normal"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a reference plane at an angle to an existing plane.
 
@@ -4081,7 +4604,11 @@ class FeatureManager:
             ref_planes = doc.RefPlanes
 
             if parent_plane_index < 1 or parent_plane_index > ref_planes.Count:
-                return {"error": f"Invalid plane index: {parent_plane_index}. Count: {ref_planes.Count}"}
+                return {
+                    "error": f"Invalid plane index: "
+                    f"{parent_plane_index}. "
+                    f"Count: {ref_planes.Count}"
+                }
 
             parent = ref_planes.Item(parent_plane_index)
 
@@ -4094,7 +4621,7 @@ class FeatureManager:
             # Angle in radians for the COM API
             angle_rad = math.radians(angle)
 
-            new_plane = ref_planes.AddAngularByAngle(parent, angle_rad, side_const)
+            ref_planes.AddAngularByAngle(parent, angle_rad, side_const)
 
             return {
                 "status": "created",
@@ -4120,7 +4647,7 @@ class FeatureManager:
         x1: float, y1: float, z1: float,
         x2: float, y2: float, z2: float,
         x3: float, y3: float, z3: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a reference plane through 3 points in space.
 
@@ -4139,7 +4666,7 @@ class FeatureManager:
             doc = self.doc_manager.get_active_document()
             ref_planes = doc.RefPlanes
 
-            new_plane = ref_planes.AddBy3Points(
+            ref_planes.AddBy3Points(
                 x1, y1, z1,
                 x2, y2, z2,
                 x3, y3, z3
@@ -4168,7 +4695,7 @@ class FeatureManager:
         self,
         plane1_index: int,
         plane2_index: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a reference plane midway between two existing planes.
 
@@ -4194,7 +4721,7 @@ class FeatureManager:
             plane1 = ref_planes.Item(plane1_index)
             plane2 = ref_planes.Item(plane2_index)
 
-            new_plane = ref_planes.AddMidPlane(plane1, plane2)
+            ref_planes.AddMidPlane(plane1, plane2)
 
             return {
                 "status": "created",
@@ -4220,7 +4747,7 @@ class FeatureManager:
         diameter: float,
         plane_index: int = 1,
         direction: str = "Normal"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a hole that goes through the entire part.
 
@@ -4259,7 +4786,7 @@ class FeatureManager:
 
             # Use through-all cutout
             cutouts = model.ExtrudedCutouts
-            cutout = cutouts.AddThroughAllMulti(1, (profile,), dir_const)
+            cutouts.AddThroughAllMulti(1, (profile,), dir_const)
 
             return {
                 "status": "created",
@@ -4283,7 +4810,7 @@ class FeatureManager:
         self,
         x1: float, y1: float, z1: float,
         x2: float, y2: float, z2: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a box-shaped cutout (boolean subtract) by two opposite corners.
 
@@ -4319,7 +4846,7 @@ class FeatureManager:
             if box_features is None:
                 return {"error": "BoxFeatures collection not accessible"}
 
-            cutout = box_features.AddCutoutByTwoPoints(
+            box_features.AddCutoutByTwoPoints(
                 x1, y1, z1,
                 x2, y2, z2,
                 0,                              # dAngle
@@ -4348,7 +4875,7 @@ class FeatureManager:
         self,
         center_x: float, center_y: float, center_z: float,
         length: float, width: float, height: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a box-shaped cutout by center point and dimensions.
 
@@ -4381,7 +4908,7 @@ class FeatureManager:
             if box_features is None:
                 return {"error": "BoxFeatures collection not accessible"}
 
-            cutout = box_features.AddCutoutByCenter(
+            box_features.AddCutoutByCenter(
                 center_x, center_y, center_z,
                 length,                         # dWidth
                 width,                          # dHeight
@@ -4412,7 +4939,7 @@ class FeatureManager:
         x1: float, y1: float, z1: float,
         x2: float, y2: float, z2: float,
         x3: float, y3: float, z3: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a box-shaped cutout by three points.
 
@@ -4452,7 +4979,7 @@ class FeatureManager:
             if box_features is None:
                 return {"error": "BoxFeatures collection not accessible"}
 
-            cutout = box_features.AddCutoutByThreePoints(
+            box_features.AddCutoutByThreePoints(
                 x1, y1, z1,
                 x2, y2, z2,
                 x3, y3, z3,
@@ -4489,7 +5016,7 @@ class FeatureManager:
         center_z: float,
         radius: float,
         height: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a cylindrical cutout (boolean subtract) primitive.
 
@@ -4519,12 +5046,16 @@ class FeatureManager:
             cyl_features = models.CylinderFeatures if hasattr(models, 'CylinderFeatures') else None
             if cyl_features is None:
                 model = models.Item(1)
-                cyl_features = model.CylinderFeatures if hasattr(model, 'CylinderFeatures') else None
+                cyl_features = (
+                    model.CylinderFeatures
+                    if hasattr(model, 'CylinderFeatures')
+                    else None
+                )
 
             if cyl_features is None:
                 return {"error": "CylinderFeatures collection not accessible"}
 
-            cutout = cyl_features.AddCutoutByCenterAndRadius(
+            cyl_features.AddCutoutByCenterAndRadius(
                 center_x, center_y, center_z,
                 radius,
                 height,                             # dDepth
@@ -4559,7 +5090,7 @@ class FeatureManager:
         center_y: float,
         center_z: float,
         radius: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a spherical cutout (boolean subtract) primitive.
 
@@ -4594,7 +5125,7 @@ class FeatureManager:
             if sph_features is None:
                 return {"error": "SphereFeatures collection not accessible"}
 
-            cutout = sph_features.AddCutoutByCenterAndRadius(
+            sph_features.AddCutoutByCenterAndRadius(
                 center_x, center_y, center_z,
                 radius,
                 top_plane,                          # pPlane
@@ -4622,7 +5153,7 @@ class FeatureManager:
     # TIER 2: EXTRUDED CUTOUT THROUGH NEXT
     # =================================================================
 
-    def create_extruded_cutout_through_next(self, direction: str = "Normal") -> Dict[str, Any]:
+    def create_extruded_cutout_through_next(self, direction: str = "Normal") -> dict[str, Any]:
         """
         Create an extruded cutout that cuts to the next face encountered.
 
@@ -4655,7 +5186,7 @@ class FeatureManager:
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
 
             cutouts = model.ExtrudedCutouts
-            cutout = cutouts.AddThroughNextMulti(1, (profile,), dir_const)
+            cutouts.AddThroughNextMulti(1, (profile,), dir_const)
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -4674,7 +5205,7 @@ class FeatureManager:
     # TIER 2: NORMAL CUTOUT THROUGH ALL
     # =================================================================
 
-    def create_normal_cutout_through_all(self, direction: str = "Normal") -> Dict[str, Any]:
+    def create_normal_cutout_through_all(self, direction: str = "Normal") -> dict[str, Any]:
         """
         Create a normal cutout that goes through the entire part.
 
@@ -4708,7 +5239,7 @@ class FeatureManager:
 
             # igNormalCutoutMethod_Normal = 0 (default method)
             cutouts = model.NormalCutouts
-            cutout = cutouts.AddThroughAllMulti(1, (profile,), dir_const, 0)
+            cutouts.AddThroughAllMulti(1, (profile,), dir_const, 0)
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -4728,7 +5259,7 @@ class FeatureManager:
     # =================================================================
 
     def create_delete_hole(self, max_diameter: float = 1.0,
-                           hole_type: str = "All") -> Dict[str, Any]:
+                           hole_type: str = "All") -> dict[str, Any]:
         """
         Delete/fill holes in the model body.
 
@@ -4761,7 +5292,7 @@ class FeatureManager:
             hole_type_const = type_map.get(hole_type, 0)
 
             delete_holes = model.DeleteHoles
-            result_feat = delete_holes.Add(hole_type_const, max_diameter)
+            delete_holes.Add(hole_type_const, max_diameter)
 
             return {
                 "status": "created",
@@ -4779,7 +5310,7 @@ class FeatureManager:
     # TIER 2: DELETE BLENDS
     # =================================================================
 
-    def create_delete_blend(self, face_index: int) -> Dict[str, Any]:
+    def create_delete_blend(self, face_index: int) -> dict[str, Any]:
         """
         Delete/remove a blend (fillet) from the model by specifying a face.
 
@@ -4804,12 +5335,16 @@ class FeatureManager:
 
             faces = body.Faces(FaceQueryConstants.igQueryAll)
             if face_index < 0 or face_index >= faces.Count:
-                return {"error": f"Invalid face index: {face_index}. Body has {faces.Count} faces."}
+                return {
+                    "error": f"Invalid face index: "
+                    f"{face_index}. Body has "
+                    f"{faces.Count} faces."
+                }
 
             face = faces.Item(face_index + 1)
 
             delete_blends = model.DeleteBlends
-            result_feat = delete_blends.Add(face)
+            delete_blends.Add(face)
 
             return {
                 "status": "created",
@@ -4827,7 +5362,7 @@ class FeatureManager:
     # =================================================================
 
     def create_revolved_surface(self, angle: float = 360,
-                                 want_end_caps: bool = False) -> Dict[str, Any]:
+                                 want_end_caps: bool = False) -> dict[str, Any]:
         """
         Create a revolved construction surface from the active profile.
 
@@ -4864,12 +5399,12 @@ class FeatureManager:
             if models.Count > 0:
                 model = models.Item(1)
                 rev_surfaces = model.RevolvedSurfaces
-                surface = rev_surfaces.AddFinite(
+                rev_surfaces.AddFinite(
                     1, v_profiles, refaxis, DirectionConstants.igRight, angle_rad, want_end_caps
                 )
             else:
                 # First feature - use Models method if available
-                surface = models.AddFiniteRevolvedSurface(
+                models.AddFiniteRevolvedSurface(
                     1, v_profiles, refaxis, DirectionConstants.igRight, angle_rad, want_end_caps
                 )
 
@@ -4891,7 +5426,7 @@ class FeatureManager:
     # TIER 2: LOFTED SURFACE
     # =================================================================
 
-    def create_lofted_surface(self, want_end_caps: bool = False) -> Dict[str, Any]:
+    def create_lofted_surface(self, want_end_caps: bool = False) -> dict[str, Any]:
         """
         Create a lofted construction surface between multiple profiles.
 
@@ -4933,7 +5468,7 @@ class FeatureManager:
             if models.Count > 0:
                 model = models.Item(1)
                 loft_surfaces = model.LoftedSurfaces
-                surface = loft_surfaces.Add(
+                loft_surfaces.Add(
                     len(all_profiles), v_sections, v_types, v_origins,
                     ExtentTypeConstants.igNone,     # StartExtentType
                     ExtentTypeConstants.igNone,     # EndExtentType
@@ -4964,7 +5499,7 @@ class FeatureManager:
     # =================================================================
 
     def create_swept_surface(self, path_profile_index: int = None,
-                              want_end_caps: bool = False) -> Dict[str, Any]:
+                              want_end_caps: bool = False) -> dict[str, Any]:
         """
         Create a swept construction surface along a path.
 
@@ -5005,7 +5540,7 @@ class FeatureManager:
             v_sections = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, cross_sections)
 
             swept_surfaces = model.SweptSurfaces
-            surface = swept_surfaces.Add(
+            swept_surfaces.Add(
                 1, v_paths, _CS,                            # Path
                 len(cross_sections), v_sections, _CS,       # Sections
                 None, None,                                 # Origins, OriginRefs
@@ -5028,7 +5563,7 @@ class FeatureManager:
                 "traceback": traceback.format_exc()
             }
 
-    def convert_feature_type(self, feature_name: str, target_type: str) -> Dict[str, Any]:
+    def convert_feature_type(self, feature_name: str, target_type: str) -> dict[str, Any]:
         """
         Convert a feature between cutout and protrusion.
 
@@ -5064,10 +5599,8 @@ class FeatureManager:
             if target_type_lower == "cutout":
                 result = target_feature.ConvertToCutout()
                 new_name = None
-                try:
+                with contextlib.suppress(Exception):
                     new_name = result.Name
-                except Exception:
-                    pass
                 return {
                     "status": "converted",
                     "original_name": feature_name,
@@ -5077,10 +5610,8 @@ class FeatureManager:
             elif target_type_lower == "protrusion":
                 result = target_feature.ConvertToProtrusion()
                 new_name = None
-                try:
+                with contextlib.suppress(Exception):
                     new_name = result.Name
-                except Exception:
-                    pass
                 return {
                     "status": "converted",
                     "original_name": feature_name,
@@ -5088,7 +5619,11 @@ class FeatureManager:
                     "new_name": new_name
                 }
             else:
-                return {"error": f"Invalid target_type: {target_type}. Use 'cutout' or 'protrusion'"}
+                return {
+                    "error": f"Invalid target_type: "
+                    f"{target_type}. "
+                    "Use 'cutout' or 'protrusion'"
+                }
         except Exception as e:
             return {
                 "error": str(e),

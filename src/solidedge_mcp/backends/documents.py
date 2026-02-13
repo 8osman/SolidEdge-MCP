@@ -4,9 +4,11 @@ Solid Edge Document Operations
 Handles creating, opening, saving, and closing documents.
 """
 
-from typing import Optional, Dict, Any, List
+import contextlib
 import os
 import traceback
+from typing import Any
+
 from .constants import DocumentTypeConstants
 
 
@@ -15,9 +17,9 @@ class DocumentManager:
 
     def __init__(self, connection):
         self.connection = connection
-        self.active_document: Optional[Any] = None
+        self.active_document: Any | None = None
 
-    def create_part(self, template: Optional[str] = None) -> Dict[str, Any]:
+    def create_part(self, template: str | None = None) -> dict[str, Any]:
         """Create a new part document"""
         try:
             app = self.connection.get_application()
@@ -41,7 +43,7 @@ class DocumentManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_assembly(self, template: Optional[str] = None) -> Dict[str, Any]:
+    def create_assembly(self, template: str | None = None) -> dict[str, Any]:
         """Create a new assembly document"""
         try:
             app = self.connection.get_application()
@@ -65,7 +67,7 @@ class DocumentManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_sheet_metal(self, template: Optional[str] = None) -> Dict[str, Any]:
+    def create_sheet_metal(self, template: str | None = None) -> dict[str, Any]:
         """Create a new sheet metal document"""
         try:
             app = self.connection.get_application()
@@ -89,7 +91,7 @@ class DocumentManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_draft(self, template: Optional[str] = None) -> Dict[str, Any]:
+    def create_draft(self, template: str | None = None) -> dict[str, Any]:
         """Create a new draft document"""
         try:
             app = self.connection.get_application()
@@ -113,7 +115,7 @@ class DocumentManager:
                 "traceback": traceback.format_exc()
             }
 
-    def open_document(self, file_path: str) -> Dict[str, Any]:
+    def open_document(self, file_path: str) -> dict[str, Any]:
         """Open an existing document"""
         try:
             if not os.path.exists(file_path):
@@ -135,7 +137,7 @@ class DocumentManager:
                 "traceback": traceback.format_exc()
             }
 
-    def save_document(self, file_path: Optional[str] = None) -> Dict[str, Any]:
+    def save_document(self, file_path: str | None = None) -> dict[str, Any]:
         """Save the active document"""
         try:
             if not self.active_document:
@@ -161,7 +163,7 @@ class DocumentManager:
                 "traceback": traceback.format_exc()
             }
 
-    def close_document(self, save: bool = True) -> Dict[str, Any]:
+    def close_document(self, save: bool = True) -> dict[str, Any]:
         """Close the active document"""
         try:
             if not self.active_document:
@@ -178,24 +180,18 @@ class DocumentManager:
                     self.active_document.Save()
             else:
                 # Suppress save dialog: disable alerts, mark saved, then close
-                try:
+                with contextlib.suppress(Exception):
                     app.DisplayAlerts = False
-                except Exception:
-                    pass
-                try:
+                with contextlib.suppress(Exception):
                     self.active_document.Saved = True
-                except Exception:
-                    pass  # Some binding modes can't set Saved property
 
             self.active_document.Close()
             self.active_document = None
 
             # Re-enable alerts
             if not save:
-                try:
+                with contextlib.suppress(Exception):
                     app.DisplayAlerts = True
-                except Exception:
-                    pass
 
             return {
                 "status": "closed",
@@ -214,7 +210,7 @@ class DocumentManager:
                 "traceback": traceback.format_exc()
             }
 
-    def list_documents(self) -> Dict[str, Any]:
+    def list_documents(self) -> dict[str, Any]:
         """List all open documents"""
         try:
             app = self.connection.get_application()
@@ -241,7 +237,7 @@ class DocumentManager:
                 "traceback": traceback.format_exc()
             }
 
-    def activate_document(self, name_or_index) -> Dict[str, Any]:
+    def activate_document(self, name_or_index) -> dict[str, Any]:
         """
         Activate a specific open document by name or index.
 
@@ -290,7 +286,7 @@ class DocumentManager:
                 "traceback": traceback.format_exc()
             }
 
-    def undo(self) -> Dict[str, Any]:
+    def undo(self) -> dict[str, Any]:
         """
         Undo the last operation on the active document.
 
@@ -307,7 +303,7 @@ class DocumentManager:
                 "traceback": traceback.format_exc()
             }
 
-    def redo(self) -> Dict[str, Any]:
+    def redo(self) -> dict[str, Any]:
         """
         Redo the last undone operation on the active document.
 
@@ -331,11 +327,11 @@ class DocumentManager:
             try:
                 app = self.connection.get_application()
                 self.active_document = app.ActiveDocument
-            except:
-                raise Exception("No active document")
+            except Exception as e:
+                raise Exception("No active document") from e
         return self.active_document
 
-    def get_active_document_type(self) -> Dict[str, Any]:
+    def get_active_document_type(self) -> dict[str, Any]:
         """
         Get the type of the currently active document.
 
@@ -357,7 +353,7 @@ class DocumentManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_weldment(self, template: Optional[str] = None) -> Dict[str, Any]:
+    def create_weldment(self, template: str | None = None) -> dict[str, Any]:
         """Create a new weldment document"""
         try:
             app = self.connection.get_application()
@@ -381,7 +377,7 @@ class DocumentManager:
                 "traceback": traceback.format_exc()
             }
 
-    def import_file(self, file_path: str) -> Dict[str, Any]:
+    def import_file(self, file_path: str) -> dict[str, Any]:
         """
         Import an external CAD file (STEP, IGES, Parasolid, etc.).
 
@@ -413,7 +409,7 @@ class DocumentManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_document_count(self) -> Dict[str, Any]:
+    def get_document_count(self) -> dict[str, Any]:
         """
         Get the count of open documents.
 
@@ -429,7 +425,7 @@ class DocumentManager:
                 "traceback": traceback.format_exc()
             }
 
-    def open_in_background(self, file_path: str) -> Dict[str, Any]:
+    def open_in_background(self, file_path: str) -> dict[str, Any]:
         """
         Open a document in the background (no visible window).
 
@@ -462,7 +458,7 @@ class DocumentManager:
                 "traceback": traceback.format_exc()
             }
 
-    def close_all_documents(self, save: bool = False) -> Dict[str, Any]:
+    def close_all_documents(self, save: bool = False) -> dict[str, Any]:
         """
         Close all open documents.
 
@@ -484,36 +480,27 @@ class DocumentManager:
             errors = []
 
             if not save:
-                try:
+                with contextlib.suppress(Exception):
                     app.DisplayAlerts = False
-                except Exception:
-                    pass
 
             # Close in reverse order (COM collections shift on removal)
             for i in range(count, 0, -1):
                 try:
                     doc = docs.Item(i)
-                    doc_name = doc.Name
                     if save:
-                        try:
+                        with contextlib.suppress(Exception):
                             doc.Save()
-                        except Exception:
-                            pass
                     else:
-                        try:
+                        with contextlib.suppress(Exception):
                             doc.Saved = True
-                        except Exception:
-                            pass
                     doc.Close()
                     closed += 1
                 except Exception as e:
                     errors.append(str(e))
 
             if not save:
-                try:
+                with contextlib.suppress(Exception):
                     app.DisplayAlerts = True
-                except Exception:
-                    pass
 
             self.active_document = None
 
@@ -545,5 +532,5 @@ class DocumentManager:
                 DocumentTypeConstants.igWeldmentAssemblyDocument: "WeldmentAssembly"
             }
             return type_map.get(doc_type, f"Unknown({doc_type})")
-        except:
+        except Exception:
             return "Unknown"

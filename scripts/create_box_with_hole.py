@@ -5,12 +5,13 @@ Create a 200mm x 300mm x 50mm box with a 10mm diameter through hole in the cente
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from solidedge_mcp.backends.connection import SolidEdgeConnection
 from solidedge_mcp.backends.documents import DocumentManager
-from solidedge_mcp.backends.sketching import SketchManager
 from solidedge_mcp.backends.features import FeatureManager
+from solidedge_mcp.backends.sketching import SketchManager
 
 print("Creating 200mm x 300mm x 50mm box with 10mm center hole...")
 
@@ -33,7 +34,8 @@ print("[3/5] Creating base sketch (200mm x 300mm)...")
 sketch_manager.create_sketch("Top")
 # Draw rectangle centered at origin
 # 200mm = 0.2m, 300mm = 0.3m
-sketch_manager.draw_rectangle(-0.1, -0.15, 0.1, 0.15)  # -100mm to +100mm in X, -150mm to +150mm in Y
+# -100mm to +100mm in X, -150mm to +150mm in Y
+sketch_manager.draw_rectangle(-0.1, -0.15, 0.1, 0.15)
 sketch_manager.close_sketch()
 
 # Extrude to create box (50mm = 0.05m)

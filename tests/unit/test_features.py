@@ -2108,7 +2108,7 @@ class TestCreateEmboss:
     def test_multiple_faces(self, feature_mgr, managers):
         _, _, doc, models, model, _ = managers
         body = model.Body
-        face2 = MagicMock()
+        MagicMock()
         faces = body.Faces.return_value
         faces.Count = 3
         faces.Item.side_effect = lambda i: MagicMock()
@@ -2116,7 +2116,10 @@ class TestCreateEmboss:
         emboss_features = MagicMock()
         model.EmbossFeatures = emboss_features
 
-        result = feature_mgr.create_emboss([0, 1, 2], clearance=0.002, thickness=0.001, thicken=True)
+        result = feature_mgr.create_emboss(
+            [0, 1, 2], clearance=0.002,
+            thickness=0.001, thicken=True,
+        )
         assert result["status"] == "created"
         assert result["face_count"] == 3
         assert result["clearance"] == 0.002
@@ -2198,3 +2201,276 @@ class TestCreateFlange:
         result = feature_mgr.create_flange(face_index=0, edge_index=99, flange_length=0.01)
         assert "error" in result
         assert "Invalid edge index" in result["error"]
+
+
+# ============================================================================
+# EXTRUDE THROUGH NEXT
+# ============================================================================
+
+class TestCreateExtrudeThroughNext:
+    def test_success(self, feature_mgr, managers):
+        _, _, _, _, model, profile = managers
+        protrusions = MagicMock()
+        model.ExtrudedProtrusions = protrusions
+
+        result = feature_mgr.create_extrude_through_next()
+        assert result["status"] == "created"
+        assert result["type"] == "extrude_through_next"
+        assert result["direction"] == "Normal"
+        protrusions.AddThroughNext.assert_called_once_with(profile, 2)
+
+    def test_reverse_direction(self, feature_mgr, managers):
+        _, _, _, _, model, profile = managers
+        protrusions = MagicMock()
+        model.ExtrudedProtrusions = protrusions
+
+        result = feature_mgr.create_extrude_through_next("Reverse")
+        assert result["status"] == "created"
+        protrusions.AddThroughNext.assert_called_once_with(profile, 1)
+
+    def test_no_profile(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, _, _ = managers
+        sketch_mgr.get_active_sketch.return_value = None
+        result = feature_mgr.create_extrude_through_next()
+        assert "error" in result
+
+    def test_no_base_feature(self, feature_mgr, managers):
+        _, _, _, models, _, _ = managers
+        models.Count = 0
+        result = feature_mgr.create_extrude_through_next()
+        assert "error" in result
+
+
+# ============================================================================
+# EXTRUDE FROM TO
+# ============================================================================
+
+class TestCreateExtrudeFromTo:
+    def test_success(self, feature_mgr, managers):
+        _, _, doc, _, model, profile = managers
+        protrusions = MagicMock()
+        model.ExtrudedProtrusions = protrusions
+        ref_planes = MagicMock()
+        ref_planes.Count = 4
+        from_plane = MagicMock()
+        to_plane = MagicMock()
+        ref_planes.Item.side_effect = lambda i: {1: from_plane, 4: to_plane}.get(i)
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_extrude_from_to(1, 4)
+        assert result["status"] == "created"
+        assert result["type"] == "extrude_from_to"
+        assert result["from_plane_index"] == 1
+        assert result["to_plane_index"] == 4
+        protrusions.AddFromTo.assert_called_once_with(profile, from_plane, to_plane)
+
+    def test_invalid_from_plane(self, feature_mgr, managers):
+        _, _, doc, _, _, _ = managers
+        ref_planes = MagicMock()
+        ref_planes.Count = 3
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_extrude_from_to(0, 2)
+        assert "error" in result
+        assert "from_plane_index" in result["error"]
+
+    def test_invalid_to_plane(self, feature_mgr, managers):
+        _, _, doc, _, _, _ = managers
+        ref_planes = MagicMock()
+        ref_planes.Count = 3
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_extrude_from_to(1, 10)
+        assert "error" in result
+        assert "to_plane_index" in result["error"]
+
+    def test_no_profile(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, _, _ = managers
+        sketch_mgr.get_active_sketch.return_value = None
+        result = feature_mgr.create_extrude_from_to(1, 2)
+        assert "error" in result
+
+    def test_no_base_feature(self, feature_mgr, managers):
+        _, _, _, models, _, _ = managers
+        models.Count = 0
+        result = feature_mgr.create_extrude_from_to(1, 2)
+        assert "error" in result
+
+
+# ============================================================================
+# EXTRUDED CUTOUT FROM TO
+# ============================================================================
+
+class TestCreateExtrudedCutoutFromTo:
+    def test_success(self, feature_mgr, managers):
+        _, _, doc, _, model, profile = managers
+        cutouts = MagicMock()
+        model.ExtrudedCutouts = cutouts
+        ref_planes = MagicMock()
+        ref_planes.Count = 4
+        from_plane = MagicMock()
+        to_plane = MagicMock()
+        ref_planes.Item.side_effect = lambda i: {2: from_plane, 3: to_plane}.get(i)
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_extruded_cutout_from_to(2, 3)
+        assert result["status"] == "created"
+        assert result["type"] == "extruded_cutout_from_to"
+        cutouts.AddFromToMulti.assert_called_once_with(1, (profile,), from_plane, to_plane)
+
+    def test_invalid_from_plane(self, feature_mgr, managers):
+        _, _, doc, _, _, _ = managers
+        ref_planes = MagicMock()
+        ref_planes.Count = 3
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_extruded_cutout_from_to(0, 2)
+        assert "error" in result
+
+    def test_no_profile(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, _, _ = managers
+        sketch_mgr.get_active_sketch.return_value = None
+        result = feature_mgr.create_extruded_cutout_from_to(1, 2)
+        assert "error" in result
+
+    def test_no_base_feature(self, feature_mgr, managers):
+        _, _, _, models, _, _ = managers
+        models.Count = 0
+        result = feature_mgr.create_extruded_cutout_from_to(1, 2)
+        assert "error" in result
+
+
+# ============================================================================
+# REF PLANE NORMAL AT DISTANCE
+# ============================================================================
+
+class TestCreateRefPlaneNormalAtDistance:
+    def test_success(self, feature_mgr, managers):
+        _, _, doc, _, _, profile = managers
+        ref_planes = MagicMock()
+        ref_planes.Count = 4
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_ref_plane_normal_at_distance(0.05)
+        assert result["status"] == "created"
+        assert result["type"] == "ref_plane_normal_at_distance"
+        assert result["distance"] == 0.05
+        ref_planes.AddNormalToCurveAtDistance.assert_called_once()
+
+    def test_no_profile(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, _, _ = managers
+        sketch_mgr.get_active_sketch.return_value = None
+        result = feature_mgr.create_ref_plane_normal_at_distance(0.05)
+        assert "error" in result
+
+
+# ============================================================================
+# REF PLANE NORMAL AT ARC RATIO
+# ============================================================================
+
+class TestCreateRefPlaneNormalAtArcRatio:
+    def test_success(self, feature_mgr, managers):
+        _, _, doc, _, _, profile = managers
+        ref_planes = MagicMock()
+        ref_planes.Count = 4
+        pivot = MagicMock()
+        ref_planes.Item.return_value = pivot
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_ref_plane_normal_at_arc_ratio(0.5)
+        assert result["status"] == "created"
+        assert result["type"] == "ref_plane_normal_at_arc_ratio"
+        assert result["ratio"] == 0.5
+        ref_planes.AddNormalToCurveAtArcLengthRatio.assert_called_once()
+
+    def test_invalid_ratio(self, feature_mgr, managers):
+        _, _, doc, _, _, profile = managers
+        ref_planes = MagicMock()
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_ref_plane_normal_at_arc_ratio(1.5)
+        assert "error" in result
+        assert "Ratio" in result["error"]
+
+    def test_no_profile(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, _, _ = managers
+        sketch_mgr.get_active_sketch.return_value = None
+        result = feature_mgr.create_ref_plane_normal_at_arc_ratio(0.5)
+        assert "error" in result
+
+
+# ============================================================================
+# REF PLANE NORMAL AT DISTANCE ALONG
+# ============================================================================
+
+class TestCreateRefPlaneNormalAtDistanceAlong:
+    def test_success(self, feature_mgr, managers):
+        _, _, doc, _, _, profile = managers
+        ref_planes = MagicMock()
+        ref_planes.Count = 4
+        pivot = MagicMock()
+        ref_planes.Item.return_value = pivot
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_ref_plane_normal_at_distance_along(0.03)
+        assert result["status"] == "created"
+        assert result["type"] == "ref_plane_normal_at_distance_along"
+        assert result["distance_along"] == 0.03
+        ref_planes.AddNormalToCurveAtDistanceAlongCurve.assert_called_once()
+
+    def test_no_profile(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, _, _ = managers
+        sketch_mgr.get_active_sketch.return_value = None
+        result = feature_mgr.create_ref_plane_normal_at_distance_along(0.03)
+        assert "error" in result
+
+
+# ============================================================================
+# REF PLANE PARALLEL BY TANGENT
+# ============================================================================
+
+class TestCreateRefPlaneParallelByTangent:
+    def test_success(self, feature_mgr, managers):
+        _, _, doc, _, model, _ = managers
+        ref_planes = MagicMock()
+        ref_planes.Count = 3
+        parent = MagicMock()
+        ref_planes.Item.return_value = parent
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_ref_plane_parallel_by_tangent(1, 0)
+        assert result["status"] == "created"
+        assert result["type"] == "ref_plane_parallel_by_tangent"
+        assert result["parent_plane_index"] == 1
+        assert result["face_index"] == 0
+        ref_planes.AddParallelByTangent.assert_called_once()
+
+    def test_invalid_plane_index(self, feature_mgr, managers):
+        _, _, doc, _, _, _ = managers
+        ref_planes = MagicMock()
+        ref_planes.Count = 3
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_ref_plane_parallel_by_tangent(10, 0)
+        assert "error" in result
+        assert "parent_plane_index" in result["error"]
+
+    def test_invalid_face_index(self, feature_mgr, managers):
+        _, _, doc, _, model, _ = managers
+        ref_planes = MagicMock()
+        ref_planes.Count = 3
+        doc.RefPlanes = ref_planes
+
+        result = feature_mgr.create_ref_plane_parallel_by_tangent(1, 99)
+        assert "error" in result
+        assert "face_index" in result["error"]
+
+    def test_no_base_feature(self, feature_mgr, managers):
+        _, _, doc, models, _, _ = managers
+        ref_planes = MagicMock()
+        ref_planes.Count = 3
+        doc.RefPlanes = ref_planes
+        models.Count = 0
+
+        result = feature_mgr.create_ref_plane_parallel_by_tangent(1, 0)
+        assert "error" in result

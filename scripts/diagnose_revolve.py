@@ -3,13 +3,14 @@
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent / "src"))
+
+import inspect
+import math
 
 from solidedge_mcp.backends.connection import SolidEdgeConnection
 from solidedge_mcp.backends.documents import DocumentManager
-import math
-import pythoncom
-import inspect
 
 connection = SolidEdgeConnection()
 connection.connect(start_if_needed=True)
@@ -50,7 +51,7 @@ except Exception as e:
 
 # Try to get help
 try:
-    print(f"\nHelp text:")
+    print("\nHelp text:")
     print(help(models.AddRevolvedProtrusion))
 except Exception as e:
     print(f"Cannot get help: {e}")

@@ -9,10 +9,10 @@ Usage:
     python test_with_solidedge.py
 """
 
-import sys
-from pathlib import Path
-import tempfile
 import os
+import sys
+import tempfile
+from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
@@ -43,8 +43,8 @@ def test_create_simple_part():
     try:
         from solidedge_mcp.backends.connection import SolidEdgeConnection
         from solidedge_mcp.backends.documents import DocumentManager
-        from solidedge_mcp.backends.sketching import SketchManager
         from solidedge_mcp.backends.features import FeatureManager
+        from solidedge_mcp.backends.sketching import SketchManager
 
         # Connect
         connection = SolidEdgeConnection()
@@ -104,7 +104,7 @@ def test_create_simple_part():
         if "error" in result:
             print(f"[WARN] Close document warning: {result['error']}")
         else:
-            print(f"[OK] Document closed")
+            print("[OK] Document closed")
 
         # Main functionality worked!
         return True
@@ -121,8 +121,8 @@ def test_query_operations():
     try:
         from solidedge_mcp.backends.connection import SolidEdgeConnection
         from solidedge_mcp.backends.documents import DocumentManager
-        from solidedge_mcp.backends.query import QueryManager
         from solidedge_mcp.backends.features import FeatureManager
+        from solidedge_mcp.backends.query import QueryManager
         from solidedge_mcp.backends.sketching import SketchManager
 
         # Connect

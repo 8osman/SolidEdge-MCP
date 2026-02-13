@@ -1,14 +1,15 @@
 from . import (
-    connection,
-    documents,
-    sketching,
-    features,
     assembly,
-    sheet_metal,
-    query,
+    connection,
+    diagnostics,
+    documents,
     export,
-    diagnostics
+    features,
+    query,
+    sheet_metal,
+    sketching,
 )
+
 
 def register_tools(mcp):
     """Register all tools with the MCP server instance."""

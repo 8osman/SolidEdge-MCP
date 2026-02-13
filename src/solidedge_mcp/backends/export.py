@@ -4,9 +4,11 @@ Solid Edge Export and Visualization Operations
 Handles exporting to various formats and creating drawings.
 """
 
-from typing import Dict, Any, Optional, List
+import contextlib
 import os
 import traceback
+from typing import Any
+
 from .constants import DrawingViewOrientationConstants, RenderModeConstants
 
 
@@ -16,7 +18,7 @@ class ExportManager:
     def __init__(self, document_manager):
         self.doc_manager = document_manager
 
-    def export_to_step(self, file_path: str) -> Dict[str, Any]:
+    def export_to_step(self, file_path: str) -> dict[str, Any]:
         """
         Export the active document to STEP format.
 
@@ -48,7 +50,7 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
-    def export_to_stl(self, file_path: str, quality: str = "Medium") -> Dict[str, Any]:
+    def export_to_stl(self, file_path: str, quality: str = "Medium") -> dict[str, Any]:
         """
         Export the active document to STL format (for 3D printing).
 
@@ -72,13 +74,13 @@ class ExportManager:
                 "Medium": 0.001,
                 "High": 0.0001
             }
-            tolerance = quality_map.get(quality, 0.001)
+            quality_map.get(quality, 0.001)
 
             # Save as STL
             # Note: Actual method may vary by Solid Edge version
             try:
                 doc.SaveAs(file_path)
-            except:
+            except Exception:
                 # Alternative export method
                 if hasattr(doc, 'SaveAsJT'):
                     # Some versions use different export methods
@@ -97,7 +99,7 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
-    def export_to_iges(self, file_path: str) -> Dict[str, Any]:
+    def export_to_iges(self, file_path: str) -> dict[str, Any]:
         """
         Export the active document to IGES format.
 
@@ -129,7 +131,7 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
-    def export_to_pdf(self, file_path: str) -> Dict[str, Any]:
+    def export_to_pdf(self, file_path: str) -> dict[str, Any]:
         """Export drawing to PDF"""
         try:
             doc = self.doc_manager.get_active_document()
@@ -151,8 +153,8 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
-    def create_drawing(self, template: Optional[str] = None,
-                      views: Optional[List[str]] = None) -> Dict[str, Any]:
+    def create_drawing(self, template: str | None = None,
+                      views: list[str] | None = None) -> dict[str, Any]:
         """
         Create a 2D drawing from the active 3D model.
 
@@ -174,13 +176,15 @@ class ExportManager:
 
             # Source must be saved to disk for ModelLinks.Add
             source_path = None
-            try:
+            with contextlib.suppress(Exception):
                 source_path = source_doc.FullName
-            except Exception:
-                pass
 
             if not source_path:
-                return {"error": "Active document must be saved before creating a drawing. Use save_document() first."}
+                return {
+                    "error": "Active document must be saved "
+                    "before creating a drawing. "
+                    "Use save_document() first."
+                }
 
             if views is None:
                 views = ['Front', 'Top', 'Right', 'Isometric']
@@ -230,12 +234,12 @@ class ExportManager:
                 x, y = positions[i] if i < len(positions) else (0.15 + i * 0.08, 0.10)
 
                 try:
-                    dv = dvs.AddPartView(model_link, orient, 1.0, x, y, 0)
+                    dvs.AddPartView(model_link, orient, 1.0, x, y, 0)
                     views_added.append(view_name)
                 except Exception:
                     # Try the generic Add method as fallback
                     try:
-                        dv = dvs.Add(model_link, orient, 1.0, x, y)
+                        dvs.Add(model_link, orient, 1.0, x, y)
                         views_added.append(view_name)
                     except Exception:
                         pass
@@ -255,7 +259,7 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
-    def add_draft_sheet(self) -> Dict[str, Any]:
+    def add_draft_sheet(self) -> dict[str, Any]:
         """
         Add a new sheet to the active draft document.
 
@@ -272,7 +276,6 @@ class ExportManager:
                 return {"error": "Active document is not a draft document. Create a drawing first."}
 
             sheets = doc.Sheets
-            old_count = sheets.Count
 
             sheet = sheets.AddSheet()
             sheet.Activate()
@@ -295,7 +298,7 @@ class ExportManager:
         y: float = 0.15,
         orientation: str = "Isometric",
         scale: float = 1.0
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Add an assembly drawing view to the active draft document.
 
@@ -320,7 +323,11 @@ class ExportManager:
 
             # Get model link
             if not hasattr(doc, 'ModelLinks') or doc.ModelLinks.Count == 0:
-                return {"error": "No model link found. Create a drawing with create_drawing() first."}
+                return {
+                    "error": "No model link found. "
+                    "Create a drawing with "
+                    "create_drawing() first."
+                }
 
             model_link = doc.ModelLinks.Item(1)
 
@@ -332,7 +339,11 @@ class ExportManager:
 
             orient = view_orient_map.get(orientation)
             if orient is None:
-                return {"error": f"Invalid orientation: {orientation}. Valid: {', '.join(view_orient_map.keys())}"}
+                valid = ', '.join(view_orient_map.keys())
+                return {
+                    "error": f"Invalid orientation: "
+                    f"{orientation}. Valid: {valid}"
+                }
 
             sheet = doc.ActiveSheet
             dvs_early = sheet.DrawingViews
@@ -340,10 +351,10 @@ class ExportManager:
 
             # seAssemblyDesignedView = 0
             try:
-                dv = dvs.AddAssemblyView(model_link, orient, scale, x, y, 0)
+                dvs.AddAssemblyView(model_link, orient, scale, x, y, 0)
             except Exception:
                 # Fall back to AddPartView if AddAssemblyView not available
-                dv = dvs.AddPartView(model_link, orient, scale, x, y, 0)
+                dvs.AddPartView(model_link, orient, scale, x, y, 0)
 
             return {
                 "status": "added",
@@ -358,7 +369,7 @@ class ExportManager:
             }
 
     def create_parts_list(self, auto_balloon: bool = True,
-                          x: float = 0.15, y: float = 0.25) -> Dict[str, Any]:
+                          x: float = 0.15, y: float = 0.25) -> dict[str, Any]:
         """
         Create a parts list (BOM table) on the active draft sheet.
 
@@ -400,7 +411,7 @@ class ExportManager:
             # Add parts list
             # Parameters: DrawingView, SavedSettings, AutoBalloon, CreatePartsList
             # AutoBalloon: 0=No, 1=Yes; CreatePartsList: 0=No, 1=Yes
-            parts_list = parts_lists.Add(dv, "", 1 if auto_balloon else 0, 1)
+            parts_lists.Add(dv, "", 1 if auto_balloon else 0, 1)
 
             return {
                 "status": "created",
@@ -413,7 +424,10 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
-    def capture_screenshot(self, file_path: str, width: int = 1920, height: int = 1080) -> Dict[str, Any]:
+    def capture_screenshot(
+        self, file_path: str,
+        width: int = 1920, height: int = 1080
+    ) -> dict[str, Any]:
         """
         Capture a screenshot of the current view.
 
@@ -431,7 +445,8 @@ class ExportManager:
             doc = self.doc_manager.get_active_document()
 
             # Ensure file has image extension
-            if not any(file_path.lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.bmp']):
+            valid_exts = ['.png', '.jpg', '.jpeg', '.bmp']
+            if not any(file_path.lower().endswith(ext) for ext in valid_exts):
                 file_path += '.png'
 
             # Get the window and view
@@ -460,7 +475,7 @@ class ExportManager:
             }
 
 
-    def export_to_dxf(self, file_path: str) -> Dict[str, Any]:
+    def export_to_dxf(self, file_path: str) -> dict[str, Any]:
         """Export to DXF format"""
         try:
             doc = self.doc_manager.get_active_document()
@@ -482,7 +497,7 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
-    def export_to_parasolid(self, file_path: str) -> Dict[str, Any]:
+    def export_to_parasolid(self, file_path: str) -> dict[str, Any]:
         """Export to Parasolid format (X_T or X_B)"""
         try:
             doc = self.doc_manager.get_active_document()
@@ -504,7 +519,7 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
-    def export_to_jt(self, file_path: str) -> Dict[str, Any]:
+    def export_to_jt(self, file_path: str) -> dict[str, Any]:
         """Export to JT format"""
         try:
             doc = self.doc_manager.get_active_document()
@@ -526,7 +541,7 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
-    def export_flat_dxf(self, file_path: str) -> Dict[str, Any]:
+    def export_flat_dxf(self, file_path: str) -> dict[str, Any]:
         """
         Export sheet metal flat pattern to DXF format.
 
@@ -547,7 +562,11 @@ class ExportManager:
 
             # Access FlatPatternModels collection (sheet metal only)
             if not hasattr(doc, 'FlatPatternModels'):
-                return {"error": "Active document is not a sheet metal document. FlatPatternModels not available."}
+                return {
+                    "error": "Active document is not a "
+                    "sheet metal document. "
+                    "FlatPatternModels not available."
+                }
 
             flat_models = doc.FlatPatternModels
 
@@ -567,7 +586,7 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
-    def add_text_box(self, x: float, y: float, text: str, height: float = 0.005) -> Dict[str, Any]:
+    def add_text_box(self, x: float, y: float, text: str, height: float = 0.005) -> dict[str, Any]:
         """
         Add a text box annotation to the active draft sheet.
 
@@ -596,10 +615,8 @@ class ExportManager:
             text_box.Text = text
 
             # Set text height if possible
-            try:
+            with contextlib.suppress(Exception):
                 text_box.TextHeight = height
-            except Exception:
-                pass
 
             return {
                 "status": "added",
@@ -613,7 +630,10 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
-    def add_leader(self, x1: float, y1: float, x2: float, y2: float, text: str = "") -> Dict[str, Any]:
+    def add_leader(
+        self, x1: float, y1: float,
+        x2: float, y2: float, text: str = ""
+    ) -> dict[str, Any]:
         """
         Add a leader annotation to the active draft sheet.
 
@@ -641,10 +661,8 @@ class ExportManager:
             leader = leaders.Add(x1, y1, 0, x2, y2, 0)
 
             if text:
-                try:
+                with contextlib.suppress(Exception):
                     leader.Text = text
-                except Exception:
-                    pass
 
             return {
                 "status": "added",
@@ -660,7 +678,7 @@ class ExportManager:
             }
 
     def add_dimension(self, x1: float, y1: float, x2: float, y2: float,
-                      dim_x: float = None, dim_y: float = None) -> Dict[str, Any]:
+                      dim_x: float = None, dim_y: float = None) -> dict[str, Any]:
         """
         Add a linear dimension between two points on the active draft sheet.
 
@@ -690,7 +708,7 @@ class ExportManager:
                 dim_y = max(y1, y2) + 0.02  # 20mm above
 
             dimensions = sheet.Dimensions
-            dim = dimensions.AddLength(x1, y1, 0, x2, y2, 0, dim_x, dim_y, 0)
+            dimensions.AddLength(x1, y1, 0, x2, y2, 0, dim_x, dim_y, 0)
 
             return {
                 "status": "added",
@@ -706,7 +724,7 @@ class ExportManager:
             }
 
     def add_balloon(self, x: float, y: float, text: str = "",
-                    leader_x: float = None, leader_y: float = None) -> Dict[str, Any]:
+                    leader_x: float = None, leader_y: float = None) -> dict[str, Any]:
         """
         Add a balloon annotation to the active draft sheet.
 
@@ -741,10 +759,8 @@ class ExportManager:
                 try:
                     balloon.BalloonText = text
                 except Exception:
-                    try:
+                    with contextlib.suppress(Exception):
                         balloon.Text = text
-                    except Exception:
-                        pass
 
             return {
                 "status": "added",
@@ -758,7 +774,7 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
-    def add_note(self, x: float, y: float, text: str, height: float = 0.005) -> Dict[str, Any]:
+    def add_note(self, x: float, y: float, text: str, height: float = 0.005) -> dict[str, Any]:
         """
         Add a note (free-standing text) to the active draft sheet.
 
@@ -786,10 +802,8 @@ class ExportManager:
             text_box = text_boxes.Add(x, y, 0)
             text_box.Text = text
 
-            try:
+            with contextlib.suppress(Exception):
                 text_box.TextHeight = height
-            except Exception:
-                pass
 
             return {
                 "status": "added",
@@ -804,7 +818,7 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_sheet_info(self) -> Dict[str, Any]:
+    def get_sheet_info(self) -> dict[str, Any]:
         """
         Get information about the active draft sheet.
 
@@ -834,28 +848,18 @@ class ExportManager:
                 pass
 
             # Try to get background name
-            try:
+            with contextlib.suppress(Exception):
                 info["background"] = sheet.Background
-            except Exception:
-                pass
 
             # Count drawing objects
-            try:
+            with contextlib.suppress(Exception):
                 info["drawing_views"] = sheet.DrawingViews.Count
-            except Exception:
-                pass
-            try:
+            with contextlib.suppress(Exception):
                 info["text_boxes"] = sheet.TextBoxes.Count
-            except Exception:
-                pass
-            try:
+            with contextlib.suppress(Exception):
                 info["leaders"] = sheet.Leaders.Count
-            except Exception:
-                pass
-            try:
+            with contextlib.suppress(Exception):
                 info["dimensions"] = sheet.Dimensions.Count
-            except Exception:
-                pass
 
             return info
         except Exception as e:
@@ -864,7 +868,7 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
-    def activate_sheet(self, sheet_index: int) -> Dict[str, Any]:
+    def activate_sheet(self, sheet_index: int) -> dict[str, Any]:
         """
         Activate a specific draft sheet by index.
 
@@ -898,7 +902,7 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
-    def rename_sheet(self, sheet_index: int, new_name: str) -> Dict[str, Any]:
+    def rename_sheet(self, sheet_index: int, new_name: str) -> dict[str, Any]:
         """
         Rename a draft sheet.
 
@@ -935,7 +939,7 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
-    def delete_sheet(self, sheet_index: int) -> Dict[str, Any]:
+    def delete_sheet(self, sheet_index: int) -> dict[str, Any]:
         """
         Delete a draft sheet.
 
@@ -986,13 +990,11 @@ class ExportManager:
         import win32com.client.dynamic
         dvs = sheet.DrawingViews
         # Force late binding to avoid Part type library mismatch
-        try:
+        with contextlib.suppress(Exception):
             dvs = win32com.client.dynamic.Dispatch(dvs._oleobj_)
-        except Exception:
-            pass
         return dvs
 
-    def get_drawing_view_count(self) -> Dict[str, Any]:
+    def get_drawing_view_count(self) -> dict[str, Any]:
         """
         Get the number of drawing views on the active sheet.
 
@@ -1008,7 +1010,7 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
-    def get_drawing_view_scale(self, view_index: int) -> Dict[str, Any]:
+    def get_drawing_view_scale(self, view_index: int) -> dict[str, Any]:
         """
         Get the scale of a drawing view.
 
@@ -1036,7 +1038,7 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
-    def set_drawing_view_scale(self, view_index: int, scale: float) -> Dict[str, Any]:
+    def set_drawing_view_scale(self, view_index: int, scale: float) -> dict[str, Any]:
         """
         Set the scale of a drawing view.
 
@@ -1066,7 +1068,7 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
-    def delete_drawing_view(self, view_index: int) -> Dict[str, Any]:
+    def delete_drawing_view(self, view_index: int) -> dict[str, Any]:
         """
         Delete a drawing view from the active sheet.
 
@@ -1095,7 +1097,7 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
-    def update_drawing_view(self, view_index: int) -> Dict[str, Any]:
+    def update_drawing_view(self, view_index: int) -> dict[str, Any]:
         """
         Force update a drawing view to reflect 3D model changes.
 
@@ -1124,31 +1126,31 @@ class ExportManager:
             }
 
     # Aliases for consistency with MCP tool names
-    def export_step(self, file_path: str) -> Dict[str, Any]:
+    def export_step(self, file_path: str) -> dict[str, Any]:
         """Alias for export_to_step"""
         return self.export_to_step(file_path)
 
-    def export_stl(self, file_path: str, quality: str = "Medium") -> Dict[str, Any]:
+    def export_stl(self, file_path: str, quality: str = "Medium") -> dict[str, Any]:
         """Alias for export_to_stl"""
         return self.export_to_stl(file_path, quality)
 
-    def export_iges(self, file_path: str) -> Dict[str, Any]:
+    def export_iges(self, file_path: str) -> dict[str, Any]:
         """Alias for export_to_iges"""
         return self.export_to_iges(file_path)
 
-    def export_pdf(self, file_path: str) -> Dict[str, Any]:
+    def export_pdf(self, file_path: str) -> dict[str, Any]:
         """Alias for export_to_pdf"""
         return self.export_to_pdf(file_path)
 
-    def export_dxf(self, file_path: str) -> Dict[str, Any]:
+    def export_dxf(self, file_path: str) -> dict[str, Any]:
         """Alias for export_to_dxf"""
         return self.export_to_dxf(file_path)
 
-    def export_parasolid(self, file_path: str) -> Dict[str, Any]:
+    def export_parasolid(self, file_path: str) -> dict[str, Any]:
         """Alias for export_to_parasolid"""
         return self.export_to_parasolid(file_path)
 
-    def export_jt(self, file_path: str) -> Dict[str, Any]:
+    def export_jt(self, file_path: str) -> dict[str, Any]:
         """Alias for export_to_jt"""
         return self.export_to_jt(file_path)
 
@@ -1159,7 +1161,7 @@ class ViewModel:
     def __init__(self, document_manager):
         self.doc_manager = document_manager
 
-    def set_view(self, view: str) -> Dict[str, Any]:
+    def set_view(self, view: str) -> dict[str, Any]:
         """
         Set the viewing orientation.
 
@@ -1207,7 +1209,7 @@ class ViewModel:
                 "traceback": traceback.format_exc()
             }
 
-    def zoom_fit(self) -> Dict[str, Any]:
+    def zoom_fit(self) -> dict[str, Any]:
         """Zoom to fit all geometry in view"""
         try:
             doc = self.doc_manager.get_active_document()
@@ -1236,7 +1238,7 @@ class ViewModel:
                 "traceback": traceback.format_exc()
             }
 
-    def zoom_to_selection(self) -> Dict[str, Any]:
+    def zoom_to_selection(self) -> dict[str, Any]:
         """Zoom to fit all geometry (equivalent to View > Fit)."""
         try:
             doc = self.doc_manager.get_active_document()
@@ -1259,7 +1261,7 @@ class ViewModel:
                 "traceback": traceback.format_exc()
             }
 
-    def set_display_mode(self, mode: str) -> Dict[str, Any]:
+    def set_display_mode(self, mode: str) -> dict[str, Any]:
         """
         Set the display mode for the active view.
 
@@ -1290,7 +1292,12 @@ class ViewModel:
 
             mode_value = mode_map.get(mode)
             if mode_value is None:
-                return {"error": f"Invalid mode: {mode}. Use 'Shaded', 'ShadedWithEdges', 'Wireframe', or 'HiddenEdgesVisible'"}
+                return {
+                    "error": f"Invalid mode: {mode}. "
+                    "Use 'Shaded', 'ShadedWithEdges', "
+                    "'Wireframe', or "
+                    "'HiddenEdgesVisible'"
+                }
 
             view_obj.SetRenderMode(mode_value)
             return {
@@ -1303,7 +1310,7 @@ class ViewModel:
                 "traceback": traceback.format_exc()
             }
 
-    def set_view_background(self, red: int, green: int, blue: int) -> Dict[str, Any]:
+    def set_view_background(self, red: int, green: int, blue: int) -> dict[str, Any]:
         """
         Set the view background color.
 
@@ -1347,7 +1354,7 @@ class ViewModel:
                 "traceback": traceback.format_exc()
             }
 
-    def get_camera(self) -> Dict[str, Any]:
+    def get_camera(self) -> dict[str, Any]:
         """
         Get the current camera parameters.
 
@@ -1387,9 +1394,15 @@ class ViewModel:
                 "traceback": traceback.format_exc()
             }
 
-    def rotate_camera(self, angle: float,
-                      center_x: float = 0.0, center_y: float = 0.0, center_z: float = 0.0,
-                      axis_x: float = 0.0, axis_y: float = 1.0, axis_z: float = 0.0) -> Dict[str, Any]:
+    def rotate_camera(
+        self, angle: float,
+        center_x: float = 0.0,
+        center_y: float = 0.0,
+        center_z: float = 0.0,
+        axis_x: float = 0.0,
+        axis_y: float = 1.0,
+        axis_z: float = 0.0
+    ) -> dict[str, Any]:
         """
         Rotate the camera around a specified axis through a center point.
 
@@ -1427,7 +1440,7 @@ class ViewModel:
                 "traceback": traceback.format_exc()
             }
 
-    def pan_camera(self, dx: int, dy: int) -> Dict[str, Any]:
+    def pan_camera(self, dx: int, dy: int) -> dict[str, Any]:
         """
         Pan the camera by pixel offsets.
 
@@ -1463,7 +1476,7 @@ class ViewModel:
                 "traceback": traceback.format_exc()
             }
 
-    def zoom_camera(self, factor: float) -> Dict[str, Any]:
+    def zoom_camera(self, factor: float) -> dict[str, Any]:
         """
         Zoom the camera by a scale factor.
 
@@ -1497,7 +1510,7 @@ class ViewModel:
                 "traceback": traceback.format_exc()
             }
 
-    def refresh_view(self) -> Dict[str, Any]:
+    def refresh_view(self) -> dict[str, Any]:
         """
         Force the active view to refresh/update.
 
@@ -1536,7 +1549,7 @@ class ViewModel:
             raise Exception("Cannot access view object")
         return view_obj
 
-    def transform_model_to_screen(self, x: float, y: float, z: float) -> Dict[str, Any]:
+    def transform_model_to_screen(self, x: float, y: float, z: float) -> dict[str, Any]:
         """
         Transform 3D model coordinates to 2D screen (device) coordinates.
 
@@ -1565,7 +1578,7 @@ class ViewModel:
                 "traceback": traceback.format_exc()
             }
 
-    def transform_screen_to_model(self, screen_x: int, screen_y: int) -> Dict[str, Any]:
+    def transform_screen_to_model(self, screen_x: int, screen_y: int) -> dict[str, Any]:
         """
         Transform 2D screen (device) coordinates to 3D model coordinates.
 
@@ -1594,7 +1607,7 @@ class ViewModel:
                 "traceback": traceback.format_exc()
             }
 
-    def begin_camera_dynamics(self) -> Dict[str, Any]:
+    def begin_camera_dynamics(self) -> dict[str, Any]:
         """
         Begin camera dynamics mode for smooth multi-step camera manipulation.
 
@@ -1615,7 +1628,7 @@ class ViewModel:
                 "traceback": traceback.format_exc()
             }
 
-    def end_camera_dynamics(self) -> Dict[str, Any]:
+    def end_camera_dynamics(self) -> dict[str, Any]:
         """
         End camera dynamics mode and apply all pending camera changes.
 
@@ -1639,7 +1652,7 @@ class ViewModel:
                    target_x: float, target_y: float, target_z: float,
                    up_x: float = 0.0, up_y: float = 1.0, up_z: float = 0.0,
                    perspective: bool = False,
-                   scale_or_angle: float = 1.0) -> Dict[str, Any]:
+                   scale_or_angle: float = 1.0) -> dict[str, Any]:
         """
         Set the camera parameters for the active view.
 

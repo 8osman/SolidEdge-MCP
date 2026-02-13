@@ -2,12 +2,20 @@
 
 from solidedge_mcp.managers import connection
 
+
 def connect_to_solidedge(start_if_needed: bool = True) -> dict:
-    """Connect to Solid Edge application. Starts the application if not running and `start_if_needed` is True."""
+    """Connect to Solid Edge application.
+
+    Starts the application if not running and
+    `start_if_needed` is True.
+    """
     return connection.connect(start_if_needed)
 
 def quit_application() -> dict:
-    """Quit the Solid Edge application. Closes all documents and shuts down Solid Edge completely."""
+    """Quit the Solid Edge application.
+
+    Closes all documents and shuts down Solid Edge.
+    """
     return connection.quit_application()
 
 def get_application_info() -> dict:
@@ -34,9 +42,17 @@ def start_command(command_id: int) -> dict:
     """Execute a Solid Edge command by its ID."""
     return connection.start_command(command_id)
 
-def set_performance_mode(delay_compute: bool = None, screen_updating: bool = None, interactive: bool = None, display_alerts: bool = None) -> dict:
+def set_performance_mode(
+    delay_compute: bool = None,
+    screen_updating: bool = None,
+    interactive: bool = None,
+    display_alerts: bool = None
+) -> dict:
     """Set application performance flags for batch operations."""
-    return connection.set_performance_mode(delay_compute, screen_updating, interactive, display_alerts)
+    return connection.set_performance_mode(
+        delay_compute, screen_updating,
+        interactive, display_alerts
+    )
 
 def do_idle() -> dict:
     """Process pending background operations."""
