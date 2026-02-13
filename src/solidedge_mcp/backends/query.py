@@ -634,27 +634,55 @@ class QueryManager:
         """
         Get all faces on the model body.
 
-        Uses Body.Faces(igQueryAll=6) to enumerate faces with their
-        type and edge count.
+        Uses Body.Faces(igQueryAll=1) to enumerate all faces with their
+        geometry type, area, and edge count.
+
+        Face geometry types are determined by checking which query type
+        each face belongs to (plane, cylinder, cone, sphere, torus, spline).
 
         Returns:
-            Dict with list of faces
+            Dict with list of faces and count
         """
         try:
             doc, model = self._get_first_model()
             body = model.Body
 
-            faces = body.Faces(6)  # igQueryAll = 6
+            # Query type constants (from SE type library)
+            query_types = {
+                6: "plane",      # igQueryPlane
+                10: "cylinder",  # igQueryCylinder
+                7: "cone",       # igQueryCone
+                9: "sphere",     # igQuerySphere
+                8: "torus",      # igQueryTorus
+                5: "spline",     # igQuerySpline
+            }
+
+            # Build a set of face indices per geometry type
+            geo_type_map = {}  # face_area -> geometry_type (approximate matching)
+            for qval, qname in query_types.items():
+                try:
+                    typed_faces = body.Faces(qval)
+                    for j in range(1, typed_faces.Count + 1):
+                        try:
+                            tf = typed_faces.Item(j)
+                            # Use (area, edge_count) as a fingerprint
+                            area = tf.Area
+                            ec = tf.Edges.Count if hasattr(tf.Edges, 'Count') else 0
+                            key = (round(area, 12), ec)
+                            geo_type_map[key] = qname
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+
+            # Now enumerate all faces
+            faces = body.Faces(1)  # igQueryAll = 1
             face_list = []
 
             for i in range(1, faces.Count + 1):
                 try:
                     face = faces.Item(i)
                     face_info = {"index": i - 1}
-                    try:
-                        face_info["type"] = face.Type
-                    except Exception:
-                        pass
                     try:
                         face_info["area"] = face.Area
                     except Exception:
@@ -664,6 +692,12 @@ class QueryManager:
                         face_info["edge_count"] = edge_count
                     except Exception:
                         pass
+                    # Look up geometry type
+                    try:
+                        key = (round(face.Area, 12), face_info.get("edge_count", 0))
+                        face_info["geometry"] = geo_type_map.get(key, "unknown")
+                    except Exception:
+                        face_info["geometry"] = "unknown"
                     face_list.append(face_info)
                 except Exception:
                     face_list.append({"index": i - 1})
@@ -692,7 +726,7 @@ class QueryManager:
             doc, model = self._get_first_model()
             body = model.Body
 
-            faces = body.Faces(6)  # igQueryAll = 6
+            faces = body.Faces(1)  # igQueryAll = 1
             total_edges = 0
             face_edges = []
 
@@ -735,7 +769,7 @@ class QueryManager:
             doc, model = self._get_first_model()
             body = model.Body
 
-            faces = body.Faces(6)  # igQueryAll = 6
+            faces = body.Faces(1)  # igQueryAll = 1
             if face_index < 0 or face_index >= faces.Count:
                 return {"error": f"Invalid face index: {face_index}. Count: {faces.Count}"}
 
@@ -1229,7 +1263,7 @@ class QueryManager:
             doc, model = self._get_first_model()
             body = model.Body
 
-            faces = body.Faces(6)  # igQueryAll = 6
+            faces = body.Faces(1)  # igQueryAll = 1
             total_edges = 0
 
             for fi in range(1, faces.Count + 1):
@@ -1439,7 +1473,7 @@ class QueryManager:
         try:
             doc, model = self._get_first_model()
             body = model.Body
-            faces = body.Faces(6)  # igQueryAll = 6
+            faces = body.Faces(1)  # igQueryAll = 1
 
             if face_index < 0 or face_index >= faces.Count:
                 return {
@@ -1484,7 +1518,7 @@ class QueryManager:
                 pass
 
             # Fallback: sum face areas
-            faces = body.Faces(6)
+            faces = body.Faces(1)  # igQueryAll = 1
             total_area = 0.0
             for i in range(1, faces.Count + 1):
                 try:
@@ -1538,7 +1572,7 @@ class QueryManager:
         try:
             doc, model = self._get_first_model()
             body = model.Body
-            faces = body.Faces(6)  # igQueryAll = 6
+            faces = body.Faces(1)  # igQueryAll = 1
             return {
                 "face_count": faces.Count
             }
@@ -1562,7 +1596,7 @@ class QueryManager:
         try:
             doc, model = self._get_first_model()
             body = model.Body
-            faces = body.Faces(6)  # igQueryAll = 6
+            faces = body.Faces(1)  # igQueryAll = 1
 
             if face_index < 0 or face_index >= faces.Count:
                 return {"error": f"Invalid face index: {face_index}. Count: {faces.Count}"}
@@ -1622,7 +1656,7 @@ class QueryManager:
         try:
             doc, model = self._get_first_model()
             body = model.Body
-            faces = body.Faces(6)  # igQueryAll = 6
+            faces = body.Faces(1)  # igQueryAll = 1
 
             if face_index < 0 or face_index >= faces.Count:
                 return {"error": f"Invalid face index: {face_index}. Count: {faces.Count}"}

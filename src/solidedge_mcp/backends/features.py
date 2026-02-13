@@ -220,7 +220,7 @@ class FeatureManager:
             body = model.Body
 
             # Collect all edges from all body faces
-            faces = body.Faces(6)  # igQueryAll = 6
+            faces = body.Faces(1)  # igQueryAll = 1
             if faces.Count == 0:
                 return {"error": "No faces found on body"}
 
@@ -281,7 +281,7 @@ class FeatureManager:
             body = model.Body
 
             # Collect all edges from all body faces
-            faces = body.Faces(6)  # igQueryAll = 6
+            faces = body.Faces(1)  # igQueryAll = 1
             if faces.Count == 0:
                 return {"error": "No faces found on body"}
 
@@ -2139,7 +2139,7 @@ class FeatureManager:
             model = models.Item(1)
             body = model.Body
 
-            faces = body.Faces(6)  # igQueryAll = 6
+            faces = body.Faces(1)  # igQueryAll = 1
             if face_index < 0 or face_index >= faces.Count:
                 return {"error": f"Invalid face index: {face_index}. Body has {faces.Count} faces."}
 
@@ -2195,7 +2195,7 @@ class FeatureManager:
             model = models.Item(1)
             body = model.Body
 
-            faces = body.Faces(6)  # igQueryAll = 6
+            faces = body.Faces(1)  # igQueryAll = 1
             if face_index < 0 or face_index >= faces.Count:
                 return {"error": f"Invalid face index: {face_index}. Body has {faces.Count} faces."}
 
@@ -2250,7 +2250,7 @@ class FeatureManager:
             model = models.Item(1)
             body = model.Body
 
-            faces = body.Faces(6)  # igQueryAll = 6
+            faces = body.Faces(1)  # igQueryAll = 1
             if faces.Count == 0:
                 return {"error": "No faces on body"}
 
@@ -2887,7 +2887,7 @@ class FeatureManager:
 
             model = models.Item(1)
             body = model.Body
-            faces = body.Faces(6)  # igQueryAll = 6
+            faces = body.Faces(1)  # igQueryAll = 1
 
             if face_index < 0 or face_index >= faces.Count:
                 return {"error": f"Invalid face index: {face_index}. Count: {faces.Count}"}

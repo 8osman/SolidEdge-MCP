@@ -100,6 +100,20 @@ class ViewOrientationConstants:
     seBottomView = 7
 
 
+class FaceQueryConstants:
+    """Body.Faces() query type constants (from type library)"""
+    igQueryAll = 1
+    igQueryRoundable = 2
+    igQueryStraight = 3
+    igQueryEllipse = 4
+    igQuerySpline = 5
+    igQueryPlane = 6
+    igQueryCone = 7
+    igQueryTorus = 8
+    igQuerySphere = 9
+    igQueryCylinder = 10
+
+
 class SaveAsConstants:
     """File save format constants"""
     igNormalSave = 0
