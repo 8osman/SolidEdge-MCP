@@ -10,7 +10,7 @@
 
 | Metric | Count |
 |--------|-------|
-| **Our implemented MCP tools** | 204 |
+| **Our implemented MCP tools** | 209 |
 | **API operations found in community repos** | 250+ |
 | **Operations we're missing** | ~20 |
 | **High-priority gaps remaining** | ~3 |
@@ -99,7 +99,7 @@
 | Draw construction line | `Lines2d.AddBy2Points + ToggleConstruction` | YES | Working | — |
 | Draw circle | `Circles2d.AddByCenterRadius(x,y,r)` | YES | Working | Samples |
 | Draw arc (center/start/end) | `Arcs2d.AddByCenterStartEnd(...)` | YES | Working | Samples |
-| Draw arc (start/center/end) | `Arcs2d.AddByStartCenterEnd(...)` | NO | Available | Interop |
+| Draw arc (start/center/end) | `Arcs2d.AddByStartCenterEnd(...)` | YES | Working | Interop |
 | Draw rectangle | Lines2d (4 lines) | YES | Working | — |
 | Draw polygon | Lines2d (n lines) | YES | Working | Samples |
 | Draw ellipse | `Ellipses2d.AddByCenterMajorMinor(...)` | YES | Working | Interop |
@@ -111,13 +111,13 @@
 | Sketch mirror | Mirror geometry across axis | YES | Working | — |
 | Get sketch info | Profile element counts | YES | Working | — |
 | Get sketch constraints | `Relations2d` iteration | YES | Working | — |
-| Mirror B-spline | `BSplineCurve2d.Mirror(x1,y1,x2,y2,copy)` | NO | Available | Samples |
-| Draw circle by 2 points | `Circles2d.AddBy2Points(...)` | NO | Available | Interop |
-| Draw circle by 3 points | `Circles2d.AddBy3Points(...)` | NO | Available | Interop |
+| Mirror B-spline | `BSplineCurve2d.Mirror(x1,y1,x2,y2,copy)` | YES | Working | Samples |
+| Draw circle by 2 points | `Circles2d.AddBy2Points(...)` | YES | Working | Interop |
+| Draw circle by 3 points | `Circles2d.AddBy3Points(...)` | YES | Working | Interop |
 | Set axis of revolution | `Profile.SetAxisOfRevolution(axis)` | YES | Working | Samples |
 | Toggle construction geometry | `Profile.ToggleConstruction(element)` | YES (internal) | Working | Samples |
 | Close/validate sketch | `Profile.End(flags)` | YES | Working | Samples |
-| Hide profile | `Profile.Visible = false` | NO | Available | Samples |
+| Hide profile | `Profile.Visible = false` | YES | Working | Samples |
 
 ## 4. 2D Constraints (Relations2d)
 
@@ -600,8 +600,8 @@ All Tier 1 and Tier 2 items are now fully implemented with MCP tool wrappers:
 Category                    Implemented    Available    Coverage
 ─────────────────────────────────────────────────────────────
 Connection                  8              8            100%
-Documents                   17             19           89%
-Sketching 2D                20             25           80%
+Documents                   19             19           100%
+Sketching 2D                25             25           100%
 Constraints                 1 (stub)       8            13%
 Extrusions                  3              5            60%
 Revolves                    5              5            100%
@@ -625,7 +625,7 @@ Performance                 4              5            80%
 Feature Management          6              8            75%
 Topology Query              8              13           62%
 ─────────────────────────────────────────────────────────────
-TOTAL                       204            ~250         82%
+TOTAL                       209            ~250         84%
 ```
 
 ---

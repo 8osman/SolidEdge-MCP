@@ -375,6 +375,198 @@ class SketchManager:
                 "traceback": traceback.format_exc()
             }
 
+    def draw_arc_by_3_points(self, start_x: float, start_y: float,
+                             center_x: float, center_y: float,
+                             end_x: float, end_y: float) -> Dict[str, Any]:
+        """
+        Draw an arc defined by start point, center point, and end point.
+
+        Args:
+            start_x, start_y: Arc start point (meters)
+            center_x, center_y: Arc center point (meters)
+            end_x, end_y: Arc end point (meters)
+
+        Returns:
+            Dict with status and arc info
+        """
+        try:
+            if not self.active_profile:
+                return {"error": "No active sketch. Call create_sketch() first"}
+
+            arcs = self.active_profile.Arcs2d
+            arc = arcs.AddByStartCenterEnd(
+                start_x, start_y,
+                center_x, center_y,
+                end_x, end_y
+            )
+
+            return {
+                "status": "created",
+                "type": "arc",
+                "start": [start_x, start_y],
+                "center": [center_x, center_y],
+                "end": [end_x, end_y],
+                "method": "start_center_end"
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def draw_circle_by_2_points(self, x1: float, y1: float,
+                                 x2: float, y2: float) -> Dict[str, Any]:
+        """
+        Draw a circle defined by two diametrically opposite points.
+
+        The two points define the diameter of the circle.
+
+        Args:
+            x1, y1: First point on circle (meters)
+            x2, y2: Second point on circle, diametrically opposite (meters)
+
+        Returns:
+            Dict with status and circle info
+        """
+        try:
+            if not self.active_profile:
+                return {"error": "No active sketch. Call create_sketch() first"}
+
+            circles = self.active_profile.Circles2d
+            circle = circles.AddBy2Points(x1, y1, x2, y2)
+
+            center_x = (x1 + x2) / 2
+            center_y = (y1 + y2) / 2
+            radius = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2) / 2
+
+            return {
+                "status": "created",
+                "type": "circle",
+                "center": [center_x, center_y],
+                "radius": radius,
+                "method": "2_points"
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def draw_circle_by_3_points(self, x1: float, y1: float,
+                                 x2: float, y2: float,
+                                 x3: float, y3: float) -> Dict[str, Any]:
+        """
+        Draw a circle through three points.
+
+        The circle passes through all three specified points.
+
+        Args:
+            x1, y1: First point on circle (meters)
+            x2, y2: Second point on circle (meters)
+            x3, y3: Third point on circle (meters)
+
+        Returns:
+            Dict with status and circle info
+        """
+        try:
+            if not self.active_profile:
+                return {"error": "No active sketch. Call create_sketch() first"}
+
+            circles = self.active_profile.Circles2d
+            circle = circles.AddBy3Points(x1, y1, x2, y2, x3, y3)
+
+            return {
+                "status": "created",
+                "type": "circle",
+                "point1": [x1, y1],
+                "point2": [x2, y2],
+                "point3": [x3, y3],
+                "method": "3_points"
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def mirror_spline(self, axis_x1: float, axis_y1: float,
+                       axis_x2: float, axis_y2: float,
+                       copy: bool = True) -> Dict[str, Any]:
+        """
+        Mirror B-spline curves across a line defined by two points.
+
+        Mirrors all B-spline curves in the active sketch across the
+        specified axis line.
+
+        Args:
+            axis_x1, axis_y1: Start point of mirror axis (meters)
+            axis_x2, axis_y2: End point of mirror axis (meters)
+            copy: If True, create a mirrored copy. If False, move the original.
+
+        Returns:
+            Dict with status and count of mirrored splines
+        """
+        try:
+            if not self.active_profile:
+                return {"error": "No active sketch. Call create_sketch() first"}
+
+            profile = self.active_profile
+            splines = profile.BSplineCurves2d
+
+            if splines.Count == 0:
+                return {"error": "No B-spline curves to mirror"}
+
+            mirror_count = 0
+            for i in range(1, splines.Count + 1):
+                try:
+                    spline = splines.Item(i)
+                    spline.Mirror(axis_x1, axis_y1, axis_x2, axis_y2, copy)
+                    mirror_count += 1
+                except Exception:
+                    pass
+
+            return {
+                "status": "created",
+                "type": "mirror_spline",
+                "mirror_axis": [[axis_x1, axis_y1], [axis_x2, axis_y2]],
+                "copy": copy,
+                "mirrored_count": mirror_count
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def hide_profile(self, visible: bool = False) -> Dict[str, Any]:
+        """
+        Show or hide the active sketch profile.
+
+        Hiding a profile makes it invisible in the 3D view but it
+        remains functional for feature operations.
+
+        Args:
+            visible: True to show, False to hide
+
+        Returns:
+            Dict with status
+        """
+        try:
+            if not self.active_profile:
+                return {"error": "No active sketch. Call create_sketch() first"}
+
+            self.active_profile.Visible = visible
+
+            return {
+                "status": "updated",
+                "visible": visible
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     def draw_point(self, x: float, y: float) -> Dict[str, Any]:
         """
         Draw a construction point in the active sketch.

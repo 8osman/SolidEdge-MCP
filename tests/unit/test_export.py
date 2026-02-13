@@ -1198,3 +1198,156 @@ class TestCloseAllDocuments:
         assert result["status"] == "closed_all"
         doc1.Save.assert_called_once()
         doc1.Close.assert_called_once()
+
+
+# ============================================================================
+# SKETCHING: DRAW ARC BY 3 POINTS
+# ============================================================================
+
+class TestDrawArcBy3Points:
+    @pytest.fixture
+    def sketch_mgr(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        dm = MagicMock()
+        sm = SketchManager(dm)
+        sm.active_profile = MagicMock()
+        return sm
+
+    def test_success(self, sketch_mgr):
+        result = sketch_mgr.draw_arc_by_3_points(0.0, 0.0, 0.05, 0.05, 0.1, 0.0)
+        assert result["status"] == "created"
+        assert result["method"] == "start_center_end"
+        sketch_mgr.active_profile.Arcs2d.AddByStartCenterEnd.assert_called_once_with(
+            0.0, 0.0, 0.05, 0.05, 0.1, 0.0
+        )
+
+    def test_no_sketch(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        sm = SketchManager(MagicMock())
+        result = sm.draw_arc_by_3_points(0, 0, 0.05, 0.05, 0.1, 0)
+        assert "error" in result
+
+
+# ============================================================================
+# SKETCHING: DRAW CIRCLE BY 2 POINTS
+# ============================================================================
+
+class TestDrawCircleBy2Points:
+    @pytest.fixture
+    def sketch_mgr(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        dm = MagicMock()
+        sm = SketchManager(dm)
+        sm.active_profile = MagicMock()
+        return sm
+
+    def test_success(self, sketch_mgr):
+        result = sketch_mgr.draw_circle_by_2_points(0.0, 0.0, 0.1, 0.0)
+        assert result["status"] == "created"
+        assert result["method"] == "2_points"
+        assert result["center"] == [0.05, 0.0]
+        assert result["radius"] == 0.05
+        sketch_mgr.active_profile.Circles2d.AddBy2Points.assert_called_once_with(
+            0.0, 0.0, 0.1, 0.0
+        )
+
+    def test_no_sketch(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        sm = SketchManager(MagicMock())
+        result = sm.draw_circle_by_2_points(0, 0, 0.1, 0)
+        assert "error" in result
+
+
+# ============================================================================
+# SKETCHING: DRAW CIRCLE BY 3 POINTS
+# ============================================================================
+
+class TestDrawCircleBy3Points:
+    @pytest.fixture
+    def sketch_mgr(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        dm = MagicMock()
+        sm = SketchManager(dm)
+        sm.active_profile = MagicMock()
+        return sm
+
+    def test_success(self, sketch_mgr):
+        result = sketch_mgr.draw_circle_by_3_points(0.0, 0.0, 0.1, 0.0, 0.05, 0.05)
+        assert result["status"] == "created"
+        assert result["method"] == "3_points"
+        sketch_mgr.active_profile.Circles2d.AddBy3Points.assert_called_once_with(
+            0.0, 0.0, 0.1, 0.0, 0.05, 0.05
+        )
+
+    def test_no_sketch(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        sm = SketchManager(MagicMock())
+        result = sm.draw_circle_by_3_points(0, 0, 0.1, 0, 0.05, 0.05)
+        assert "error" in result
+
+
+# ============================================================================
+# SKETCHING: MIRROR SPLINE
+# ============================================================================
+
+class TestMirrorSpline:
+    @pytest.fixture
+    def sketch_mgr(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        dm = MagicMock()
+        sm = SketchManager(dm)
+        sm.active_profile = MagicMock()
+        return sm
+
+    def test_success(self, sketch_mgr):
+        spline = MagicMock()
+        sketch_mgr.active_profile.BSplineCurves2d.Count = 1
+        sketch_mgr.active_profile.BSplineCurves2d.Item.return_value = spline
+
+        result = sketch_mgr.mirror_spline(0, 0, 0, 1, True)
+        assert result["status"] == "created"
+        assert result["mirrored_count"] == 1
+        spline.Mirror.assert_called_once_with(0, 0, 0, 1, True)
+
+    def test_no_splines(self, sketch_mgr):
+        sketch_mgr.active_profile.BSplineCurves2d.Count = 0
+        result = sketch_mgr.mirror_spline(0, 0, 0, 1)
+        assert "error" in result
+
+    def test_no_sketch(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        sm = SketchManager(MagicMock())
+        result = sm.mirror_spline(0, 0, 0, 1)
+        assert "error" in result
+
+
+# ============================================================================
+# SKETCHING: HIDE PROFILE
+# ============================================================================
+
+class TestHideProfile:
+    @pytest.fixture
+    def sketch_mgr(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        dm = MagicMock()
+        sm = SketchManager(dm)
+        sm.active_profile = MagicMock()
+        return sm
+
+    def test_hide(self, sketch_mgr):
+        result = sketch_mgr.hide_profile(visible=False)
+        assert result["status"] == "updated"
+        assert result["visible"] is False
+        assert sketch_mgr.active_profile.Visible is False
+
+    def test_show(self, sketch_mgr):
+        result = sketch_mgr.hide_profile(visible=True)
+        assert result["status"] == "updated"
+        assert result["visible"] is True
+        assert sketch_mgr.active_profile.Visible is True
+
+    def test_no_sketch(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        sm = SketchManager(MagicMock())
+        result = sm.hide_profile()
+        assert "error" in result

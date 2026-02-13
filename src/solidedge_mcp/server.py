@@ -497,6 +497,118 @@ def draw_spline(points: list) -> dict:
 
 
 @mcp.tool()
+def draw_arc_by_3_points(
+    start_x: float, start_y: float,
+    center_x: float, center_y: float,
+    end_x: float, end_y: float
+) -> dict:
+    """
+    Draw an arc defined by start point, center point, and end point.
+
+    Alternative to draw_arc which uses center + angles. This method
+    specifies the arc by its start, center, and end coordinates directly.
+
+    Args:
+        start_x: Arc start X coordinate (meters)
+        start_y: Arc start Y coordinate (meters)
+        center_x: Arc center X coordinate (meters)
+        center_y: Arc center Y coordinate (meters)
+        end_x: Arc end X coordinate (meters)
+        end_y: Arc end Y coordinate (meters)
+
+    Returns:
+        Arc creation status
+    """
+    return sketch_manager.draw_arc_by_3_points(start_x, start_y, center_x, center_y, end_x, end_y)
+
+
+@mcp.tool()
+def draw_circle_by_2_points(x1: float, y1: float, x2: float, y2: float) -> dict:
+    """
+    Draw a circle defined by two diametrically opposite points.
+
+    The two points define the diameter of the circle. The center is
+    the midpoint and the radius is half the distance between them.
+
+    Args:
+        x1: First point X coordinate (meters)
+        y1: First point Y coordinate (meters)
+        x2: Second point X coordinate (meters)
+        y2: Second point Y coordinate (meters)
+
+    Returns:
+        Circle creation status with computed center and radius
+    """
+    return sketch_manager.draw_circle_by_2_points(x1, y1, x2, y2)
+
+
+@mcp.tool()
+def draw_circle_by_3_points(
+    x1: float, y1: float,
+    x2: float, y2: float,
+    x3: float, y3: float
+) -> dict:
+    """
+    Draw a circle through three points.
+
+    The circle passes through all three specified points. Useful when
+    the center and radius are not known but three points on the
+    circumference are.
+
+    Args:
+        x1, y1: First point on circle (meters)
+        x2, y2: Second point on circle (meters)
+        x3, y3: Third point on circle (meters)
+
+    Returns:
+        Circle creation status
+    """
+    return sketch_manager.draw_circle_by_3_points(x1, y1, x2, y2, x3, y3)
+
+
+@mcp.tool()
+def mirror_spline(
+    axis_x1: float, axis_y1: float,
+    axis_x2: float, axis_y2: float,
+    copy: bool = True
+) -> dict:
+    """
+    Mirror B-spline curves across a line defined by two points.
+
+    Mirrors all B-spline curves in the active sketch across the
+    specified axis line.
+
+    Args:
+        axis_x1: Mirror axis start X (meters)
+        axis_y1: Mirror axis start Y (meters)
+        axis_x2: Mirror axis end X (meters)
+        axis_y2: Mirror axis end Y (meters)
+        copy: If True, create a mirrored copy. If False, move the original.
+
+    Returns:
+        Mirror status with count of mirrored splines
+    """
+    return sketch_manager.mirror_spline(axis_x1, axis_y1, axis_x2, axis_y2, copy)
+
+
+@mcp.tool()
+def set_profile_visibility(visible: bool = False) -> dict:
+    """
+    Show or hide the active sketch profile.
+
+    Hiding a profile makes it invisible in the 3D view but it remains
+    functional for feature operations.
+
+    Args:
+        visible: True to show, False to hide
+
+    Returns:
+        Visibility update status
+    """
+    return sketch_manager.hide_profile(visible)
+
+
+@mcp.tool()
 def draw_point(x: float, y: float) -> dict:
     """
     Draw a construction point in the active sketch.
