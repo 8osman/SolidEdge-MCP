@@ -468,3 +468,58 @@ class SolidEdgeConnection:
                 "error": str(e),
                 "traceback": traceback.format_exc()
             }
+
+    def get_global_parameter(self, parameter: int) -> Dict[str, Any]:
+        """
+        Get an application-level global parameter.
+
+        Uses Application.GetGlobalParameter(param). Parameter IDs come from
+        the AssemblyGlobalConstants enum (1-21).
+
+        Args:
+            parameter: Global parameter ID (from AssemblyGlobalConstants)
+
+        Returns:
+            Dict with parameter value
+        """
+        try:
+            self.ensure_connected()
+            value = self.application.GetGlobalParameter(parameter)
+            return {
+                "status": "success",
+                "parameter": parameter,
+                "value": value
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def set_global_parameter(self, parameter: int, value) -> Dict[str, Any]:
+        """
+        Set an application-level global parameter.
+
+        Uses Application.SetGlobalParameter(param, value). Parameter IDs come
+        from the AssemblyGlobalConstants enum (1-21).
+
+        Args:
+            parameter: Global parameter ID (from AssemblyGlobalConstants)
+            value: New value for the parameter
+
+        Returns:
+            Dict with status
+        """
+        try:
+            self.ensure_connected()
+            self.application.SetGlobalParameter(parameter, value)
+            return {
+                "status": "set",
+                "parameter": parameter,
+                "value": value
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }

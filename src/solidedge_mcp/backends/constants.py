@@ -241,6 +241,34 @@ class MateTypeConstants:
 
 # SaveAsConstants - names not in type library, but values match
 # (SaveAs=0, SaveCopyAs=1)
+class AssemblyGlobalConstants:
+    """Assembly global parameter constants (from type library: seAssemblyGlobal*)
+
+    Used with Application.GetGlobalParameter / SetGlobalParameter.
+    """
+    seAssemblyGlobalTubeWallThickness = 1
+    seAssemblyGlobalTubeOuterDiameter = 2
+    seAssemblyGlobalMiterClearance = 3
+    seAssemblyGlobalTrimExtendLength = 4
+    seAssemblyGlobalCopeClearance = 5
+    seAssemblyGlobalNotchPlateLength = 6
+    seAssemblyGlobalWeldOffset = 7
+    seAssemblyGlobalWeldAngle = 8
+    seAssemblyGlobalWeldSize = 9
+    seAssemblyGlobalBoltDiameter = 10
+    seAssemblyGlobalHoleDiameter = 11
+    seAssemblyGlobalHoleDiameterOffset = 12
+    seAssemblyGlobalBoltHeadDiameter = 13
+    seAssemblyGlobalBoltLength = 14
+    seAssemblyGlobalNutDiameter = 15
+    seAssemblyGlobalNutHeight = 16
+    seAssemblyGlobalWasherOuterDiameter = 17
+    seAssemblyGlobalWasherThickness = 18
+    seAssemblyGlobalDefaultMaterial = 19
+    seAssemblyGlobalEndCapType = 20
+    seAssemblyGlobalAdjustableTubes = 21
+
+
 class SaveAsConstants:
     """File save format constants (values verified, names approximate)"""
     SaveAs = 0

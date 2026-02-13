@@ -70,6 +70,14 @@ def set_visible(visible: bool) -> dict:
     """Set the visibility of the Solid Edge window."""
     return connection.set_visible(visible)
 
+def get_global_parameter(parameter: int) -> dict:
+    """Get an application-level global parameter by ID (from AssemblyGlobalConstants 1-21)."""
+    return connection.get_global_parameter(parameter)
+
+def set_global_parameter(parameter: int, value: float) -> dict:
+    """Set an application-level global parameter by ID (from AssemblyGlobalConstants 1-21)."""
+    return connection.set_global_parameter(parameter, value)
+
 def register(mcp):
     """Register connection tools with the MCP server."""
     mcp.tool()(connect_to_solidedge)
@@ -89,3 +97,5 @@ def register(mcp):
     mcp.tool()(set_status_bar)
     mcp.tool()(get_visible)
     mcp.tool()(set_visible)
+    mcp.tool()(get_global_parameter)
+    mcp.tool()(set_global_parameter)

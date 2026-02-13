@@ -160,6 +160,18 @@ def get_variable_names(name: str) -> dict:
     """Get both DisplayName and SystemName of a variable."""
     return query_manager.get_variable_names(name)
 
+def translate_variable(name: str) -> dict:
+    """Translate (look up) a variable by name via Variables.Translate()."""
+    return query_manager.translate_variable(name)
+
+def copy_variable_to_clipboard(name: str) -> dict:
+    """Copy a variable definition to the clipboard for pasting into another document."""
+    return query_manager.copy_variable_to_clipboard(name)
+
+def add_variable_from_clipboard(name: str, units_type: str = None) -> dict:
+    """Add a variable from the clipboard (previously copied with copy_variable_to_clipboard)."""
+    return query_manager.add_variable_from_clipboard(name, units_type)
+
 
 # === Custom Properties ===
 
@@ -208,6 +220,33 @@ def get_body_color() -> dict:
 def set_face_color(face_index: int, red: int, green: int, blue: int) -> dict:
     """Set the color of a specific face."""
     return query_manager.set_face_color(face_index, red, green, blue)
+
+def set_body_opacity(opacity: float) -> dict:
+    """Set the body opacity (0.0 = fully transparent, 1.0 = fully opaque)."""
+    return query_manager.set_body_opacity(opacity)
+
+def set_body_reflectivity(reflectivity: float) -> dict:
+    """Set the body reflectivity (0.0 to 1.0)."""
+    return query_manager.set_body_reflectivity(reflectivity)
+
+
+# === Layers ===
+
+def get_layers() -> dict:
+    """Get all layers in the active document."""
+    return query_manager.get_layers()
+
+def add_layer(name: str) -> dict:
+    """Add a new layer to the active document."""
+    return query_manager.add_layer(name)
+
+def activate_layer(name_or_index) -> dict:
+    """Activate a layer by name (str) or 0-based index (int)."""
+    return query_manager.activate_layer(name_or_index)
+
+def set_layer_properties(name_or_index, show: bool = None, selectable: bool = None) -> dict:
+    """Set layer visibility and selectability properties."""
+    return query_manager.set_layer_properties(name_or_index, show, selectable)
 
 
 # === Modeling Mode ===
@@ -335,6 +374,9 @@ def register(mcp):
     mcp.tool()(get_variable_formula)
     mcp.tool()(rename_variable)
     mcp.tool()(get_variable_names)
+    mcp.tool()(translate_variable)
+    mcp.tool()(copy_variable_to_clipboard)
+    mcp.tool()(add_variable_from_clipboard)
     # Custom Properties
     mcp.tool()(get_custom_properties)
     mcp.tool()(set_custom_property)
@@ -348,6 +390,13 @@ def register(mcp):
     mcp.tool()(set_body_color)
     mcp.tool()(get_body_color)
     mcp.tool()(set_face_color)
+    mcp.tool()(set_body_opacity)
+    mcp.tool()(set_body_reflectivity)
+    # Layers
+    mcp.tool()(get_layers)
+    mcp.tool()(add_layer)
+    mcp.tool()(activate_layer)
+    mcp.tool()(set_layer_properties)
     # Modeling Mode
     mcp.tool()(get_modeling_mode)
     mcp.tool()(set_modeling_mode)

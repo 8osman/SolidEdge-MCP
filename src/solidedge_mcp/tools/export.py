@@ -194,6 +194,22 @@ def set_camera(eye_x: float, eye_y: float, eye_z: float,
         perspective, scale_or_angle
     )
 
+def transform_model_to_screen(x: float, y: float, z: float) -> dict:
+    """Transform 3D model coordinates to 2D screen pixel coordinates."""
+    return view_manager.transform_model_to_screen(x, y, z)
+
+def transform_screen_to_model(screen_x: int, screen_y: int) -> dict:
+    """Transform 2D screen pixel coordinates to 3D model coordinates."""
+    return view_manager.transform_screen_to_model(screen_x, screen_y)
+
+def begin_camera_dynamics() -> dict:
+    """Begin camera dynamics mode for smooth multi-step camera manipulation."""
+    return view_manager.begin_camera_dynamics()
+
+def end_camera_dynamics() -> dict:
+    """End camera dynamics mode and apply pending camera changes."""
+    return view_manager.end_camera_dynamics()
+
 
 # === Registration ===
 
@@ -243,3 +259,7 @@ def register(mcp):
     mcp.tool()(refresh_view)
     mcp.tool()(get_camera)
     mcp.tool()(set_camera)
+    mcp.tool()(transform_model_to_screen)
+    mcp.tool()(transform_screen_to_model)
+    mcp.tool()(begin_camera_dynamics)
+    mcp.tool()(end_camera_dynamics)

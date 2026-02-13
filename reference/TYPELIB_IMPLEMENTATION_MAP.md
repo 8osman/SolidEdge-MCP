@@ -1,7 +1,7 @@
 # Solid Edge Type Library Implementation Map
 
 Generated: 2026-02-13 | Source: 40 type libraries, 2,240 interfaces, 21,237 methods
-Current: 299 MCP tools implemented
+Current: 314 MCP tools implemented
 
 This document maps every actionable COM API surface from the Solid Edge type libraries
 against our current MCP tool coverage. It identifies gaps and prioritizes what to implement next.
@@ -13,17 +13,17 @@ against our current MCP tool coverage. It identifies gaps and prioritizes what t
 | **Part Features** |    52    |    15    |    28   |      9      |       74 / 181       |
 | **Assembly**      |    11    |     0    |     3   |      8      |       14 /  60       |
 | **Draft/Drawing** |     5    |     0    |     4   |      1      |       16 /  49       |
-| **Framework/App** |     7    |     0    |     6   |      1      |       44 /  53       |
-| **Total**         | **75**   |  **15**  |  **41** |   **19**    | **148 / 343 (43%)**  |
+| **Framework/App** |     7    |     1    |     5   |      1      |       51 /  53       |
+| **Total**         | **75**   |  **16**  |  **40** |   **19**    | **155 / 343 (45%)**  |
 
-**299 MCP tools** registered (many tools cover multiple methods or provide capabilities
+**314 MCP tools** registered (many tools cover multiple methods or provide capabilities
 beyond what the type library tracks, e.g. primitives, view controls, export formats).
 
-## Tool Count by Category (299 total)
+## Tool Count by Category (314 total)
 
 | Category                  | Count | Tools |
 |:--------------------------|:-----:|:---|
-| **Connection/Application**| 17    | Connect, disconnect, app info, quit, is_connected, process_info, install_info, start_command, set_performance_mode, do_idle, activate, abort_command, active_environment, status_bar (get/set), visible (get/set) |
+| **Connection/Application**| 19    | Connect, disconnect, app info, quit, is_connected, process_info, install_info, start_command, set_performance_mode, do_idle, activate, abort_command, active_environment, status_bar (get/set), visible (get/set), global_parameter (get/set) |
 | **Document Management**   | 13    | Create (part, assembly, sheet metal, draft), open, save, close, list, activate, undo, redo |
 | **Sketching**             | 24    | Lines, circles, arcs (multiple), rects, polygons, ellipses, splines, points, constraints (9 types), fillet, chamfer, mirror, construction, hide profile, project_edge, include_edge |
 | **Basic Primitives**      | 10    | Box (3 variants), cylinder, sphere, box cutout (3 variants), cylinder cutout, sphere cutout |
@@ -39,12 +39,12 @@ beyond what the type library tracks, e.g. primitives, view controls, export form
 | **Sheet Metal**           | 10    | Base flange/tab, lofted flange, web network, advanced variants, emboss, flange |
 | **Body Operations**       | 11    | Add body, thicken, mesh, tag, construction, delete faces (2), delete holes (2), delete blends |
 | **Simplification**        | 4     | Auto-simplify, enclosure, duplicate |
-| **View/Display**          | 11    | Orientation, zoom, display mode, background color, get/set camera, rotate, pan, zoom factor, refresh |
-| **Variables**             | 8     | Get all, get by name, set value, add variable, query/search, get formula, rename, get names (display+system) |
+| **View/Display**          | 15    | Orientation, zoom, display mode, background color, get/set camera, rotate, pan, zoom factor, refresh, transform model-to-screen, transform screen-to-model, begin/end camera dynamics |
+| **Variables**             | 11    | Get all, get by name, set value, add variable, query/search, get formula, rename, get names (display+system), translate, copy to clipboard, add from clipboard |
 | **Custom Properties**     | 3     | Get all, set/create, delete |
 | **Body Topology**         | 3     | Body faces, body edges, face info |
 | **Performance**           | 1     | Recompute (set_performance_mode moved to Connection/Application) |
-| **Query/Analysis**        | 28    | Mass properties, bounding box, features, measurements, facet data, solid bodies, modeling mode, face/edge info, colors, angles, volume, delete feature, material table, feature dimensions, material list/set/property, feature status, feature profiles, vertex count |
+| **Query/Analysis**        | 34    | Mass properties, bounding box, features, measurements, facet data, solid bodies, modeling mode, face/edge info, colors, angles, volume, delete feature, material table, feature dimensions, material list/set/property, feature status, feature profiles, vertex count, layers (get/add/activate/set properties), body opacity, body reflectivity |
 | **Feature Management**    | 6     | Suppress, unsuppress, face rotate (2), draft angle, convert feature type |
 | **Export**                | 10    | STEP, STL, IGES, PDF, DXF, flat DXF, Parasolid, JT, drawing, screenshot |
 | **Assembly**              | 28    | Place, list, constraints, patterns, suppress, BOM, structured BOM, interference, bbox, relations, doc tree, replace, delete, visibility, color, transform, count, move, rotate, is_subassembly, display_name, occurrence_document, sub_occurrences |
@@ -558,17 +558,17 @@ Key properties:
 - [x] `DoIdle` - via `do_idle`
 - [x] `StartCommand` - via `start_command`
 - [x] `AbortCommand` - via `abort_command`
-- [ ] `GetGlobalParameter` / `SetGlobalParameter` - Global settings
-- [ ] `GetModelessTaskEventSource` - Event handling
+- [x] `GetGlobalParameter` / `SetGlobalParameter` - via `get_global_parameter`, `set_global_parameter`
+- [ ] `GetModelessTaskEventSource` - Event handling (infeasible: requires event sink)
 - [x] `Activate` - via `activate_application`
 
 Key Properties:
 - [x] `ActiveDocument` - via document tools
 - [x] `ActiveEnvironment` - via `get_active_environment`
 - [x] `StatusBar` (get/put) - via `get_status_bar`, `set_status_bar`
-- [ ] `DisplayAlerts` (get/put) - Alert suppression (have `set_performance_mode`)
+- [x] `DisplayAlerts` (get/put) - covered via `set_performance_mode(display_alerts=...)`
 - [x] `Visible` (get/put) - via `get_visible`, `set_visible`
-- [ ] `SensorEvents` - Sensor monitoring
+- [ ] `SensorEvents` - Sensor monitoring (infeasible: requires event sink)
 
 ### 4.2 View Interface (60 methods)
 
@@ -580,22 +580,22 @@ Key Properties:
 - [x] `RotateCamera` - via `rotate_view`
 - [x] `PanCamera` - via `pan_view`
 - [x] `ZoomCamera` - via `zoom_view`
-- [ ] `TransformModelToDC` / `TransformDCToModel` - **3D-to-screen coordinate mapping**
+- [x] `TransformModelToDC` / `TransformDCToModel` - via `transform_model_to_screen`, `transform_screen_to_model`
 - [x] `Update` - via `refresh_view`
-- [ ] `BeginCameraDynamics` / `EndCameraDynamics` - Smooth camera transitions
+- [x] `BeginCameraDynamics` / `EndCameraDynamics` - via `begin_camera_dynamics`, `end_camera_dynamics`
 
 ### 4.3 Variables Interface (13 methods)
 
 - [x] `Item` / iteration - via `get_variables`, `get_variable`
 - [x] `Edit` / value setting - via `set_variable`
 - [x] `Add` - via `add_variable`
-- [ ] `AddFromClipboard` - Variable from clipboard
+- [x] `AddFromClipboard` - via `add_variable_from_clipboard`
 - [x] `PutName` / `GetName` - via `rename_variable`
-- [ ] `Translate` - Get variable by system name
+- [x] `Translate` - via `translate_variable`
 - [x] `Query` - via `query_variables`
 - [x] `GetFormula` - via `get_variable_formula`
 - [x] `GetDisplayName` / `GetSystemName` - via `get_variable_names`
-- [ ] `CopyToClipboard` - Copy variable value
+- [x] `CopyToClipboard` - via `copy_variable_to_clipboard`
 
 ### 4.4 SelectSet Interface (13 methods)
 
@@ -617,14 +617,15 @@ Key Properties:
 - [ ] Material library access (full)
 
 #### Layer Interface (15 methods)
-- [ ] `Add` / `Delete` / `SetActive` - **Layer management**
-- [ ] `Visible` / `Selectable` - Layer properties
+- [x] `Add` / `SetActive` - via `add_layer`, `activate_layer`
+- [x] `Visible` / `Selectable` - via `set_layer_properties`, `get_layers`
+- [ ] `Delete` / remaining layer methods
 
 #### FaceStyle Interface (49 methods, 69 properties)
 - [x] Basic body color - via `set_body_color`, `set_face_color`
 - [ ] `Texture` - Apply texture
-- [ ] `Transparency` - Set transparency
-- [ ] `Reflectivity` - Material appearance
+- [x] `Transparency` - via `set_body_opacity`
+- [x] `Reflectivity` - via `set_body_reflectivity`
 
 ---
 

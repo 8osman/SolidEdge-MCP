@@ -1525,6 +1525,116 @@ class ViewModel:
                 "traceback": traceback.format_exc()
             }
 
+    def _get_view_object(self):
+        """Get the active view object from the first window."""
+        doc = self.doc_manager.get_active_document()
+        if not hasattr(doc, 'Windows') or doc.Windows.Count == 0:
+            raise Exception("No window available")
+        window = doc.Windows.Item(1)
+        view_obj = window.View if hasattr(window, 'View') else None
+        if not view_obj:
+            raise Exception("Cannot access view object")
+        return view_obj
+
+    def transform_model_to_screen(self, x: float, y: float, z: float) -> Dict[str, Any]:
+        """
+        Transform 3D model coordinates to 2D screen (device) coordinates.
+
+        Uses View.ModelToScreenTransform or TransformModelToDC.
+
+        Args:
+            x: Model X coordinate (meters)
+            y: Model Y coordinate (meters)
+            z: Model Z coordinate (meters)
+
+        Returns:
+            Dict with screen_x and screen_y pixel coordinates
+        """
+        try:
+            view_obj = self._get_view_object()
+            result = view_obj.TransformModelToDC(x, y, z)
+            return {
+                "status": "success",
+                "model": [x, y, z],
+                "screen_x": result[0],
+                "screen_y": result[1]
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def transform_screen_to_model(self, screen_x: int, screen_y: int) -> Dict[str, Any]:
+        """
+        Transform 2D screen (device) coordinates to 3D model coordinates.
+
+        Uses View.TransformDCToModel.
+
+        Args:
+            screen_x: Screen X pixel coordinate
+            screen_y: Screen Y pixel coordinate
+
+        Returns:
+            Dict with model x, y, z coordinates (meters)
+        """
+        try:
+            view_obj = self._get_view_object()
+            result = view_obj.TransformDCToModel(screen_x, screen_y)
+            return {
+                "status": "success",
+                "screen": [screen_x, screen_y],
+                "x": result[0],
+                "y": result[1],
+                "z": result[2]
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def begin_camera_dynamics(self) -> Dict[str, Any]:
+        """
+        Begin camera dynamics mode for smooth multi-step camera manipulation.
+
+        Call this before a sequence of RotateCamera/PanCamera/ZoomCamera calls,
+        then call end_camera_dynamics() when done. This prevents intermediate
+        view updates and improves performance.
+
+        Returns:
+            Dict with status
+        """
+        try:
+            view_obj = self._get_view_object()
+            view_obj.BeginCameraDynamics()
+            return {"status": "camera_dynamics_started"}
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def end_camera_dynamics(self) -> Dict[str, Any]:
+        """
+        End camera dynamics mode and apply all pending camera changes.
+
+        Call after a sequence of camera manipulations that were started with
+        begin_camera_dynamics().
+
+        Returns:
+            Dict with status
+        """
+        try:
+            view_obj = self._get_view_object()
+            view_obj.EndCameraDynamics()
+            return {"status": "camera_dynamics_ended"}
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     def set_camera(self, eye_x: float, eye_y: float, eye_z: float,
                    target_x: float, target_y: float, target_z: float,
                    up_x: float = 0.0, up_y: float = 1.0, up_z: float = 0.0,

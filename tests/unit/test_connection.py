@@ -152,3 +152,50 @@ class TestSetVisible:
         c = SolidEdgeConnection()
         result = c.set_visible(True)
         assert "error" in result
+
+
+# ============================================================================
+# GET GLOBAL PARAMETER
+# ============================================================================
+
+class TestGetGlobalParameter:
+    def test_success(self, conn):
+        conn.application.GetGlobalParameter.return_value = 0.005
+        result = conn.get_global_parameter(1)
+        assert result["status"] == "success"
+        assert result["parameter"] == 1
+        assert result["value"] == 0.005
+        conn.application.GetGlobalParameter.assert_called_once_with(1)
+
+    def test_not_connected(self):
+        c = SolidEdgeConnection()
+        result = c.get_global_parameter(1)
+        assert "error" in result
+
+    def test_invalid_parameter(self, conn):
+        conn.application.GetGlobalParameter.side_effect = Exception("Invalid param")
+        result = conn.get_global_parameter(999)
+        assert "error" in result
+
+
+# ============================================================================
+# SET GLOBAL PARAMETER
+# ============================================================================
+
+class TestSetGlobalParameter:
+    def test_success(self, conn):
+        result = conn.set_global_parameter(10, 0.01)
+        assert result["status"] == "set"
+        assert result["parameter"] == 10
+        assert result["value"] == 0.01
+        conn.application.SetGlobalParameter.assert_called_once_with(10, 0.01)
+
+    def test_not_connected(self):
+        c = SolidEdgeConnection()
+        result = c.set_global_parameter(1, 0.005)
+        assert "error" in result
+
+    def test_com_error(self, conn):
+        conn.application.SetGlobalParameter.side_effect = Exception("COM error")
+        result = conn.set_global_parameter(1, 0.005)
+        assert "error" in result

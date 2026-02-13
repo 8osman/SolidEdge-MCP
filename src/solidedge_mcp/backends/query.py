@@ -2828,3 +2828,363 @@ class QueryManager:
                 "error": str(e),
                 "traceback": traceback.format_exc()
             }
+
+    def translate_variable(self, name: str) -> Dict[str, Any]:
+        """
+        Translate (look up) a variable by name using Variables.Translate().
+
+        Returns the variable dispatch object's Name, Value, and Formula.
+
+        Args:
+            name: Variable name to translate
+
+        Returns:
+            Dict with variable info (name, value, formula)
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            variables = doc.Variables
+
+            var = variables.Translate(name)
+
+            result = {"status": "success", "input_name": name}
+            try:
+                result["name"] = var.Name
+            except Exception:
+                pass
+            try:
+                result["display_name"] = var.DisplayName
+            except Exception:
+                pass
+            try:
+                result["value"] = var.Value
+            except Exception:
+                pass
+            try:
+                result["formula"] = var.Formula
+            except Exception:
+                pass
+            return result
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def copy_variable_to_clipboard(self, name: str) -> Dict[str, Any]:
+        """
+        Copy a variable definition to the clipboard.
+
+        Uses Variables.CopyToClipboard(name). The variable can then be pasted
+        into another document using add_variable_from_clipboard.
+
+        Args:
+            name: Variable display name to copy
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            variables = doc.Variables
+            variables.CopyToClipboard(name)
+            return {"status": "copied", "name": name}
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def add_variable_from_clipboard(self, name: str, units_type: str = None) -> Dict[str, Any]:
+        """
+        Add a variable from the clipboard.
+
+        Uses Variables.AddFromClipboard(name) or AddFromClipboard(name, units).
+        The variable must have been previously copied with copy_variable_to_clipboard.
+
+        Args:
+            name: Name for the new variable
+            units_type: Optional units type string
+
+        Returns:
+            Dict with status and variable info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            variables = doc.Variables
+
+            if units_type:
+                new_var = variables.AddFromClipboard(name, units_type)
+            else:
+                new_var = variables.AddFromClipboard(name)
+
+            result = {"status": "added", "name": name}
+            try:
+                result["value"] = new_var.Value
+            except Exception:
+                pass
+            return result
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # LAYER MANAGEMENT
+    # =================================================================
+
+    def get_layers(self) -> Dict[str, Any]:
+        """
+        Get all layers in the active document.
+
+        Iterates doc.Layers and reports Name, Show, Locatable, IsEmpty.
+
+        Returns:
+            Dict with list of layers
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Layers'):
+                return {"error": "Active document does not support layers"}
+
+            layers_col = doc.Layers
+            layers = []
+
+            for i in range(1, layers_col.Count + 1):
+                try:
+                    layer = layers_col.Item(i)
+                    info = {"index": i - 1}
+                    try:
+                        info["name"] = layer.Name
+                    except Exception:
+                        info["name"] = f"Layer_{i}"
+                    try:
+                        info["show"] = bool(layer.Show)
+                    except Exception:
+                        pass
+                    try:
+                        info["locatable"] = bool(layer.Locatable)
+                    except Exception:
+                        pass
+                    try:
+                        info["is_empty"] = bool(layer.IsEmpty)
+                    except Exception:
+                        pass
+                    layers.append(info)
+                except Exception:
+                    continue
+
+            return {
+                "layers": layers,
+                "count": len(layers)
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def add_layer(self, name: str) -> Dict[str, Any]:
+        """
+        Add a new layer to the active document.
+
+        Uses doc.Layers.Add(name).
+
+        Args:
+            name: Name for the new layer
+
+        Returns:
+            Dict with status and layer info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Layers'):
+                return {"error": "Active document does not support layers"}
+
+            layers = doc.Layers
+            new_layer = layers.Add(name)
+
+            return {
+                "status": "added",
+                "name": name,
+                "total_layers": layers.Count
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def activate_layer(self, name_or_index) -> Dict[str, Any]:
+        """
+        Activate a layer by name or 0-based index.
+
+        Finds the layer and calls layer.Activate().
+
+        Args:
+            name_or_index: Layer name (str) or 0-based index (int)
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Layers'):
+                return {"error": "Active document does not support layers"}
+
+            layers = doc.Layers
+
+            if isinstance(name_or_index, int):
+                if name_or_index < 0 or name_or_index >= layers.Count:
+                    return {"error": f"Invalid layer index: {name_or_index}. Count: {layers.Count}"}
+                layer = layers.Item(name_or_index + 1)
+            else:
+                # Search by name
+                layer = None
+                for i in range(1, layers.Count + 1):
+                    try:
+                        l = layers.Item(i)
+                        if l.Name == name_or_index:
+                            layer = l
+                            break
+                    except Exception:
+                        continue
+                if layer is None:
+                    return {"error": f"Layer '{name_or_index}' not found"}
+
+            layer.Activate()
+            layer_name = layer.Name if hasattr(layer, 'Name') else str(name_or_index)
+
+            return {
+                "status": "activated",
+                "name": layer_name
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def set_layer_properties(self, name_or_index, show: bool = None, selectable: bool = None) -> Dict[str, Any]:
+        """
+        Set layer visibility and selectability properties.
+
+        Args:
+            name_or_index: Layer name (str) or 0-based index (int)
+            show: If provided, set layer visibility
+            selectable: If provided, set layer selectability (Locatable)
+
+        Returns:
+            Dict with status and updated properties
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Layers'):
+                return {"error": "Active document does not support layers"}
+
+            layers = doc.Layers
+
+            if isinstance(name_or_index, int):
+                if name_or_index < 0 or name_or_index >= layers.Count:
+                    return {"error": f"Invalid layer index: {name_or_index}. Count: {layers.Count}"}
+                layer = layers.Item(name_or_index + 1)
+            else:
+                layer = None
+                for i in range(1, layers.Count + 1):
+                    try:
+                        l = layers.Item(i)
+                        if l.Name == name_or_index:
+                            layer = l
+                            break
+                    except Exception:
+                        continue
+                if layer is None:
+                    return {"error": f"Layer '{name_or_index}' not found"}
+
+            updated = {}
+            if show is not None:
+                layer.Show = show
+                updated["show"] = show
+            if selectable is not None:
+                layer.Locatable = selectable
+                updated["selectable"] = selectable
+
+            layer_name = layer.Name if hasattr(layer, 'Name') else str(name_or_index)
+
+            return {
+                "status": "updated",
+                "name": layer_name,
+                "properties": updated
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    # =================================================================
+    # FACESTYLE / APPEARANCE
+    # =================================================================
+
+    def set_body_opacity(self, opacity: float) -> Dict[str, Any]:
+        """
+        Set the body opacity (transparency).
+
+        Uses model.Body.FaceStyle.Opacity.
+
+        Args:
+            opacity: Opacity value from 0.0 (fully transparent) to 1.0 (fully opaque)
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc, model = self._get_first_model()
+            body = model.Body
+
+            opacity = max(0.0, min(1.0, opacity))
+            body.FaceStyle.Opacity = opacity
+
+            return {
+                "status": "set",
+                "opacity": opacity
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def set_body_reflectivity(self, reflectivity: float) -> Dict[str, Any]:
+        """
+        Set the body reflectivity.
+
+        Uses model.Body.FaceStyle.Reflectivity.
+
+        Args:
+            reflectivity: Reflectivity value from 0.0 to 1.0
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc, model = self._get_first_model()
+            body = model.Body
+
+            reflectivity = max(0.0, min(1.0, reflectivity))
+            body.FaceStyle.Reflectivity = reflectivity
+
+            return {
+                "status": "set",
+                "reflectivity": reflectivity
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }

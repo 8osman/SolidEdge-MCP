@@ -1917,6 +1917,388 @@ class TestGetVariableNames:
 
 
 # ============================================================================
+# TRANSLATE VARIABLE
+# ============================================================================
+
+class TestTranslateVariable:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+        translated_var = MagicMock()
+        translated_var.Name = "V1"
+        translated_var.DisplayName = "Width"
+        translated_var.Value = 0.1
+        translated_var.Formula = "100 mm"
+
+        variables = MagicMock()
+        variables.Translate.return_value = translated_var
+        doc.Variables = variables
+
+        result = qm.translate_variable("Width")
+        assert result["status"] == "success"
+        assert result["name"] == "V1"
+        assert result["display_name"] == "Width"
+        assert result["value"] == 0.1
+        assert result["formula"] == "100 mm"
+        variables.Translate.assert_called_once_with("Width")
+
+    def test_not_found(self, query_mgr):
+        qm, doc = query_mgr
+        variables = MagicMock()
+        variables.Translate.side_effect = Exception("Variable not found")
+        doc.Variables = variables
+
+        result = qm.translate_variable("NonExistent")
+        assert "error" in result
+
+
+# ============================================================================
+# COPY VARIABLE TO CLIPBOARD
+# ============================================================================
+
+class TestCopyVariableToClipboard:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+        variables = MagicMock()
+        doc.Variables = variables
+
+        result = qm.copy_variable_to_clipboard("Width")
+        assert result["status"] == "copied"
+        assert result["name"] == "Width"
+        variables.CopyToClipboard.assert_called_once_with("Width")
+
+    def test_com_error(self, query_mgr):
+        qm, doc = query_mgr
+        variables = MagicMock()
+        variables.CopyToClipboard.side_effect = Exception("COM error")
+        doc.Variables = variables
+
+        result = qm.copy_variable_to_clipboard("Width")
+        assert "error" in result
+
+
+# ============================================================================
+# ADD VARIABLE FROM CLIPBOARD
+# ============================================================================
+
+class TestAddVariableFromClipboard:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+        new_var = MagicMock()
+        new_var.Value = 0.1
+        variables = MagicMock()
+        variables.AddFromClipboard.return_value = new_var
+        doc.Variables = variables
+
+        result = qm.add_variable_from_clipboard("PastedWidth")
+        assert result["status"] == "added"
+        assert result["name"] == "PastedWidth"
+        assert result["value"] == 0.1
+        variables.AddFromClipboard.assert_called_once_with("PastedWidth")
+
+    def test_with_units(self, query_mgr):
+        qm, doc = query_mgr
+        new_var = MagicMock()
+        new_var.Value = 0.01
+        variables = MagicMock()
+        variables.AddFromClipboard.return_value = new_var
+        doc.Variables = variables
+
+        result = qm.add_variable_from_clipboard("PastedDia", units_type="m")
+        assert result["status"] == "added"
+        variables.AddFromClipboard.assert_called_once_with("PastedDia", "m")
+
+    def test_com_error(self, query_mgr):
+        qm, doc = query_mgr
+        variables = MagicMock()
+        variables.AddFromClipboard.side_effect = Exception("No clipboard data")
+        doc.Variables = variables
+
+        result = qm.add_variable_from_clipboard("Test")
+        assert "error" in result
+
+
+# ============================================================================
+# LAYERS: GET LAYERS
+# ============================================================================
+
+class TestGetLayers:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+        layer1 = MagicMock()
+        layer1.Name = "Default"
+        layer1.Show = True
+        layer1.Locatable = True
+        layer1.IsEmpty = False
+
+        layer2 = MagicMock()
+        layer2.Name = "Construction"
+        layer2.Show = False
+        layer2.Locatable = False
+        layer2.IsEmpty = True
+
+        layers = MagicMock()
+        layers.Count = 2
+        layers.Item.side_effect = lambda i: {1: layer1, 2: layer2}[i]
+        doc.Layers = layers
+
+        result = qm.get_layers()
+        assert result["count"] == 2
+        assert result["layers"][0]["name"] == "Default"
+        assert result["layers"][0]["show"] is True
+        assert result["layers"][1]["name"] == "Construction"
+        assert result["layers"][1]["is_empty"] is True
+
+    def test_no_layers(self, query_mgr):
+        qm, doc = query_mgr
+        del doc.Layers
+
+        result = qm.get_layers()
+        assert "error" in result
+
+
+# ============================================================================
+# LAYERS: ADD LAYER
+# ============================================================================
+
+class TestAddLayer:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+        layers = MagicMock()
+        layers.Count = 3
+        layers.Add.return_value = MagicMock()
+        doc.Layers = layers
+
+        result = qm.add_layer("MyLayer")
+        assert result["status"] == "added"
+        assert result["name"] == "MyLayer"
+        assert result["total_layers"] == 3
+        layers.Add.assert_called_once_with("MyLayer")
+
+    def test_no_layers_support(self, query_mgr):
+        qm, doc = query_mgr
+        del doc.Layers
+
+        result = qm.add_layer("Test")
+        assert "error" in result
+
+
+# ============================================================================
+# LAYERS: ACTIVATE LAYER
+# ============================================================================
+
+class TestActivateLayer:
+    def test_by_index(self, query_mgr):
+        qm, doc = query_mgr
+        layer = MagicMock()
+        layer.Name = "Layer1"
+        layers = MagicMock()
+        layers.Count = 3
+        layers.Item.return_value = layer
+        doc.Layers = layers
+
+        result = qm.activate_layer(0)
+        assert result["status"] == "activated"
+        assert result["name"] == "Layer1"
+        layer.Activate.assert_called_once()
+
+    def test_by_name(self, query_mgr):
+        qm, doc = query_mgr
+        layer1 = MagicMock()
+        layer1.Name = "Default"
+        layer2 = MagicMock()
+        layer2.Name = "Custom"
+        layers = MagicMock()
+        layers.Count = 2
+        layers.Item.side_effect = lambda i: {1: layer1, 2: layer2}[i]
+        doc.Layers = layers
+
+        result = qm.activate_layer("Custom")
+        assert result["status"] == "activated"
+        assert result["name"] == "Custom"
+        layer2.Activate.assert_called_once()
+
+    def test_invalid_index(self, query_mgr):
+        qm, doc = query_mgr
+        layers = MagicMock()
+        layers.Count = 2
+        doc.Layers = layers
+
+        result = qm.activate_layer(5)
+        assert "error" in result
+
+    def test_name_not_found(self, query_mgr):
+        qm, doc = query_mgr
+        layer1 = MagicMock()
+        layer1.Name = "Default"
+        layers = MagicMock()
+        layers.Count = 1
+        layers.Item.return_value = layer1
+        doc.Layers = layers
+
+        result = qm.activate_layer("NonExistent")
+        assert "error" in result
+
+    def test_no_layers_support(self, query_mgr):
+        qm, doc = query_mgr
+        del doc.Layers
+
+        result = qm.activate_layer(0)
+        assert "error" in result
+
+
+# ============================================================================
+# LAYERS: SET LAYER PROPERTIES
+# ============================================================================
+
+class TestSetLayerProperties:
+    def test_set_show(self, query_mgr):
+        qm, doc = query_mgr
+        layer = MagicMock()
+        layer.Name = "Layer1"
+        layers = MagicMock()
+        layers.Count = 1
+        layers.Item.return_value = layer
+        doc.Layers = layers
+
+        result = qm.set_layer_properties(0, show=False)
+        assert result["status"] == "updated"
+        assert result["properties"]["show"] is False
+        assert layer.Show is False
+
+    def test_set_selectable(self, query_mgr):
+        qm, doc = query_mgr
+        layer = MagicMock()
+        layer.Name = "Layer1"
+        layers = MagicMock()
+        layers.Count = 1
+        layers.Item.return_value = layer
+        doc.Layers = layers
+
+        result = qm.set_layer_properties(0, selectable=True)
+        assert result["status"] == "updated"
+        assert result["properties"]["selectable"] is True
+        assert layer.Locatable is True
+
+    def test_set_both(self, query_mgr):
+        qm, doc = query_mgr
+        layer = MagicMock()
+        layer.Name = "Layer1"
+        layers = MagicMock()
+        layers.Count = 1
+        layers.Item.return_value = layer
+        doc.Layers = layers
+
+        result = qm.set_layer_properties(0, show=True, selectable=False)
+        assert result["status"] == "updated"
+        assert result["properties"]["show"] is True
+        assert result["properties"]["selectable"] is False
+
+    def test_by_name(self, query_mgr):
+        qm, doc = query_mgr
+        layer = MagicMock()
+        layer.Name = "Custom"
+        layers = MagicMock()
+        layers.Count = 1
+        layers.Item.return_value = layer
+        doc.Layers = layers
+
+        result = qm.set_layer_properties("Custom", show=False)
+        assert result["status"] == "updated"
+        assert result["name"] == "Custom"
+
+    def test_no_layers_support(self, query_mgr):
+        qm, doc = query_mgr
+        del doc.Layers
+
+        result = qm.set_layer_properties(0, show=True)
+        assert "error" in result
+
+
+# ============================================================================
+# FACESTYLE: SET BODY OPACITY
+# ============================================================================
+
+class TestSetBodyOpacity:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+        model = MagicMock()
+        models = MagicMock()
+        models.Count = 1
+        models.Item.return_value = model
+        doc.Models = models
+
+        result = qm.set_body_opacity(0.5)
+        assert result["status"] == "set"
+        assert result["opacity"] == 0.5
+        assert model.Body.FaceStyle.Opacity == 0.5
+
+    def test_clamps_values(self, query_mgr):
+        qm, doc = query_mgr
+        model = MagicMock()
+        models = MagicMock()
+        models.Count = 1
+        models.Item.return_value = model
+        doc.Models = models
+
+        result = qm.set_body_opacity(1.5)
+        assert result["status"] == "set"
+        assert result["opacity"] == 1.0
+
+        result = qm.set_body_opacity(-0.5)
+        assert result["status"] == "set"
+        assert result["opacity"] == 0.0
+
+    def test_no_model(self, query_mgr):
+        qm, doc = query_mgr
+        models = MagicMock()
+        models.Count = 0
+        doc.Models = models
+
+        result = qm.set_body_opacity(0.5)
+        assert "error" in result
+
+
+# ============================================================================
+# FACESTYLE: SET BODY REFLECTIVITY
+# ============================================================================
+
+class TestSetBodyReflectivity:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+        model = MagicMock()
+        models = MagicMock()
+        models.Count = 1
+        models.Item.return_value = model
+        doc.Models = models
+
+        result = qm.set_body_reflectivity(0.7)
+        assert result["status"] == "set"
+        assert result["reflectivity"] == 0.7
+        assert model.Body.FaceStyle.Reflectivity == 0.7
+
+    def test_clamps_values(self, query_mgr):
+        qm, doc = query_mgr
+        model = MagicMock()
+        models = MagicMock()
+        models.Count = 1
+        models.Item.return_value = model
+        doc.Models = models
+
+        result = qm.set_body_reflectivity(2.0)
+        assert result["status"] == "set"
+        assert result["reflectivity"] == 1.0
+
+    def test_no_model(self, query_mgr):
+        qm, doc = query_mgr
+        models = MagicMock()
+        models.Count = 0
+        doc.Models = models
+
+        result = qm.set_body_reflectivity(0.5)
+        assert "error" in result
+
+
+# ============================================================================
 # GET FEATURE STATUS
 # ============================================================================
 

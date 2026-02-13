@@ -2103,3 +2103,92 @@ class TestUpdateDrawingView:
 
         result = em.update_drawing_view(5)
         assert "error" in result
+
+
+# ============================================================================
+# VIEW COORDINATE TRANSFORMS
+# ============================================================================
+
+class TestTransformModelToScreen:
+    def test_success(self, view_mgr):
+        vm, doc, view_obj = view_mgr
+        view_obj.TransformModelToDC.return_value = (400, 300)
+        result = vm.transform_model_to_screen(0.1, 0.2, 0.3)
+        assert result["status"] == "success"
+        assert result["screen_x"] == 400
+        assert result["screen_y"] == 300
+        assert result["model"] == [0.1, 0.2, 0.3]
+        view_obj.TransformModelToDC.assert_called_once_with(0.1, 0.2, 0.3)
+
+    def test_no_window(self):
+        from solidedge_mcp.backends.export import ViewModel
+        dm = MagicMock()
+        doc = MagicMock()
+        doc.Windows.Count = 0
+        dm.get_active_document.return_value = doc
+        vm = ViewModel(dm)
+        result = vm.transform_model_to_screen(0, 0, 0)
+        assert "error" in result
+
+
+class TestTransformScreenToModel:
+    def test_success(self, view_mgr):
+        vm, doc, view_obj = view_mgr
+        view_obj.TransformDCToModel.return_value = (0.05, 0.10, 0.15)
+        result = vm.transform_screen_to_model(500, 250)
+        assert result["status"] == "success"
+        assert result["x"] == 0.05
+        assert result["y"] == 0.10
+        assert result["z"] == 0.15
+        assert result["screen"] == [500, 250]
+        view_obj.TransformDCToModel.assert_called_once_with(500, 250)
+
+    def test_no_window(self):
+        from solidedge_mcp.backends.export import ViewModel
+        dm = MagicMock()
+        doc = MagicMock()
+        doc.Windows.Count = 0
+        dm.get_active_document.return_value = doc
+        vm = ViewModel(dm)
+        result = vm.transform_screen_to_model(0, 0)
+        assert "error" in result
+
+
+# ============================================================================
+# CAMERA DYNAMICS
+# ============================================================================
+
+class TestBeginCameraDynamics:
+    def test_success(self, view_mgr):
+        vm, doc, view_obj = view_mgr
+        result = vm.begin_camera_dynamics()
+        assert result["status"] == "camera_dynamics_started"
+        view_obj.BeginCameraDynamics.assert_called_once()
+
+    def test_no_window(self):
+        from solidedge_mcp.backends.export import ViewModel
+        dm = MagicMock()
+        doc = MagicMock()
+        doc.Windows.Count = 0
+        dm.get_active_document.return_value = doc
+        vm = ViewModel(dm)
+        result = vm.begin_camera_dynamics()
+        assert "error" in result
+
+
+class TestEndCameraDynamics:
+    def test_success(self, view_mgr):
+        vm, doc, view_obj = view_mgr
+        result = vm.end_camera_dynamics()
+        assert result["status"] == "camera_dynamics_ended"
+        view_obj.EndCameraDynamics.assert_called_once()
+
+    def test_no_window(self):
+        from solidedge_mcp.backends.export import ViewModel
+        dm = MagicMock()
+        doc = MagicMock()
+        doc.Windows.Count = 0
+        dm.get_active_document.return_value = doc
+        vm = ViewModel(dm)
+        result = vm.end_camera_dynamics()
+        assert "error" in result
