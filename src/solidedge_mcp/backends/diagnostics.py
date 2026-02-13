@@ -2,6 +2,7 @@
 Diagnostic tools for Solid Edge API exploration
 """
 
+
 def get_available_methods(obj, filter_prefix=None):
     """
     Get all available methods and properties on a COM object
@@ -37,7 +38,7 @@ def get_available_methods(obj, filter_prefix=None):
         "methods": sorted(methods),
         "properties": sorted(properties),
         "total_methods": len(methods),
-        "total_properties": len(properties)
+        "total_properties": len(properties),
     }
 
 
@@ -55,16 +56,31 @@ def diagnose_document(doc):
         "document_type": type(doc).__name__,
         "available_collections": [],
         "models_methods": [],
-        "cutout_related_methods": []
+        "cutout_related_methods": [],
     }
 
     # Check for common collections
     collection_names = [
-        'Models', 'ExtrudedCutouts', 'Cutouts', 'Features',
-        'ProfileSets', 'Profiles', 'ExtrudedProtrusions',
-        'Holes', 'Rounds', 'Chamfers', 'Patterns', 'RibWebs',
-        'Threads', 'Constructions', 'RefPlanes', 'UserDefinedPatterns',
-        'Assemblies', 'Occurrences', 'SolidEdgePart', 'Sketches'
+        "Models",
+        "ExtrudedCutouts",
+        "Cutouts",
+        "Features",
+        "ProfileSets",
+        "Profiles",
+        "ExtrudedProtrusions",
+        "Holes",
+        "Rounds",
+        "Chamfers",
+        "Patterns",
+        "RibWebs",
+        "Threads",
+        "Constructions",
+        "RefPlanes",
+        "UserDefinedPatterns",
+        "Assemblies",
+        "Occurrences",
+        "SolidEdgePart",
+        "Sketches",
     ]
 
     for name in collection_names:
@@ -79,14 +95,15 @@ def diagnose_document(doc):
                 pass
 
     # Get all methods on Models collection
-    if hasattr(doc, 'Models'):
+    if hasattr(doc, "Models"):
         models = doc.Models
         all_methods = get_available_methods(models)
         info["models_methods"] = all_methods["methods"]
 
         # Filter cutout-related
-        cutout_methods = [m for m in all_methods["methods"]
-                         if 'cutout' in m.lower() or 'cut' in m.lower()]
+        cutout_methods = [
+            m for m in all_methods["methods"] if "cutout" in m.lower() or "cut" in m.lower()
+        ]
         info["cutout_related_methods"] = cutout_methods
 
     return info
@@ -106,15 +123,24 @@ def diagnose_feature(model):
         "model_type": type(model).__name__,
         "properties": {},
         "all_attributes": [],
-        "operation_related": []
+        "operation_related": [],
     }
 
     # Properties to check
     property_names = [
-        'Name', 'Type', 'Visible', 'Suppressed', 'FeatureType',
-        'Operation', 'OperationType', 'SideStep', 'ExtrusionType',
-        'ProfileSide', 'ProfilePlaneSide', 'KeypointType',
-        'FeatureOperationType'
+        "Name",
+        "Type",
+        "Visible",
+        "Suppressed",
+        "FeatureType",
+        "Operation",
+        "OperationType",
+        "SideStep",
+        "ExtrusionType",
+        "ProfileSide",
+        "ProfilePlaneSide",
+        "KeypointType",
+        "FeatureOperationType",
     ]
 
     for prop_name in property_names:
@@ -130,9 +156,12 @@ def diagnose_feature(model):
     info["all_attributes"] = all_attrs["methods"] + all_attrs["properties"]
 
     # Find operation-related attributes
-    keywords = ['operation', 'side', 'type', 'cut', 'add', 'subtract', 'feature']
-    operation_attrs = [attr for attr in info["all_attributes"]
-                      if any(keyword in attr.lower() for keyword in keywords)]
+    keywords = ["operation", "side", "type", "cut", "add", "subtract", "feature"]
+    operation_attrs = [
+        attr
+        for attr in info["all_attributes"]
+        if any(keyword in attr.lower() for keyword in keywords)
+    ]
     info["operation_related"] = operation_attrs
 
     return info

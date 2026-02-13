@@ -14,6 +14,7 @@ import pytest
 def asm_mgr():
     """Create AssemblyManager with mocked dependencies."""
     from solidedge_mcp.backends.assembly import AssemblyManager
+
     dm = MagicMock()
     doc = MagicMock()
     dm.get_active_document.return_value = doc
@@ -23,6 +24,7 @@ def asm_mgr():
 # ============================================================================
 # OCCURRENCE BOUNDING BOX
 # ============================================================================
+
 
 class TestGetOccurrenceBoundingBox:
     def test_success(self, asm_mgr):
@@ -66,6 +68,7 @@ class TestGetOccurrenceBoundingBox:
 # ============================================================================
 # BOM
 # ============================================================================
+
 
 class TestGetBom:
     def test_basic_bom(self, asm_mgr):
@@ -151,6 +154,7 @@ class TestGetBom:
 # INTERFERENCE CHECK
 # ============================================================================
 
+
 class TestCheckInterference:
     def test_not_assembly(self, asm_mgr):
         am, doc = asm_mgr
@@ -182,6 +186,7 @@ class TestCheckInterference:
 # EXISTING METHODS
 # ============================================================================
 
+
 class TestPlaceComponent:
     def test_at_origin(self, asm_mgr):
         am, doc = asm_mgr
@@ -197,6 +202,7 @@ class TestPlaceComponent:
 
         # Mock os.path.exists
         import unittest.mock
+
         with unittest.mock.patch("os.path.exists", return_value=True):
             result = am.place_component("C:/test/part.par", 0, 0, 0)
 
@@ -206,6 +212,7 @@ class TestPlaceComponent:
     def test_file_not_found(self, asm_mgr):
         am, doc = asm_mgr
         import unittest.mock
+
         with unittest.mock.patch("os.path.exists", return_value=False):
             result = am.place_component("nonexistent.par")
 
@@ -215,6 +222,7 @@ class TestPlaceComponent:
 # ============================================================================
 # ASSEMBLY RELATIONS
 # ============================================================================
+
 
 class TestGetAssemblyRelations:
     def test_success(self, asm_mgr):
@@ -263,6 +271,7 @@ class TestGetAssemblyRelations:
 # ============================================================================
 # DOCUMENT TREE
 # ============================================================================
+
 
 class TestGetDocumentTree:
     def test_flat_assembly(self, asm_mgr):
@@ -363,6 +372,7 @@ class TestSuppressComponent:
 # TIER 3: OCCURRENCE MOVE
 # ============================================================================
 
+
 class TestOccurrenceMove:
     def test_success(self, asm_mgr):
         am, doc = asm_mgr
@@ -399,9 +409,11 @@ class TestOccurrenceMove:
 # TIER 3: OCCURRENCE ROTATE
 # ============================================================================
 
+
 class TestOccurrenceRotate:
     def test_success(self, asm_mgr):
         import math
+
         am, doc = asm_mgr
         occ = MagicMock()
         occurrences = MagicMock()
@@ -437,6 +449,7 @@ class TestOccurrenceRotate:
 # ============================================================================
 # ASSEMBLY: IS SUBASSEMBLY
 # ============================================================================
+
 
 class TestIsSubassembly:
     def test_true(self, asm_mgr):
@@ -487,6 +500,7 @@ class TestIsSubassembly:
 # ASSEMBLY: GET COMPONENT DISPLAY NAME
 # ============================================================================
 
+
 class TestGetComponentDisplayName:
     def test_success(self, asm_mgr):
         am, doc = asm_mgr
@@ -524,6 +538,7 @@ class TestGetComponentDisplayName:
 # ============================================================================
 # ASSEMBLY: GET OCCURRENCE DOCUMENT
 # ============================================================================
+
 
 class TestGetOccurrenceDocument:
     def test_success(self, asm_mgr):
@@ -568,6 +583,7 @@ class TestGetOccurrenceDocument:
 # ============================================================================
 # ASSEMBLY: GET SUB-OCCURRENCES
 # ============================================================================
+
 
 class TestGetSubOccurrences:
     def test_with_children(self, asm_mgr):
@@ -633,6 +649,7 @@ class TestGetSubOccurrences:
 # SET COMPONENT TRANSFORM
 # ============================================================================
 
+
 class TestSetComponentTransform:
     def test_success(self, asm_mgr):
         am, doc = asm_mgr
@@ -650,6 +667,7 @@ class TestSetComponentTransform:
         occ.PutTransform.assert_called_once()
         # Verify radians conversion
         import math
+
         args = occ.PutTransform.call_args[0]
         assert args[0] == 0.1
         assert args[3] == pytest.approx(math.radians(45.0))
@@ -675,6 +693,7 @@ class TestSetComponentTransform:
 # ============================================================================
 # SET COMPONENT ORIGIN
 # ============================================================================
+
 
 class TestSetComponentOrigin:
     def test_success(self, asm_mgr):
@@ -711,6 +730,7 @@ class TestSetComponentOrigin:
 # ============================================================================
 # MIRROR COMPONENT
 # ============================================================================
+
 
 class TestMirrorComponent:
     def test_success(self, asm_mgr):
@@ -760,4 +780,129 @@ class TestMirrorComponent:
         doc.RefPlanes = ref_planes
 
         result = am.mirror_component(0, 10)
+        assert "error" in result
+
+
+# ============================================================================
+# ADD COMPONENT WITH TRANSFORM
+# ============================================================================
+
+
+class TestAddComponentWithTransform:
+    def test_success(self, asm_mgr):
+        am, doc = asm_mgr
+        occ = MagicMock()
+        occ.Name = "Part1:1"
+        occurrences = MagicMock()
+        occurrences.Count = 1
+        occurrences.AddWithTransform.return_value = occ
+        doc.Occurrences = occurrences
+
+        import unittest.mock
+
+        with unittest.mock.patch("os.path.exists", return_value=True):
+            result = am.add_component_with_transform("C:\\test.par", 0.1, 0.2, 0.3, 0, 0, 45)
+        assert result["status"] == "added"
+        assert result["name"] == "Part1:1"
+        occurrences.AddWithTransform.assert_called_once()
+
+    def test_not_assembly(self, asm_mgr):
+        am, doc = asm_mgr
+        del doc.Occurrences
+
+        import unittest.mock
+
+        with unittest.mock.patch("os.path.exists", return_value=True):
+            result = am.add_component_with_transform("C:\\test.par")
+        assert "error" in result
+
+    def test_default_values(self, asm_mgr):
+        am, doc = asm_mgr
+        occ = MagicMock()
+        occ.Name = "Part1:1"
+        occurrences = MagicMock()
+        occurrences.Count = 1
+        occurrences.AddWithTransform.return_value = occ
+        doc.Occurrences = occurrences
+
+        import unittest.mock
+
+        with unittest.mock.patch("os.path.exists", return_value=True):
+            result = am.add_component_with_transform("C:\\test.par")
+        assert result["status"] == "added"
+
+
+# ============================================================================
+# DELETE RELATION
+# ============================================================================
+
+
+class TestDeleteRelation:
+    def test_success(self, asm_mgr):
+        am, doc = asm_mgr
+        rel = MagicMock()
+        rel.Type = 2
+        relations = MagicMock()
+        relations.Count = 3
+        relations.Item.return_value = rel
+        doc.Relations3d = relations
+
+        result = am.delete_relation(1)
+        assert result["status"] == "deleted"
+        assert result["relation_index"] == 1
+        rel.Delete.assert_called_once()
+
+    def test_not_assembly(self, asm_mgr):
+        am, doc = asm_mgr
+        del doc.Relations3d
+
+        result = am.delete_relation(0)
+        assert "error" in result
+
+    def test_invalid_index(self, asm_mgr):
+        am, doc = asm_mgr
+        relations = MagicMock()
+        relations.Count = 2
+        doc.Relations3d = relations
+
+        result = am.delete_relation(5)
+        assert "error" in result
+
+
+# ============================================================================
+# GET RELATION INFO
+# ============================================================================
+
+
+class TestGetRelationInfo:
+    def test_success(self, asm_mgr):
+        am, doc = asm_mgr
+        rel = MagicMock()
+        rel.Type = 2
+        rel.Status = 0
+        rel.Name = "Planar1"
+        rel.Suppressed = False
+        relations = MagicMock()
+        relations.Count = 3
+        relations.Item.return_value = rel
+        doc.Relations3d = relations
+
+        result = am.get_relation_info(0)
+        assert result["relation_index"] == 0
+        assert result["name"] == "Planar1"
+
+    def test_not_assembly(self, asm_mgr):
+        am, doc = asm_mgr
+        del doc.Relations3d
+
+        result = am.get_relation_info(0)
+        assert "error" in result
+
+    def test_invalid_index(self, asm_mgr):
+        am, doc = asm_mgr
+        relations = MagicMock()
+        relations.Count = 1
+        doc.Relations3d = relations
+
+        result = am.get_relation_info(5)
         assert "error" in result

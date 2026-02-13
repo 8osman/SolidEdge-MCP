@@ -4,14 +4,22 @@ from solidedge_mcp.managers import query_manager
 
 # === Measurement ===
 
+
 def measure_distance(x1: float, y1: float, z1: float, x2: float, y2: float, z2: float) -> dict:
     """Measure distance between two 3D points."""
     return query_manager.measure_distance(x1, y1, z1, x2, y2, z2)
 
+
 def measure_angle(
-    x1: float, y1: float, z1: float,
-    x2: float, y2: float, z2: float,
-    x3: float, y3: float, z3: float
+    x1: float,
+    y1: float,
+    z1: float,
+    x2: float,
+    y2: float,
+    z2: float,
+    x3: float,
+    y3: float,
+    z3: float,
 ) -> dict:
     """Measure angle between three 3D points (vertex at point 2)."""
     return query_manager.measure_angle(x1, y1, z1, x2, y2, z2, x3, y3, z3)
@@ -19,25 +27,31 @@ def measure_angle(
 
 # === Mass / Physical Properties ===
 
+
 def get_mass_properties(density: float = 7850) -> dict:
     """Get mass properties (density default: 7850 kg/m3 steel)."""
     return query_manager.get_mass_properties(density)
+
 
 def get_center_of_gravity() -> dict:
     """Get the center of gravity of the active part."""
     return query_manager.get_center_of_gravity()
 
+
 def get_moments_of_inertia() -> dict:
     """Get moments of inertia of the active part."""
     return query_manager.get_moments_of_inertia()
+
 
 def get_surface_area() -> dict:
     """Get the total surface area of the active part."""
     return query_manager.get_surface_area()
 
+
 def get_volume() -> dict:
     """Get the volume of the active part."""
     return query_manager.get_volume()
+
 
 def set_material_density(density: float) -> dict:
     """Set the material density for mass property calculations."""
@@ -46,41 +60,51 @@ def set_material_density(density: float) -> dict:
 
 # === Geometry / Topology ===
 
+
 def get_bounding_box() -> dict:
     """Get the bounding box of the model."""
     return query_manager.get_bounding_box()
+
 
 def get_body_faces() -> dict:
     """Get all faces on the body with geometry info."""
     return query_manager.get_body_faces()
 
+
 def get_body_edges() -> dict:
     """Get edge information from the model body."""
     return query_manager.get_body_edges()
+
 
 def get_face_info(face_index: int) -> dict:
     """Get detailed information about a specific face."""
     return query_manager.get_face_info(face_index)
 
+
 def get_face_count() -> dict:
     """Get the total face count on the body."""
     return query_manager.get_face_count()
+
 
 def get_face_area(face_index: int) -> dict:
     """Get the area of a specific face."""
     return query_manager.get_face_area(face_index)
 
+
 def get_edge_count() -> dict:
     """Get total edge count on the model body."""
     return query_manager.get_edge_count()
+
 
 def get_edge_info(face_index: int, edge_index: int) -> dict:
     """Get detailed info about a specific edge."""
     return query_manager.get_edge_info(face_index, edge_index)
 
+
 def get_solid_bodies() -> dict:
     """Report all solid bodies in the active part document."""
     return query_manager.get_solid_bodies()
+
 
 def get_body_facet_data(tolerance: float = 0.0) -> dict:
     """Get tessellation/mesh data from the model body."""
@@ -89,25 +113,31 @@ def get_body_facet_data(tolerance: float = 0.0) -> dict:
 
 # === Features / Design Tree ===
 
+
 def get_feature_count() -> dict:
     """Get the total count of features."""
     return query_manager.get_feature_count()
+
 
 def get_feature_dimensions(feature_name: str) -> dict:
     """Get dimensions/parameters of a named feature."""
     return query_manager.get_feature_dimensions(feature_name)
 
+
 def get_design_edgebar_features() -> dict:
     """Get the full feature tree from DesignEdgebarFeatures."""
     return query_manager.get_design_edgebar_features()
+
 
 def rename_feature(old_name: str, new_name: str) -> dict:
     """Rename a feature in the design tree (by name)."""
     return query_manager.rename_feature(old_name, new_name)
 
+
 def suppress_feature(feature_name: str) -> dict:
     """Suppress a feature by name."""
     return query_manager.suppress_feature(feature_name)
+
 
 def unsuppress_feature(feature_name: str) -> dict:
     """Unsuppress a feature by name."""
@@ -116,13 +146,16 @@ def unsuppress_feature(feature_name: str) -> dict:
 
 # === Document Properties ===
 
+
 def get_document_properties() -> dict:
     """Get document properties (Title, Subject, Author, etc.)."""
     return query_manager.get_document_properties()
 
+
 def set_document_property(name: str, value: str) -> dict:
     """Set a summary/document property."""
     return query_manager.set_document_property(name, value)
+
 
 def get_ref_planes() -> dict:
     """List all reference planes."""
@@ -131,45 +164,56 @@ def get_ref_planes() -> dict:
 
 # === Variables ===
 
+
 def get_variables() -> dict:
     """Get all variables (dimensions, parameters) in the document."""
     return query_manager.get_variables()
+
 
 def get_variable(name: str) -> dict:
     """Get a specific variable by name."""
     return query_manager.get_variable(name)
 
+
 def set_variable(name: str, value: float) -> dict:
     """Set a variable's value."""
     return query_manager.set_variable(name, value)
+
 
 def add_variable(name: str, formula: str, units_type: str = None) -> dict:
     """Add a new user variable."""
     return query_manager.add_variable(name, formula, units_type)
 
+
 def query_variables(pattern: str = "*", case_insensitive: bool = True) -> dict:
     """Query variables matching a pattern."""
     return query_manager.query_variables(pattern, case_insensitive)
+
 
 def get_variable_formula(name: str) -> dict:
     """Get the formula of a variable by name."""
     return query_manager.get_variable_formula(name)
 
+
 def rename_variable(old_name: str, new_name: str) -> dict:
     """Rename a variable's display name."""
     return query_manager.rename_variable(old_name, new_name)
+
 
 def get_variable_names(name: str) -> dict:
     """Get both DisplayName and SystemName of a variable."""
     return query_manager.get_variable_names(name)
 
+
 def translate_variable(name: str) -> dict:
     """Translate (look up) a variable by name via Variables.Translate()."""
     return query_manager.translate_variable(name)
 
+
 def copy_variable_to_clipboard(name: str) -> dict:
     """Copy a variable definition to the clipboard for pasting into another document."""
     return query_manager.copy_variable_to_clipboard(name)
+
 
 def add_variable_from_clipboard(name: str, units_type: str = None) -> dict:
     """Add a variable from the clipboard (previously copied with copy_variable_to_clipboard)."""
@@ -178,13 +222,16 @@ def add_variable_from_clipboard(name: str, units_type: str = None) -> dict:
 
 # === Custom Properties ===
 
+
 def get_custom_properties() -> dict:
     """Get all custom properties."""
     return query_manager.get_custom_properties()
 
+
 def set_custom_property(name: str, value: str) -> dict:
     """Set or create a custom property."""
     return query_manager.set_custom_property(name, value)
+
 
 def delete_custom_property(name: str) -> dict:
     """Delete a custom property."""
@@ -193,17 +240,21 @@ def delete_custom_property(name: str) -> dict:
 
 # === Materials ===
 
+
 def get_material_list() -> dict:
     """Get the list of available materials."""
     return query_manager.get_material_list()
+
 
 def get_material_table() -> dict:
     """Get the full material table with properties."""
     return query_manager.get_material_table()
 
+
 def get_material_property(material_name: str, property_index: int) -> dict:
     """Get a specific property of a material."""
     return query_manager.get_material_property(material_name, property_index)
+
 
 def set_material(material_name: str) -> dict:
     """Assign a material to the active part."""
@@ -212,21 +263,26 @@ def set_material(material_name: str) -> dict:
 
 # === Appearance ===
 
+
 def set_body_color(red: int, green: int, blue: int) -> dict:
     """Set the body color of the active part."""
     return query_manager.set_body_color(red, green, blue)
+
 
 def get_body_color() -> dict:
     """Get the current body color of the active part."""
     return query_manager.get_body_color()
 
+
 def set_face_color(face_index: int, red: int, green: int, blue: int) -> dict:
     """Set the color of a specific face."""
     return query_manager.set_face_color(face_index, red, green, blue)
 
+
 def set_body_opacity(opacity: float) -> dict:
     """Set the body opacity (0.0 = fully transparent, 1.0 = fully opaque)."""
     return query_manager.set_body_opacity(opacity)
+
 
 def set_body_reflectivity(reflectivity: float) -> dict:
     """Set the body reflectivity (0.0 to 1.0)."""
@@ -235,17 +291,21 @@ def set_body_reflectivity(reflectivity: float) -> dict:
 
 # === Layers ===
 
+
 def get_layers() -> dict:
     """Get all layers in the active document."""
     return query_manager.get_layers()
+
 
 def add_layer(name: str) -> dict:
     """Add a new layer to the active document."""
     return query_manager.add_layer(name)
 
+
 def activate_layer(name_or_index) -> dict:
     """Activate a layer by name (str) or 0-based index (int)."""
     return query_manager.activate_layer(name_or_index)
+
 
 def set_layer_properties(name_or_index, show: bool = None, selectable: bool = None) -> dict:
     """Set layer visibility and selectability properties."""
@@ -254,9 +314,11 @@ def set_layer_properties(name_or_index, show: bool = None, selectable: bool = No
 
 # === Modeling Mode ===
 
+
 def get_modeling_mode() -> dict:
     """Get the current modeling mode (Ordered vs Synchronous)."""
     return query_manager.get_modeling_mode()
+
 
 def set_modeling_mode(mode: str) -> dict:
     """Set the modeling mode ('ordered' or 'synchronous')."""
@@ -265,45 +327,56 @@ def set_modeling_mode(mode: str) -> dict:
 
 # === Select Set ===
 
+
 def get_select_set() -> dict:
     """Get the current selection set."""
     return query_manager.get_select_set()
+
 
 def clear_select_set() -> dict:
     """Clear the current selection set."""
     return query_manager.clear_select_set()
 
+
 def select_add(object_type: str, index: int) -> dict:
     """Add an object to the selection set."""
     return query_manager.select_add(object_type, index)
+
 
 def select_remove(index: int) -> dict:
     """Remove an object from the selection set by 0-based index."""
     return query_manager.select_remove(index)
 
+
 def select_all() -> dict:
     """Select all objects in the active document."""
     return query_manager.select_all()
+
 
 def select_copy() -> dict:
     """Copy the current selection to the clipboard."""
     return query_manager.select_copy()
 
+
 def select_cut() -> dict:
     """Cut the current selection to the clipboard."""
     return query_manager.select_cut()
+
 
 def select_delete() -> dict:
     """Delete the currently selected objects."""
     return query_manager.select_delete()
 
+
 def select_suspend_display() -> dict:
     """Suspend display updates for the selection set (for batch perf)."""
     return query_manager.select_suspend_display()
 
+
 def select_resume_display() -> dict:
     """Resume display updates for the selection set."""
     return query_manager.select_resume_display()
+
 
 def select_refresh_display() -> dict:
     """Refresh the display of the selection set."""
@@ -312,13 +385,16 @@ def select_refresh_display() -> dict:
 
 # === Feature Analysis ===
 
+
 def get_feature_status(feature_name: str) -> dict:
     """Get the status of a feature (OK, suppressed, failed, etc.)."""
     return query_manager.get_feature_status(feature_name)
 
+
 def get_feature_profiles(feature_name: str) -> dict:
     """Get the sketch profiles associated with a feature."""
     return query_manager.get_feature_profiles(feature_name)
+
 
 def get_vertex_count() -> dict:
     """Get the total vertex count on the model body."""
@@ -327,12 +403,38 @@ def get_vertex_count() -> dict:
 
 # === Recompute ===
 
+
 def recompute() -> dict:
     """Recompute the active document and model."""
     return query_manager.recompute()
 
 
+# === Variable Formulas ===
+
+
+def set_variable_formula(name: str, formula: str) -> dict:
+    """Set the formula of an existing variable by name."""
+    return query_manager.set_variable_formula(name, formula)
+
+
+# === Layer Management ===
+
+
+def delete_layer(name_or_index) -> dict:
+    """Delete a layer by name (str) or 0-based index (int)."""
+    return query_manager.delete_layer(name_or_index)
+
+
+# === Feature Parents ===
+
+
+def get_feature_parents(feature_name: str) -> dict:
+    """Get parent geometry/features of a named feature."""
+    return query_manager.get_feature_parents(feature_name)
+
+
 # === Registration ===
+
 
 def register(mcp):
     """Register query tools with the MCP server."""
@@ -421,3 +523,9 @@ def register(mcp):
     mcp.tool()(get_vertex_count)
     # Recompute
     mcp.tool()(recompute)
+    # Variable Formulas
+    mcp.tool()(set_variable_formula)
+    # Layer Management
+    mcp.tool()(delete_layer)
+    # Feature Parents
+    mcp.tool()(get_feature_parents)

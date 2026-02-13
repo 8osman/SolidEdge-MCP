@@ -11,14 +11,11 @@ mcp = FastMCP("Solid Edge MCP Server")
 # Register all tools
 register_tools(mcp)
 
-if __name__ == "__main__":
-    # Verification check (optional, but requested by user)
-    # Access _tool_manager._tools if available or assume correct registration
-    try:
-        if hasattr(mcp, '_tool_manager'):
-            count = len(mcp._tool_manager._tools)
-            print(f"Registered {count} tools")
-    except Exception:
-        pass
 
+def main():
+    """Entry point for the MCP server."""
     mcp.run()
+
+
+if __name__ == "__main__":
+    main()

@@ -9,6 +9,7 @@ def diagnose_api() -> dict:
     doc = doc_manager.get_active_document()
     return diagnose_document(doc)
 
+
 def register(mcp):
     """Register diagnostic tools with the MCP server."""
     mcp.tool()(diagnose_api)

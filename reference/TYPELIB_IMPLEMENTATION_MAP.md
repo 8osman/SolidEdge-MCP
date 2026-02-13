@@ -1,7 +1,7 @@
 # Solid Edge Type Library Implementation Map
 
 Generated: 2026-02-13 | Source: 40 type libraries, 2,240 interfaces, 21,237 methods
-Current: 314 MCP tools implemented
+Current: 341 MCP tools implemented
 
 This document maps every actionable COM API surface from the Solid Edge type libraries
 against our current MCP tool coverage. It identifies gaps and prioritizes what to implement next.
@@ -10,27 +10,27 @@ against our current MCP tool coverage. It identifies gaps and prioritizes what t
 
 |     Category      | Sections | Complete | Partial | Not Started | Methods (impl/total) |
 |-------------------|----------|----------|---------|-------------|----------------------|
-| **Part Features** |    52    |    15    |    28   |      9      |       74 / 181       |
-| **Assembly**      |    11    |     0    |     3   |      8      |       14 /  60       |
-| **Draft/Drawing** |     5    |     0    |     4   |      1      |       16 /  49       |
-| **Framework/App** |     7    |     1    |     5   |      1      |       51 /  53       |
-| **Total**         | **75**   |  **16**  |  **40** |   **19**    | **155 / 343 (45%)**  |
+| **Part Features** |    52    |    15    |    28   |      9      |       80 / 181       |
+| **Assembly**      |    11    |     0    |     3   |      8      |       17 /  60       |
+| **Draft/Drawing** |     5    |     0    |     4   |      1      |       22 /  49       |
+| **Framework/App** |     7    |     4    |     3   |      0      |       53 /  57       |
+| **Total**         | **75**   |  **19**  |  **38** |   **18**    | **172 / 347 (50%)**  |
 
-**314 MCP tools** registered (many tools cover multiple methods or provide capabilities
+**341 MCP tools** registered (many tools cover multiple methods or provide capabilities
 beyond what the type library tracks, e.g. primitives, view controls, export formats).
 
-## Tool Count by Category (314 total)
+## Tool Count by Category (341 total)
 
 | Category                  | Count | Tools |
 |:--------------------------|:-----:|:---|
 | **Connection/Application**| 19    | Connect, disconnect, app info, quit, is_connected, process_info, install_info, start_command, set_performance_mode, do_idle, activate, abort_command, active_environment, status_bar (get/set), visible (get/set), global_parameter (get/set) |
 | **Document Management**   | 13    | Create (part, assembly, sheet metal, draft), open, save, close, list, activate, undo, redo |
-| **Sketching**             | 24    | Lines, circles, arcs (multiple), rects, polygons, ellipses, splines, points, constraints (9 types), fillet, chamfer, mirror, construction, hide profile, project_edge, include_edge |
+| **Sketching**             | 26    | Lines, circles, arcs (multiple), rects, polygons, ellipses, splines, points, constraints (9 types), fillet, chamfer, mirror, construction, hide profile, project_edge, include_edge, get_sketch_matrix, clean_sketch_geometry |
 | **Basic Primitives**      | 10    | Box (3 variants), cylinder, sphere, box cutout (3 variants), cylinder cutout, sphere cutout |
-| **Extrusions**            | 4     | Finite, infinite, thin-wall, extruded surface |
+| **Extrusions**            | 5     | Finite, infinite, symmetric, thin-wall, extruded surface |
 | **Revolves**              | 5     | Basic, finite, sync, thin-wall |
 | **Cutouts**               | 9     | Extruded finite/through-all/through-next, revolved, normal/normal-through-all, lofted, swept, helix |
-| **Rounds/Chamfers/Holes** | 9     | Round (all/face), variable round, blend, chamfer (equal/unequal/angle/face), hole, hole through-all |
+| **Rounds/Chamfers/Holes** | 10    | Round (all/face), variable round, blend, chamfer (equal/unequal/angle/face), chamfer unequal on face, hole, hole through-all |
 | **Reference Planes**      | 5     | Offset, normal-to-curve, angle, 3-points, mid-plane |
 | **Loft**                  | 2     | Basic, thin-wall |
 | **Sweep**                 | 2     | Basic, thin-wall |
@@ -40,15 +40,15 @@ beyond what the type library tracks, e.g. primitives, view controls, export form
 | **Body Operations**       | 11    | Add body, thicken, mesh, tag, construction, delete faces (2), delete holes (2), delete blends |
 | **Simplification**        | 4     | Auto-simplify, enclosure, duplicate |
 | **View/Display**          | 15    | Orientation, zoom, display mode, background color, get/set camera, rotate, pan, zoom factor, refresh, transform model-to-screen, transform screen-to-model, begin/end camera dynamics |
-| **Variables**             | 11    | Get all, get by name, set value, add variable, query/search, get formula, rename, get names (display+system), translate, copy to clipboard, add from clipboard |
+| **Variables**             | 12    | Get all, get by name, set value, set formula, add variable, query/search, get formula, rename, get names (display+system), translate, copy to clipboard, add from clipboard |
 | **Custom Properties**     | 3     | Get all, set/create, delete |
 | **Body Topology**         | 3     | Body faces, body edges, face info |
 | **Performance**           | 1     | Recompute (set_performance_mode moved to Connection/Application) |
-| **Query/Analysis**        | 34    | Mass properties, bounding box, features, measurements, facet data, solid bodies, modeling mode, face/edge info, colors, angles, volume, delete feature, material table, feature dimensions, material list/set/property, feature status, feature profiles, vertex count, layers (get/add/activate/set properties), body opacity, body reflectivity |
+| **Query/Analysis**        | 37    | Mass properties, bounding box, features, measurements, facet data, solid bodies, modeling mode, face/edge info, colors, angles, volume, delete feature, material table, feature dimensions, material list/set/property, feature status, feature profiles, vertex count, layers (get/add/activate/set properties/delete), body opacity, body reflectivity, variable formula, feature parents |
 | **Feature Management**    | 6     | Suppress, unsuppress, face rotate (2), draft angle, convert feature type |
 | **Export**                | 10    | STEP, STL, IGES, PDF, DXF, flat DXF, Parasolid, JT, drawing, screenshot |
-| **Assembly**              | 28    | Place, list, constraints, patterns, suppress, BOM, structured BOM, interference, bbox, relations, doc tree, replace, delete, visibility, color, transform, count, move, rotate, is_subassembly, display_name, occurrence_document, sub_occurrences |
-| **Draft/Drawing**         | 16    | Sheets (add, activate, delete, rename), views (add, count, get/set scale, delete, update), annotations (dimension, balloon, note, leader, text box), parts list |
+| **Assembly**              | 31    | Place, place with transform, list, constraints, patterns, suppress, BOM, structured BOM, interference, bbox, relations, relation info, delete relation, doc tree, replace, delete, visibility, color, transform, count, move, rotate, is_subassembly, display_name, occurrence_document, sub_occurrences |
+| **Draft/Drawing**         | 22    | Sheets (add, activate, delete, rename), views (add, projected, count, get/set scale, delete, update, move, info, orientation, hidden edges, display mode), annotations (dimension, balloon, note, leader, text box), parts list |
 | **Part Features**         | 10    | Dimple, etch, rib, lip, drawn cutout, bead, louver, gusset, thread, slot, split |
 | **Diagnostics**           | 2     | API and feature inspection |
 | **Select Set**            | 11    | Get selection, clear selection, add, remove, select all, copy, cut, delete, suspend/resume/refresh display |
@@ -150,7 +150,7 @@ beyond what the type library tracks, e.g. primitives, view controls, export form
 
 #### Chamfers Collection (5 Add methods)
 - [x] `AddEqualSetback` - via `create_chamfer`, `create_chamfer_on_face`
-- [x] `AddUnequalSetback` - via `create_chamfer_unequal`
+- [x] `AddUnequalSetback` - via `create_chamfer_unequal`, `create_chamfer_unequal_on_face`
 - [x] `AddSetbackAngle` - via `create_chamfer_angle`
 
 #### Holes Collection (14 Add methods)
@@ -351,15 +351,15 @@ in late binding. The `Ex` variants may use different parameter types - worth inv
 - [x] `ProjectEdge` - via `project_edge`
 - [x] `IncludeEdge` - via `include_edge`
 - [ ] `ProjectSilhouetteEdges` - Project silhouette onto sketch
-- [ ] `ProjectRefPlane` - Project ref plane intersection
+- [x] `ProjectRefPlane` - via `project_ref_plane`
 - [ ] `IncludeRegionFaces` - Include face region
-- [ ] `Offset2d` - Offset profile curves
+- [x] `Offset2d` - via `offset_sketch_2d`
 - [ ] `ChainLocate` - Locate connected chain of edges
 - [ ] `ConvertToCurve` - Convert element to curve
-- [ ] `CleanGeometry2d` - Clean up sketch geometry
+- [x] `CleanGeometry2d` - via `clean_sketch_geometry`
 - [ ] `Paste` - Paste clipboard into sketch
 - [ ] `OrderedGeometry` - Get ordered geometry
-- [ ] `GetMatrix` - Get sketch coordinate system
+- [x] `GetMatrix` - via `get_sketch_matrix`
 
 ### 1.10 Feature Editing (Common Methods on Feature Objects)
 
@@ -375,7 +375,7 @@ RevolvedCutout, Round, Chamfer, Hole, etc.) and allow editing after creation:
 - [ ] `GetBodyArray` / `SetBodyArray` - Multi-body targeting
 - [x] `ConvertToCutout` / `ConvertToProtrusion` - via `convert_feature_type`
 - [x] `GetStatusEx` - via `get_feature_status`
-- [ ] `GetTopologyParents` - Query parent geometry
+- [x] `GetTopologyParents` - via `get_feature_parents`
 
 **Impact**: These would enable parametric editing of existing features, not just creation.
 
@@ -387,7 +387,7 @@ RevolvedCutout, Round, Chamfer, Hole, etc.) and allow editing after creation:
 
 - [x] `AddByFilename` - via `place_component`
 - [x] `AddWithMatrix` - via `place_component` (with position)
-- [ ] `AddWithTransform` - Place with Euler angles
+- [x] `AddWithTransform` - via `assembly_add_component_with_transform`
 - [ ] `AddFamilyByFilename` - **Place family-of-parts member**
 - [ ] `AddFamilyWithTransform` - Family with transform
 - [ ] `AddFamilyWithMatrix` - Family with matrix
@@ -440,7 +440,7 @@ Key Properties NOT exposed:
 - [ ] `Angle` (get/put) - **Edit angular constraint angle**
 - [ ] `NormalsAligned` (get/put) - Flip alignment
 - [ ] `Suppress` (get/put) - **Suppress/unsuppress constraint**
-- [ ] `Delete` - Delete constraint
+- [x] `Delete` - via `assembly_delete_relation`
 - [ ] `GetGeometry1` / `GetGeometry2` - Query constraint geometry
 - [ ] `RatioValue1` / `RatioValue2` - Gear ratio
 
@@ -484,7 +484,7 @@ Key Properties NOT exposed:
 
 - [x] `Add` (via AddPartView workaround) - via `create_drawing`, `add_assembly_drawing_view`
 - [ ] `AddWithConfiguration` - **View with named configuration**
-- [ ] `AddByFold` - **Folded (projected) view from parent**
+- [x] `AddByFold` - via `add_projected_view`
 - [ ] `AddByAuxiliaryFold` - Auxiliary view
 - [ ] `AddByDetailEnvelope` - **Detail view with circle**
 - [ ] `AddDraftView` - Empty 2D draft view
@@ -499,15 +499,15 @@ Key methods:
 - [x] `Update` - via `update_drawing_view`
 - [ ] `Activate` / `Deactivate` - Activate for editing
 - [x] `Delete` - via `delete_drawing_view`
-- [ ] `Move` - Reposition view on sheet
-- [ ] `SetOrientation` - Change orientation
+- [x] `Move` - via `move_drawing_view`
+- [x] `SetOrientation` - via `set_drawing_view_orientation`
 - [x] `Count` - via `get_drawing_view_count` (on collection)
 
 Key properties:
 - [x] `Scale` (get/put) - via `get_drawing_view_scale` / `set_drawing_view_scale`
-- [ ] `ShowHiddenEdges` (get/put) - Hidden lines
+- [x] `ShowHiddenEdges` (get/put) - via `show_hidden_edges`, `get_drawing_view_info`
 - [ ] `ShowTangentEdges` (get/put) - Tangent edges
-- [ ] `DisplayMode` (get/put) - Shaded/wireframe
+- [x] `DisplayMode` (get/put) - via `set_drawing_view_display_mode`, `get_drawing_view_info`
 - [ ] `ModelLink` (get) - Model reference
 - [ ] `Dimensions` (get) - Access dimensions in view
 
@@ -593,7 +593,7 @@ Key Properties:
 - [x] `PutName` / `GetName` - via `rename_variable`
 - [x] `Translate` - via `translate_variable`
 - [x] `Query` - via `query_variables`
-- [x] `GetFormula` - via `get_variable_formula`
+- [x] `GetFormula` / `Formula` (put) - via `get_variable_formula`, `set_variable_formula`
 - [x] `GetDisplayName` / `GetSystemName` - via `get_variable_names`
 - [x] `CopyToClipboard` - via `copy_variable_to_clipboard`
 
@@ -619,7 +619,7 @@ Key Properties:
 #### Layer Interface (15 methods)
 - [x] `Add` / `SetActive` - via `add_layer`, `activate_layer`
 - [x] `Visible` / `Selectable` - via `set_layer_properties`, `get_layers`
-- [ ] `Delete` / remaining layer methods
+- [x] `Delete` - via `delete_layer`
 
 #### FaceStyle Interface (49 methods, 69 properties)
 - [x] Basic body color - via `set_body_color`, `set_face_color`

@@ -11,6 +11,7 @@ def connect_to_solidedge(start_if_needed: bool = True) -> dict:
     """
     return connection.connect(start_if_needed)
 
+
 def quit_application() -> dict:
     """Quit the Solid Edge application.
 
@@ -18,81 +19,98 @@ def quit_application() -> dict:
     """
     return connection.quit_application()
 
+
 def get_application_info() -> dict:
     """Get Solid Edge application information (version, path, document count)."""
     return connection.get_info()
+
 
 def disconnect_from_solidedge() -> dict:
     """Disconnect from the Solid Edge application without closing it."""
     return connection.disconnect()
 
+
 def is_connected() -> dict:
     """Check if currently connected to Solid Edge."""
     return {"connected": connection.is_connected()}
+
 
 def get_process_info() -> dict:
     """Get Solid Edge process information (PID, window handle)."""
     return connection.get_process_info()
 
+
 def get_install_info() -> dict:
     """Get Solid Edge installation information (path, language, version)."""
     return connection.get_install_info()
+
 
 def start_command(command_id: int) -> dict:
     """Execute a Solid Edge command by its ID."""
     return connection.start_command(command_id)
 
+
 def set_performance_mode(
     delay_compute: bool = None,
     screen_updating: bool = None,
     interactive: bool = None,
-    display_alerts: bool = None
+    display_alerts: bool = None,
 ) -> dict:
     """Set application performance flags for batch operations."""
     return connection.set_performance_mode(
-        delay_compute, screen_updating,
-        interactive, display_alerts
+        delay_compute, screen_updating, interactive, display_alerts
     )
+
 
 def do_idle() -> dict:
     """Process pending background operations."""
     return connection.do_idle()
 
+
 def activate_application() -> dict:
     """Activate (bring to foreground) the Solid Edge application window."""
     return connection.activate_application()
+
 
 def abort_command(abort_all: bool = True) -> dict:
     """Abort the current Solid Edge command."""
     return connection.abort_command(abort_all)
 
+
 def get_active_environment() -> dict:
     """Get the currently active environment (Part, Assembly, Draft, etc.)."""
     return connection.get_active_environment()
+
 
 def get_status_bar() -> dict:
     """Get the current status bar text."""
     return connection.get_status_bar()
 
+
 def set_status_bar(text: str) -> dict:
     """Set the status bar text."""
     return connection.set_status_bar(text)
+
 
 def get_visible() -> dict:
     """Get the visibility state of the Solid Edge window."""
     return connection.get_visible()
 
+
 def set_visible(visible: bool) -> dict:
     """Set the visibility of the Solid Edge window."""
     return connection.set_visible(visible)
+
 
 def get_global_parameter(parameter: int) -> dict:
     """Get an application-level global parameter by ID (from AssemblyGlobalConstants 1-21)."""
     return connection.get_global_parameter(parameter)
 
+
 def set_global_parameter(parameter: int, value: float) -> dict:
     """Set an application-level global parameter by ID (from AssemblyGlobalConstants 1-21)."""
     return connection.set_global_parameter(parameter, value)
+
 
 def register(mcp):
     """Register connection tools with the MCP server."""

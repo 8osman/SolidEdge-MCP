@@ -9,7 +9,7 @@ import os
 import traceback
 from typing import Any
 
-from .constants import DrawingViewOrientationConstants, RenderModeConstants
+from .constants import DrawingViewOrientationConstants, FoldTypeConstants, RenderModeConstants
 
 
 class ExportManager:
@@ -32,8 +32,8 @@ class ExportManager:
             doc = self.doc_manager.get_active_document()
 
             # Ensure file has .step or .stp extension
-            if not file_path.lower().endswith(('.step', '.stp')):
-                file_path += '.step'
+            if not file_path.lower().endswith((".step", ".stp")):
+                file_path += ".step"
 
             # Save as STEP
             doc.SaveAs(file_path)
@@ -42,13 +42,10 @@ class ExportManager:
                 "status": "exported",
                 "format": "STEP",
                 "path": file_path,
-                "size_bytes": os.path.getsize(file_path) if os.path.exists(file_path) else 0
+                "size_bytes": os.path.getsize(file_path) if os.path.exists(file_path) else 0,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def export_to_stl(self, file_path: str, quality: str = "Medium") -> dict[str, Any]:
         """
@@ -65,15 +62,11 @@ class ExportManager:
             doc = self.doc_manager.get_active_document()
 
             # Ensure file has .stl extension
-            if not file_path.lower().endswith('.stl'):
-                file_path += '.stl'
+            if not file_path.lower().endswith(".stl"):
+                file_path += ".stl"
 
             # Quality mapping (actual values depend on Solid Edge version)
-            quality_map = {
-                "Low": 0.01,
-                "Medium": 0.001,
-                "High": 0.0001
-            }
+            quality_map = {"Low": 0.01, "Medium": 0.001, "High": 0.0001}
             quality_map.get(quality, 0.001)
 
             # Save as STL
@@ -82,7 +75,7 @@ class ExportManager:
                 doc.SaveAs(file_path)
             except Exception:
                 # Alternative export method
-                if hasattr(doc, 'SaveAsJT'):
+                if hasattr(doc, "SaveAsJT"):
                     # Some versions use different export methods
                     pass
 
@@ -91,13 +84,10 @@ class ExportManager:
                 "format": "STL",
                 "path": file_path,
                 "quality": quality,
-                "size_bytes": os.path.getsize(file_path) if os.path.exists(file_path) else 0
+                "size_bytes": os.path.getsize(file_path) if os.path.exists(file_path) else 0,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def export_to_iges(self, file_path: str) -> dict[str, Any]:
         """
@@ -113,8 +103,8 @@ class ExportManager:
             doc = self.doc_manager.get_active_document()
 
             # Ensure file has .iges or .igs extension
-            if not file_path.lower().endswith(('.iges', '.igs')):
-                file_path += '.iges'
+            if not file_path.lower().endswith((".iges", ".igs")):
+                file_path += ".iges"
 
             # Save as IGES
             doc.SaveAs(file_path)
@@ -123,38 +113,29 @@ class ExportManager:
                 "status": "exported",
                 "format": "IGES",
                 "path": file_path,
-                "size_bytes": os.path.getsize(file_path) if os.path.exists(file_path) else 0
+                "size_bytes": os.path.getsize(file_path) if os.path.exists(file_path) else 0,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def export_to_pdf(self, file_path: str) -> dict[str, Any]:
         """Export drawing to PDF"""
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not file_path.lower().endswith('.pdf'):
-                file_path += '.pdf'
+            if not file_path.lower().endswith(".pdf"):
+                file_path += ".pdf"
 
             # PDF export typically works for draft documents
             doc.SaveAs(file_path)
 
-            return {
-                "status": "exported",
-                "format": "PDF",
-                "path": file_path
-            }
+            return {"status": "exported", "format": "PDF", "path": file_path}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def create_drawing(self, template: str | None = None,
-                      views: list[str] | None = None) -> dict[str, Any]:
+    def create_drawing(
+        self, template: str | None = None, views: list[str] | None = None
+    ) -> dict[str, Any]:
         """
         Create a 2D drawing from the active 3D model.
 
@@ -187,17 +168,17 @@ class ExportManager:
                 }
 
             if views is None:
-                views = ['Front', 'Top', 'Right', 'Isometric']
+                views = ["Front", "Top", "Right", "Isometric"]
 
             view_orient_map = {
-                'Front': DrawingViewOrientationConstants.Front,
-                'Back': DrawingViewOrientationConstants.Back,
-                'Top': DrawingViewOrientationConstants.Top,
-                'Bottom': DrawingViewOrientationConstants.Bottom,
-                'Right': DrawingViewOrientationConstants.Right,
-                'Left': DrawingViewOrientationConstants.Left,
-                'Isometric': DrawingViewOrientationConstants.Isometric,
-                'Iso': DrawingViewOrientationConstants.Isometric,
+                "Front": DrawingViewOrientationConstants.Front,
+                "Back": DrawingViewOrientationConstants.Back,
+                "Top": DrawingViewOrientationConstants.Top,
+                "Bottom": DrawingViewOrientationConstants.Bottom,
+                "Right": DrawingViewOrientationConstants.Right,
+                "Left": DrawingViewOrientationConstants.Left,
+                "Isometric": DrawingViewOrientationConstants.Isometric,
+                "Iso": DrawingViewOrientationConstants.Isometric,
             }
 
             # Create a new draft document
@@ -219,10 +200,10 @@ class ExportManager:
             # Place views in a grid layout on the sheet
             # Standard A-size sheet is ~0.279 x 0.216 m (A4 landscape)
             positions = [
-                (0.10, 0.15),   # View 1
-                (0.10, 0.06),   # View 2
-                (0.22, 0.15),   # View 3
-                (0.22, 0.06),   # View 4
+                (0.10, 0.15),  # View 1
+                (0.10, 0.06),  # View 2
+                (0.22, 0.15),  # View 3
+                (0.22, 0.06),  # View 4
             ]
 
             views_added = []
@@ -247,17 +228,14 @@ class ExportManager:
             return {
                 "status": "created",
                 "type": "drawing",
-                "draft_name": draft_doc.Name if hasattr(draft_doc, 'Name') else "Draft",
+                "draft_name": draft_doc.Name if hasattr(draft_doc, "Name") else "Draft",
                 "model_link": source_path,
                 "views_requested": views,
                 "views_added": views_added,
-                "total_views": len(views_added)
+                "total_views": len(views_added),
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def add_draft_sheet(self) -> dict[str, Any]:
         """
@@ -272,7 +250,7 @@ class ExportManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Sheets'):
+            if not hasattr(doc, "Sheets"):
                 return {"error": "Active document is not a draft document. Create a drawing first."}
 
             sheets = doc.Sheets
@@ -284,20 +262,13 @@ class ExportManager:
                 "status": "added",
                 "sheet_number": sheets.Count,
                 "total_sheets": sheets.Count,
-                "name": sheet.Name if hasattr(sheet, 'Name') else f"Sheet {sheets.Count}"
+                "name": sheet.Name if hasattr(sheet, "Name") else f"Sheet {sheets.Count}",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def add_assembly_drawing_view(
-        self,
-        x: float = 0.15,
-        y: float = 0.15,
-        orientation: str = "Isometric",
-        scale: float = 1.0
+        self, x: float = 0.15, y: float = 0.15, orientation: str = "Isometric", scale: float = 1.0
     ) -> dict[str, Any]:
         """
         Add an assembly drawing view to the active draft document.
@@ -318,32 +289,33 @@ class ExportManager:
 
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Sheets'):
+            if not hasattr(doc, "Sheets"):
                 return {"error": "Active document is not a draft document"}
 
             # Get model link
-            if not hasattr(doc, 'ModelLinks') or doc.ModelLinks.Count == 0:
+            if not hasattr(doc, "ModelLinks") or doc.ModelLinks.Count == 0:
                 return {
-                    "error": "No model link found. "
-                    "Create a drawing with "
-                    "create_drawing() first."
+                    "error": "No model link found. Create a drawing with create_drawing() first."
                 }
 
             model_link = doc.ModelLinks.Item(1)
 
             # View orientation constants
             view_orient_map = {
-                'Front': 5, 'Back': 8, 'Top': 6, 'Bottom': 9,
-                'Right': 7, 'Left': 10, 'Isometric': 12, 'Iso': 12,
+                "Front": 5,
+                "Back": 8,
+                "Top": 6,
+                "Bottom": 9,
+                "Right": 7,
+                "Left": 10,
+                "Isometric": 12,
+                "Iso": 12,
             }
 
             orient = view_orient_map.get(orientation)
             if orient is None:
-                valid = ', '.join(view_orient_map.keys())
-                return {
-                    "error": f"Invalid orientation: "
-                    f"{orientation}. Valid: {valid}"
-                }
+                valid = ", ".join(view_orient_map.keys())
+                return {"error": f"Invalid orientation: {orientation}. Valid: {valid}"}
 
             sheet = doc.ActiveSheet
             dvs_early = sheet.DrawingViews
@@ -360,16 +332,14 @@ class ExportManager:
                 "status": "added",
                 "orientation": orientation,
                 "scale": scale,
-                "position": [x, y]
+                "position": [x, y],
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def create_parts_list(self, auto_balloon: bool = True,
-                          x: float = 0.15, y: float = 0.25) -> dict[str, Any]:
+    def create_parts_list(
+        self, auto_balloon: bool = True, x: float = 0.15, y: float = 0.25
+    ) -> dict[str, Any]:
         """
         Create a parts list (BOM table) on the active draft sheet.
 
@@ -387,7 +357,7 @@ class ExportManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Sheets'):
+            if not hasattr(doc, "Sheets"):
                 return {"error": "Active document is not a draft document"}
 
             sheet = doc.ActiveSheet
@@ -400,10 +370,10 @@ class ExportManager:
             dv = dvs.Item(1)
 
             # Get PartsLists collection
-            parts_lists = sheet.PartsLists if hasattr(sheet, 'PartsLists') else None
+            parts_lists = sheet.PartsLists if hasattr(sheet, "PartsLists") else None
             if parts_lists is None:
                 # Try from document level
-                parts_lists = doc.PartsLists if hasattr(doc, 'PartsLists') else None
+                parts_lists = doc.PartsLists if hasattr(doc, "PartsLists") else None
 
             if parts_lists is None:
                 return {"error": "PartsLists collection not available"}
@@ -416,17 +386,13 @@ class ExportManager:
             return {
                 "status": "created",
                 "auto_balloon": auto_balloon,
-                "total_parts_lists": parts_lists.Count
+                "total_parts_lists": parts_lists.Count,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def capture_screenshot(
-        self, file_path: str,
-        width: int = 1920, height: int = 1080
+        self, file_path: str, width: int = 1920, height: int = 1080
     ) -> dict[str, Any]:
         """
         Capture a screenshot of the current view.
@@ -445,16 +411,16 @@ class ExportManager:
             doc = self.doc_manager.get_active_document()
 
             # Ensure file has image extension
-            valid_exts = ['.png', '.jpg', '.jpeg', '.bmp']
+            valid_exts = [".png", ".jpg", ".jpeg", ".bmp"]
             if not any(file_path.lower().endswith(ext) for ext in valid_exts):
-                file_path += '.png'
+                file_path += ".png"
 
             # Get the window and view
-            if not hasattr(doc, 'Windows') or doc.Windows.Count == 0:
+            if not hasattr(doc, "Windows") or doc.Windows.Count == 0:
                 return {"error": "No window available for screenshot"}
 
             window = doc.Windows.Item(1)
-            view = window.View if hasattr(window, 'View') else None
+            view = window.View if hasattr(window, "View") else None
 
             if not view:
                 return {"error": "Cannot access view object"}
@@ -466,22 +432,18 @@ class ExportManager:
                 "status": "captured",
                 "path": file_path,
                 "dimensions": [width, height],
-                "size_bytes": os.path.getsize(file_path) if os.path.exists(file_path) else 0
+                "size_bytes": os.path.getsize(file_path) if os.path.exists(file_path) else 0,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
-
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def export_to_dxf(self, file_path: str) -> dict[str, Any]:
         """Export to DXF format"""
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not file_path.lower().endswith('.dxf'):
-                file_path += '.dxf'
+            if not file_path.lower().endswith(".dxf"):
+                file_path += ".dxf"
 
             doc.SaveAs(file_path)
 
@@ -489,21 +451,18 @@ class ExportManager:
                 "status": "exported",
                 "format": "DXF",
                 "path": file_path,
-                "size_bytes": os.path.getsize(file_path) if os.path.exists(file_path) else 0
+                "size_bytes": os.path.getsize(file_path) if os.path.exists(file_path) else 0,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def export_to_parasolid(self, file_path: str) -> dict[str, Any]:
         """Export to Parasolid format (X_T or X_B)"""
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not (file_path.lower().endswith('.x_t') or file_path.lower().endswith('.x_b')):
-                file_path += '.x_t'
+            if not (file_path.lower().endswith(".x_t") or file_path.lower().endswith(".x_b")):
+                file_path += ".x_t"
 
             doc.SaveAs(file_path)
 
@@ -511,21 +470,18 @@ class ExportManager:
                 "status": "exported",
                 "format": "Parasolid",
                 "path": file_path,
-                "size_bytes": os.path.getsize(file_path) if os.path.exists(file_path) else 0
+                "size_bytes": os.path.getsize(file_path) if os.path.exists(file_path) else 0,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def export_to_jt(self, file_path: str) -> dict[str, Any]:
         """Export to JT format"""
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not file_path.lower().endswith('.jt'):
-                file_path += '.jt'
+            if not file_path.lower().endswith(".jt"):
+                file_path += ".jt"
 
             doc.SaveAs(file_path)
 
@@ -533,13 +489,10 @@ class ExportManager:
                 "status": "exported",
                 "format": "JT",
                 "path": file_path,
-                "size_bytes": os.path.getsize(file_path) if os.path.exists(file_path) else 0
+                "size_bytes": os.path.getsize(file_path) if os.path.exists(file_path) else 0,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def export_flat_dxf(self, file_path: str) -> dict[str, Any]:
         """
@@ -557,11 +510,11 @@ class ExportManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not file_path.lower().endswith('.dxf'):
-                file_path += '.dxf'
+            if not file_path.lower().endswith(".dxf"):
+                file_path += ".dxf"
 
             # Access FlatPatternModels collection (sheet metal only)
-            if not hasattr(doc, 'FlatPatternModels'):
+            if not hasattr(doc, "FlatPatternModels"):
                 return {
                     "error": "Active document is not a "
                     "sheet metal document. "
@@ -578,13 +531,10 @@ class ExportManager:
                 "status": "exported",
                 "format": "Flat DXF",
                 "path": file_path,
-                "size_bytes": os.path.getsize(file_path) if os.path.exists(file_path) else 0
+                "size_bytes": os.path.getsize(file_path) if os.path.exists(file_path) else 0,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def add_text_box(self, x: float, y: float, text: str, height: float = 0.005) -> dict[str, Any]:
         """
@@ -602,7 +552,7 @@ class ExportManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Sheets'):
+            if not hasattr(doc, "Sheets"):
                 return {"error": "Active document is not a draft document"}
 
             sheet = doc.ActiveSheet
@@ -618,21 +568,12 @@ class ExportManager:
             with contextlib.suppress(Exception):
                 text_box.TextHeight = height
 
-            return {
-                "status": "added",
-                "type": "text_box",
-                "text": text,
-                "position": [x, y]
-            }
+            return {"status": "added", "type": "text_box", "text": text, "position": [x, y]}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def add_leader(
-        self, x1: float, y1: float,
-        x2: float, y2: float, text: str = ""
+        self, x1: float, y1: float, x2: float, y2: float, text: str = ""
     ) -> dict[str, Any]:
         """
         Add a leader annotation to the active draft sheet.
@@ -652,7 +593,7 @@ class ExportManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Sheets'):
+            if not hasattr(doc, "Sheets"):
                 return {"error": "Active document is not a draft document"}
 
             sheet = doc.ActiveSheet
@@ -669,16 +610,14 @@ class ExportManager:
                 "type": "leader",
                 "start": [x1, y1],
                 "end": [x2, y2],
-                "text": text
+                "text": text,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def add_dimension(self, x1: float, y1: float, x2: float, y2: float,
-                      dim_x: float = None, dim_y: float = None) -> dict[str, Any]:
+    def add_dimension(
+        self, x1: float, y1: float, x2: float, y2: float, dim_x: float = None, dim_y: float = None
+    ) -> dict[str, Any]:
         """
         Add a linear dimension between two points on the active draft sheet.
 
@@ -696,7 +635,7 @@ class ExportManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Sheets'):
+            if not hasattr(doc, "Sheets"):
                 return {"error": "Active document is not a draft document"}
 
             sheet = doc.ActiveSheet
@@ -715,16 +654,14 @@ class ExportManager:
                 "type": "dimension",
                 "point1": [x1, y1],
                 "point2": [x2, y2],
-                "text_position": [dim_x, dim_y]
+                "text_position": [dim_x, dim_y],
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def add_balloon(self, x: float, y: float, text: str = "",
-                    leader_x: float = None, leader_y: float = None) -> dict[str, Any]:
+    def add_balloon(
+        self, x: float, y: float, text: str = "", leader_x: float = None, leader_y: float = None
+    ) -> dict[str, Any]:
         """
         Add a balloon annotation to the active draft sheet.
 
@@ -743,7 +680,7 @@ class ExportManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Sheets'):
+            if not hasattr(doc, "Sheets"):
                 return {"error": "Active document is not a draft document"}
 
             sheet = doc.ActiveSheet
@@ -762,17 +699,9 @@ class ExportManager:
                     with contextlib.suppress(Exception):
                         balloon.Text = text
 
-            return {
-                "status": "added",
-                "type": "balloon",
-                "position": [x, y],
-                "text": text
-            }
+            return {"status": "added", "type": "balloon", "position": [x, y], "text": text}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def add_note(self, x: float, y: float, text: str, height: float = 0.005) -> dict[str, Any]:
         """
@@ -792,7 +721,7 @@ class ExportManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Sheets'):
+            if not hasattr(doc, "Sheets"):
                 return {"error": "Active document is not a draft document"}
 
             sheet = doc.ActiveSheet
@@ -810,13 +739,10 @@ class ExportManager:
                 "type": "note",
                 "position": [x, y],
                 "text": text,
-                "height": height
+                "height": height,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_sheet_info(self) -> dict[str, Any]:
         """
@@ -828,7 +754,7 @@ class ExportManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Sheets'):
+            if not hasattr(doc, "Sheets"):
                 return {"error": "Active document is not a draft document"}
 
             sheet = doc.ActiveSheet
@@ -863,10 +789,7 @@ class ExportManager:
 
             return info
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def activate_sheet(self, sheet_index: int) -> dict[str, Any]:
         """
@@ -881,7 +804,7 @@ class ExportManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Sheets'):
+            if not hasattr(doc, "Sheets"):
                 return {"error": "Active document is not a draft document"}
 
             sheets = doc.Sheets
@@ -891,16 +814,9 @@ class ExportManager:
             sheet = sheets.Item(sheet_index + 1)  # COM is 1-indexed
             sheet.Activate()
 
-            return {
-                "status": "activated",
-                "sheet_name": sheet.Name,
-                "sheet_index": sheet_index
-            }
+            return {"status": "activated", "sheet_name": sheet.Name, "sheet_index": sheet_index}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def rename_sheet(self, sheet_index: int, new_name: str) -> dict[str, Any]:
         """
@@ -916,7 +832,7 @@ class ExportManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Sheets'):
+            if not hasattr(doc, "Sheets"):
                 return {"error": "Active document is not a draft document"}
 
             sheets = doc.Sheets
@@ -931,13 +847,10 @@ class ExportManager:
                 "status": "renamed",
                 "old_name": old_name,
                 "new_name": new_name,
-                "sheet_index": sheet_index
+                "sheet_index": sheet_index,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def delete_sheet(self, sheet_index: int) -> dict[str, Any]:
         """
@@ -952,7 +865,7 @@ class ExportManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Sheets'):
+            if not hasattr(doc, "Sheets"):
                 return {"error": "Active document is not a draft document"}
 
             sheets = doc.Sheets
@@ -966,16 +879,9 @@ class ExportManager:
             sheet_name = sheet.Name
             sheet.Delete()
 
-            return {
-                "status": "deleted",
-                "sheet_name": sheet_name,
-                "remaining_sheets": sheets.Count
-            }
+            return {"status": "deleted", "sheet_name": sheet_name, "remaining_sheets": sheets.Count}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     # =================================================================
     # DRAWING VIEW MANAGEMENT
@@ -984,10 +890,11 @@ class ExportManager:
     def _get_drawing_views(self):
         """Get the DrawingViews collection from the active sheet."""
         doc = self.doc_manager.get_active_document()
-        if not hasattr(doc, 'Sheets'):
+        if not hasattr(doc, "Sheets"):
             raise Exception("Active document is not a draft document")
         sheet = doc.ActiveSheet
         import win32com.client.dynamic
+
         dvs = sheet.DrawingViews
         # Force late binding to avoid Part type library mismatch
         with contextlib.suppress(Exception):
@@ -1005,10 +912,7 @@ class ExportManager:
             dvs = self._get_drawing_views()
             return {"count": dvs.Count}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_drawing_view_scale(self, view_index: int) -> dict[str, Any]:
         """
@@ -1028,15 +932,9 @@ class ExportManager:
             view = dvs.Item(view_index + 1)
             scale = view.ScaleFactor
 
-            return {
-                "view_index": view_index,
-                "scale": scale
-            }
+            return {"view_index": view_index, "scale": scale}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def set_drawing_view_scale(self, view_index: int, scale: float) -> dict[str, Any]:
         """
@@ -1057,16 +955,9 @@ class ExportManager:
             view = dvs.Item(view_index + 1)
             view.ScaleFactor = scale
 
-            return {
-                "status": "set",
-                "view_index": view_index,
-                "scale": scale
-            }
+            return {"status": "set", "view_index": view_index, "scale": scale}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def delete_drawing_view(self, view_index: int) -> dict[str, Any]:
         """
@@ -1086,16 +977,9 @@ class ExportManager:
             view = dvs.Item(view_index + 1)
             view.Delete()
 
-            return {
-                "status": "deleted",
-                "view_index": view_index,
-                "remaining_views": dvs.Count
-            }
+            return {"status": "deleted", "view_index": view_index, "remaining_views": dvs.Count}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def update_drawing_view(self, view_index: int) -> dict[str, Any]:
         """
@@ -1115,15 +999,234 @@ class ExportManager:
             view = dvs.Item(view_index + 1)
             view.Update()
 
+            return {"status": "updated", "view_index": view_index}
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def add_projected_view(
+        self, parent_view_index: int, fold_direction: str, x: float, y: float
+    ) -> dict[str, Any]:
+        """
+        Add a projected (folded) drawing view from a parent view.
+
+        Creates an orthographic projection by folding from the parent view
+        in the specified direction.
+
+        Args:
+            parent_view_index: 0-based index of the parent drawing view
+            fold_direction: 'Up', 'Down', 'Left', or 'Right'
+            x: X position on sheet (meters)
+            y: Y position on sheet (meters)
+
+        Returns:
+            Dict with status and view info
+        """
+        try:
+            dvs = self._get_drawing_views()
+
+            if parent_view_index < 0 or parent_view_index >= dvs.Count:
+                return {
+                    "error": f"Invalid parent view index: {parent_view_index}. Count: {dvs.Count}"
+                }
+
+            fold_map = {
+                "Up": FoldTypeConstants.igFoldUp,
+                "Down": FoldTypeConstants.igFoldDown,
+                "Left": FoldTypeConstants.igFoldLeft,
+                "Right": FoldTypeConstants.igFoldRight,
+            }
+
+            fold_const = fold_map.get(fold_direction)
+            if fold_const is None:
+                valid = ", ".join(fold_map.keys())
+                return {"error": f"Invalid fold_direction: '{fold_direction}'. Valid: {valid}"}
+
+            parent_view = dvs.Item(parent_view_index + 1)
+            dvs.AddByFold(parent_view, fold_const, x, y)
+
             return {
-                "status": "updated",
-                "view_index": view_index
+                "status": "added",
+                "parent_view_index": parent_view_index,
+                "fold_direction": fold_direction,
+                "position": [x, y],
+                "total_views": dvs.Count,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def move_drawing_view(self, view_index: int, x: float, y: float) -> dict[str, Any]:
+        """
+        Reposition a drawing view on the sheet.
+
+        Args:
+            view_index: 0-based view index
+            x: New X position (meters)
+            y: New Y position (meters)
+
+        Returns:
+            Dict with status
+        """
+        try:
+            dvs = self._get_drawing_views()
+
+            if view_index < 0 or view_index >= dvs.Count:
+                return {"error": f"Invalid view index: {view_index}. Count: {dvs.Count}"}
+
+            view = dvs.Item(view_index + 1)
+
+            try:
+                view.OriginX = x
+                view.OriginY = y
+            except Exception:
+                view.XPosition = x
+                view.YPosition = y
+
+            return {"status": "moved", "view_index": view_index, "position": [x, y]}
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def show_hidden_edges(self, view_index: int, show: bool = True) -> dict[str, Any]:
+        """
+        Toggle hidden edge visibility on a drawing view.
+
+        Args:
+            view_index: 0-based view index
+            show: True to show hidden edges, False to hide them
+
+        Returns:
+            Dict with status
+        """
+        try:
+            dvs = self._get_drawing_views()
+
+            if view_index < 0 or view_index >= dvs.Count:
+                return {"error": f"Invalid view index: {view_index}. Count: {dvs.Count}"}
+
+            view = dvs.Item(view_index + 1)
+            view.ShowHiddenEdges = show
+
+            return {"status": "updated", "view_index": view_index, "show_hidden_edges": show}
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def set_drawing_view_display_mode(self, view_index: int, mode: str) -> dict[str, Any]:
+        """
+        Set the display/render mode of a drawing view.
+
+        Args:
+            view_index: 0-based view index
+            mode: 'Wireframe', 'HiddenEdgesVisible', 'Shaded', or 'ShadedWithEdges'
+
+        Returns:
+            Dict with status
+        """
+        try:
+            dvs = self._get_drawing_views()
+
+            if view_index < 0 or view_index >= dvs.Count:
+                return {"error": f"Invalid view index: {view_index}. Count: {dvs.Count}"}
+
+            mode_map = {
+                "Wireframe": RenderModeConstants.seRenderModeWireframe,
+                "HiddenEdgesVisible": RenderModeConstants.seRenderModeVHL,
+                "Shaded": RenderModeConstants.seRenderModeSmooth,
+                "ShadedWithEdges": RenderModeConstants.seRenderModeSmoothBoundary,
             }
+
+            mode_value = mode_map.get(mode)
+            if mode_value is None:
+                valid = ", ".join(mode_map.keys())
+                return {"error": f"Invalid mode: '{mode}'. Valid: {valid}"}
+
+            view = dvs.Item(view_index + 1)
+
+            try:
+                view.SetRenderMode(mode_value)
+            except Exception:
+                view.DisplayMode = mode_value
+
+            return {"status": "updated", "view_index": view_index, "mode": mode}
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def get_drawing_view_info(self, view_index: int) -> dict[str, Any]:
+        """
+        Get detailed information about a drawing view.
+
+        Args:
+            view_index: 0-based view index
+
+        Returns:
+            Dict with scale, position, display properties, and name
+        """
+        try:
+            dvs = self._get_drawing_views()
+
+            if view_index < 0 or view_index >= dvs.Count:
+                return {"error": f"Invalid view index: {view_index}. Count: {dvs.Count}"}
+
+            view = dvs.Item(view_index + 1)
+
+            info = {"view_index": view_index}
+
+            with contextlib.suppress(Exception):
+                info["name"] = view.Name
+            with contextlib.suppress(Exception):
+                info["scale"] = view.ScaleFactor
+            with contextlib.suppress(Exception):
+                info["origin_x"] = view.OriginX
+            with contextlib.suppress(Exception):
+                info["origin_y"] = view.OriginY
+            with contextlib.suppress(Exception):
+                info["show_hidden_edges"] = view.ShowHiddenEdges
+            with contextlib.suppress(Exception):
+                info["show_tangent_edges"] = view.ShowTangentEdges
+            with contextlib.suppress(Exception):
+                info["type"] = view.Type
+
+            return info
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def set_drawing_view_orientation(self, view_index: int, orientation: str) -> dict[str, Any]:
+        """
+        Change the orientation of a drawing view.
+
+        Args:
+            view_index: 0-based view index
+            orientation: 'Front', 'Top', 'Right', 'Back', 'Bottom', 'Left', 'Isometric'
+
+        Returns:
+            Dict with status
+        """
+        try:
+            dvs = self._get_drawing_views()
+
+            if view_index < 0 or view_index >= dvs.Count:
+                return {"error": f"Invalid view index: {view_index}. Count: {dvs.Count}"}
+
+            orient_map = {
+                "Front": DrawingViewOrientationConstants.Front,
+                "Top": DrawingViewOrientationConstants.Top,
+                "Right": DrawingViewOrientationConstants.Right,
+                "Back": DrawingViewOrientationConstants.Back,
+                "Bottom": DrawingViewOrientationConstants.Bottom,
+                "Left": DrawingViewOrientationConstants.Left,
+                "Isometric": DrawingViewOrientationConstants.Isometric,
+                "Iso": DrawingViewOrientationConstants.Isometric,
+            }
+
+            orient_const = orient_map.get(orientation)
+            if orient_const is None:
+                valid = ", ".join(orient_map.keys())
+                return {"error": f"Invalid orientation: '{orientation}'. Valid: {valid}"}
+
+            view = dvs.Item(view_index + 1)
+            view.ViewOrientation = orient_const
+
+            return {"status": "updated", "view_index": view_index, "orientation": orientation}
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     # Aliases for consistency with MCP tool names
     def export_step(self, file_path: str) -> dict[str, Any]:
@@ -1175,11 +1278,11 @@ class ViewModel:
             doc = self.doc_manager.get_active_document()
 
             # Get the window
-            if not hasattr(doc, 'Windows') or doc.Windows.Count == 0:
+            if not hasattr(doc, "Windows") or doc.Windows.Count == 0:
                 return {"error": "No window available"}
 
             window = doc.Windows.Item(1)
-            view_obj = window.View if hasattr(window, 'View') else None
+            view_obj = window.View if hasattr(window, "View") else None
 
             if not view_obj:
                 return {"error": "Cannot access view object"}
@@ -1192,62 +1295,53 @@ class ViewModel:
                 return {"error": f"Invalid view: {view}. Valid: {', '.join(valid_views)}"}
 
             # Use ApplyNamedView with string name (discovered method!)
-            if hasattr(view_obj, 'ApplyNamedView'):
+            if hasattr(view_obj, "ApplyNamedView"):
                 view_obj.ApplyNamedView(view)
-                return {
-                    "status": "view_set",
-                    "view": view
-                }
+                return {"status": "view_set", "view": view}
             else:
                 return {
                     "error": "ApplyNamedView not available",
-                    "note": "Use View menu in Solid Edge UI"
+                    "note": "Use View menu in Solid Edge UI",
                 }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def zoom_fit(self) -> dict[str, Any]:
         """Zoom to fit all geometry in view"""
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Windows') or doc.Windows.Count == 0:
+            if not hasattr(doc, "Windows") or doc.Windows.Count == 0:
                 return {"error": "No window available"}
 
             window = doc.Windows.Item(1)
-            view_obj = window.View if hasattr(window, 'View') else None
+            view_obj = window.View if hasattr(window, "View") else None
 
             if not view_obj:
                 return {"error": "Cannot access view object"}
 
             # Zoom to fit
-            if hasattr(view_obj, 'Fit'):
+            if hasattr(view_obj, "Fit"):
                 view_obj.Fit()
                 return {"status": "zoomed_fit"}
             else:
                 return {
                     "error": "Fit method not available",
-                    "note": "Use View > Fit in Solid Edge UI"
+                    "note": "Use View > Fit in Solid Edge UI",
                 }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def zoom_to_selection(self) -> dict[str, Any]:
         """Zoom to fit all geometry (equivalent to View > Fit)."""
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Windows') or doc.Windows.Count == 0:
+            if not hasattr(doc, "Windows") or doc.Windows.Count == 0:
                 return {"error": "No window available"}
 
             window = doc.Windows.Item(1)
-            view_obj = window.View if hasattr(window, 'View') else None
+            view_obj = window.View if hasattr(window, "View") else None
 
             if not view_obj:
                 return {"error": "Cannot access view object"}
@@ -1256,10 +1350,7 @@ class ViewModel:
 
             return {"status": "zoomed_to_selection"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def set_display_mode(self, mode: str) -> dict[str, Any]:
         """
@@ -1274,11 +1365,11 @@ class ViewModel:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Windows') or doc.Windows.Count == 0:
+            if not hasattr(doc, "Windows") or doc.Windows.Count == 0:
                 return {"error": "No window available"}
 
             window = doc.Windows.Item(1)
-            view_obj = window.View if hasattr(window, 'View') else None
+            view_obj = window.View if hasattr(window, "View") else None
 
             if not view_obj:
                 return {"error": "Cannot access view object"}
@@ -1300,15 +1391,9 @@ class ViewModel:
                 }
 
             view_obj.SetRenderMode(mode_value)
-            return {
-                "status": "display_mode_set",
-                "mode": mode
-            }
+            return {"status": "display_mode_set", "mode": mode}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def set_view_background(self, red: int, green: int, blue: int) -> dict[str, Any]:
         """
@@ -1325,11 +1410,11 @@ class ViewModel:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Windows') or doc.Windows.Count == 0:
+            if not hasattr(doc, "Windows") or doc.Windows.Count == 0:
                 return {"error": "No window available"}
 
             window = doc.Windows.Item(1)
-            view_obj = window.View if hasattr(window, 'View') else None
+            view_obj = window.View if hasattr(window, "View") else None
 
             if not view_obj:
                 return {"error": "Cannot access view object"}
@@ -1344,15 +1429,9 @@ class ViewModel:
                 except Exception:
                     view_obj.SetBackgroundGradientColor(ole_color, ole_color)
 
-            return {
-                "status": "updated",
-                "color": [red, green, blue]
-            }
+            return {"status": "updated", "color": [red, green, blue]}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_camera(self) -> dict[str, Any]:
         """
@@ -1367,11 +1446,11 @@ class ViewModel:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Windows') or doc.Windows.Count == 0:
+            if not hasattr(doc, "Windows") or doc.Windows.Count == 0:
                 return {"error": "No window available"}
 
             window = doc.Windows.Item(1)
-            view_obj = window.View if hasattr(window, 'View') else None
+            view_obj = window.View if hasattr(window, "View") else None
 
             if not view_obj:
                 return {"error": "Cannot access view object"}
@@ -1386,22 +1465,20 @@ class ViewModel:
                 "target": [result[3], result[4], result[5]],
                 "up": [result[6], result[7], result[8]],
                 "perspective": bool(result[9]),
-                "scale_or_angle": result[10]
+                "scale_or_angle": result[10],
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def rotate_camera(
-        self, angle: float,
+        self,
+        angle: float,
         center_x: float = 0.0,
         center_y: float = 0.0,
         center_z: float = 0.0,
         axis_x: float = 0.0,
         axis_y: float = 1.0,
-        axis_z: float = 0.0
+        axis_z: float = 0.0,
     ) -> dict[str, Any]:
         """
         Rotate the camera around a specified axis through a center point.
@@ -1417,11 +1494,11 @@ class ViewModel:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Windows') or doc.Windows.Count == 0:
+            if not hasattr(doc, "Windows") or doc.Windows.Count == 0:
                 return {"error": "No window available"}
 
             window = doc.Windows.Item(1)
-            view_obj = window.View if hasattr(window, 'View') else None
+            view_obj = window.View if hasattr(window, "View") else None
 
             if not view_obj:
                 return {"error": "Cannot access view object"}
@@ -1432,13 +1509,10 @@ class ViewModel:
                 "status": "camera_rotated",
                 "angle_rad": angle,
                 "center": [center_x, center_y, center_z],
-                "axis": [axis_x, axis_y, axis_z]
+                "axis": [axis_x, axis_y, axis_z],
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def pan_camera(self, dx: int, dy: int) -> dict[str, Any]:
         """
@@ -1454,27 +1528,20 @@ class ViewModel:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Windows') or doc.Windows.Count == 0:
+            if not hasattr(doc, "Windows") or doc.Windows.Count == 0:
                 return {"error": "No window available"}
 
             window = doc.Windows.Item(1)
-            view_obj = window.View if hasattr(window, 'View') else None
+            view_obj = window.View if hasattr(window, "View") else None
 
             if not view_obj:
                 return {"error": "Cannot access view object"}
 
             view_obj.PanCamera(dx, dy)
 
-            return {
-                "status": "camera_panned",
-                "dx": dx,
-                "dy": dy
-            }
+            return {"status": "camera_panned", "dx": dx, "dy": dy}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def zoom_camera(self, factor: float) -> dict[str, Any]:
         """
@@ -1489,26 +1556,20 @@ class ViewModel:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Windows') or doc.Windows.Count == 0:
+            if not hasattr(doc, "Windows") or doc.Windows.Count == 0:
                 return {"error": "No window available"}
 
             window = doc.Windows.Item(1)
-            view_obj = window.View if hasattr(window, 'View') else None
+            view_obj = window.View if hasattr(window, "View") else None
 
             if not view_obj:
                 return {"error": "Cannot access view object"}
 
             view_obj.ZoomCamera(factor)
 
-            return {
-                "status": "camera_zoomed",
-                "factor": factor
-            }
+            return {"status": "camera_zoomed", "factor": factor}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def refresh_view(self) -> dict[str, Any]:
         """
@@ -1520,11 +1581,11 @@ class ViewModel:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Windows') or doc.Windows.Count == 0:
+            if not hasattr(doc, "Windows") or doc.Windows.Count == 0:
                 return {"error": "No window available"}
 
             window = doc.Windows.Item(1)
-            view_obj = window.View if hasattr(window, 'View') else None
+            view_obj = window.View if hasattr(window, "View") else None
 
             if not view_obj:
                 return {"error": "Cannot access view object"}
@@ -1533,18 +1594,15 @@ class ViewModel:
 
             return {"status": "view_refreshed"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def _get_view_object(self):
         """Get the active view object from the first window."""
         doc = self.doc_manager.get_active_document()
-        if not hasattr(doc, 'Windows') or doc.Windows.Count == 0:
+        if not hasattr(doc, "Windows") or doc.Windows.Count == 0:
             raise Exception("No window available")
         window = doc.Windows.Item(1)
-        view_obj = window.View if hasattr(window, 'View') else None
+        view_obj = window.View if hasattr(window, "View") else None
         if not view_obj:
             raise Exception("Cannot access view object")
         return view_obj
@@ -1570,13 +1628,10 @@ class ViewModel:
                 "status": "success",
                 "model": [x, y, z],
                 "screen_x": result[0],
-                "screen_y": result[1]
+                "screen_y": result[1],
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def transform_screen_to_model(self, screen_x: int, screen_y: int) -> dict[str, Any]:
         """
@@ -1599,13 +1654,10 @@ class ViewModel:
                 "screen": [screen_x, screen_y],
                 "x": result[0],
                 "y": result[1],
-                "z": result[2]
+                "z": result[2],
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def begin_camera_dynamics(self) -> dict[str, Any]:
         """
@@ -1623,10 +1675,7 @@ class ViewModel:
             view_obj.BeginCameraDynamics()
             return {"status": "camera_dynamics_started"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def end_camera_dynamics(self) -> dict[str, Any]:
         """
@@ -1643,16 +1692,22 @@ class ViewModel:
             view_obj.EndCameraDynamics()
             return {"status": "camera_dynamics_ended"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def set_camera(self, eye_x: float, eye_y: float, eye_z: float,
-                   target_x: float, target_y: float, target_z: float,
-                   up_x: float = 0.0, up_y: float = 1.0, up_z: float = 0.0,
-                   perspective: bool = False,
-                   scale_or_angle: float = 1.0) -> dict[str, Any]:
+    def set_camera(
+        self,
+        eye_x: float,
+        eye_y: float,
+        eye_z: float,
+        target_x: float,
+        target_y: float,
+        target_z: float,
+        up_x: float = 0.0,
+        up_y: float = 1.0,
+        up_z: float = 0.0,
+        perspective: bool = False,
+        scale_or_angle: float = 1.0,
+    ) -> dict[str, Any]:
         """
         Set the camera parameters for the active view.
 
@@ -1669,20 +1724,27 @@ class ViewModel:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Windows') or doc.Windows.Count == 0:
+            if not hasattr(doc, "Windows") or doc.Windows.Count == 0:
                 return {"error": "No window available"}
 
             window = doc.Windows.Item(1)
-            view_obj = window.View if hasattr(window, 'View') else None
+            view_obj = window.View if hasattr(window, "View") else None
 
             if not view_obj:
                 return {"error": "Cannot access view object"}
 
             view_obj.SetCamera(
-                eye_x, eye_y, eye_z,
-                target_x, target_y, target_z,
-                up_x, up_y, up_z,
-                perspective, scale_or_angle
+                eye_x,
+                eye_y,
+                eye_z,
+                target_x,
+                target_y,
+                target_z,
+                up_x,
+                up_y,
+                up_z,
+                perspective,
+                scale_or_angle,
             )
 
             return {
@@ -1691,10 +1753,7 @@ class ViewModel:
                 "target": [target_x, target_y, target_z],
                 "up": [up_x, up_y, up_z],
                 "perspective": perspective,
-                "scale_or_angle": scale_or_angle
+                "scale_or_angle": scale_or_angle,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}

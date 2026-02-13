@@ -8,13 +8,15 @@ All values verified against the Solid Edge type library
 
 class RefPlaneConstants:
     """Reference plane index constants (1-based collection indices)"""
-    seRefPlaneTop = 1     # Top/XZ plane
-    seRefPlaneFront = 2   # Front/XY plane
-    seRefPlaneRight = 3   # Right/YZ plane
+
+    seRefPlaneTop = 1  # Top/XZ plane
+    seRefPlaneFront = 2  # Front/XY plane
+    seRefPlaneRight = 3  # Right/YZ plane
 
 
 class DocumentTypeConstants:
     """Document type constants (from type library)"""
+
     igPartDocument = 1
     igDraftDocument = 2
     igAssemblyDocument = 3
@@ -26,28 +28,31 @@ class DocumentTypeConstants:
 
 class DirectionConstants:
     """Extrusion/Revolve direction constants (from type library)"""
-    igLeft = 1       # Left/Reverse direction
-    igRight = 2      # Right/Normal direction (also igNormalSide)
+
+    igLeft = 1  # Left/Reverse direction
+    igRight = 2  # Right/Normal direction (also igNormalSide)
     igSymmetric = 3  # Symmetric (both directions)
-    igBoth = 6       # Both directions
+    igBoth = 6  # Both directions
 
 
 class ProfileValidationConstants:
     """Profile.End() validation flag constants (bitfield, from type library)"""
-    igProfileClosed = 1              # Profile must be closed
-    igProfileSingle = 4             # Single profile only
-    igProfileNoSelfIntersect = 8    # No self-intersection
-    igProfileRefAxisRequired = 16   # Reference axis required (for revolve)
+
+    igProfileClosed = 1  # Profile must be closed
+    igProfileSingle = 4  # Single profile only
+    igProfileNoSelfIntersect = 8  # No self-intersection
+    igProfileRefAxisRequired = 16  # Reference axis required (for revolve)
     igProfileNoRefAxisIntersect = 32  # Profile must not intersect axis
-    igProfileAllowNested = 8192     # Allow nested profiles
+    igProfileAllowNested = 8192  # Allow nested profiles
 
     # Common combinations
-    igProfileDefault = 0            # Default (extrude)
-    igProfileForRevolve = 17        # igProfileClosed | igProfileRefAxisRequired
+    igProfileDefault = 0  # Default (extrude)
+    igProfileForRevolve = 17  # igProfileClosed | igProfileRefAxisRequired
 
 
 class ExtentTypeConstants:
     """Extent type constants (from type library)"""
+
     igFinite = 13
     igThroughAll = 16
     igNone = 44
@@ -55,6 +60,7 @@ class ExtentTypeConstants:
 
 class HoleTypeConstants:
     """Hole type constants (from type library)"""
+
     igRegularHole = 33
     igCounterboreHole = 34
     igCountersinkHole = 35
@@ -65,6 +71,7 @@ class HoleTypeConstants:
 
 class FaceQueryConstants:
     """Body.Faces() query type constants (from type library)"""
+
     igQueryAll = 1
     igQueryRoundable = 2
     igQueryStraight = 3
@@ -79,6 +86,7 @@ class FaceQueryConstants:
 
 class ViewOrientationConstants:
     """Standard orthographic view orientation constants (from type library)"""
+
     igTopView = 1
     igRightView = 2
     igLeftView = 3
@@ -86,7 +94,7 @@ class ViewOrientationConstants:
     igBottomView = 5
     igBackView = 6
     # Pictorial views use a separate numbering scheme:
-    igTopFrontLeftView = 8    # Standard isometric
+    igTopFrontLeftView = 8  # Standard isometric
     igTopFrontRightView = 9
     igTopBackLeftView = 7
     igTopBackRightView = 10
@@ -94,6 +102,7 @@ class ViewOrientationConstants:
 
 class DrawingViewTypeConstants:
     """Drawing view type constants (from type library - separate enum)"""
+
     igPrincipleView = 1
     igIsometricView = 2
     igAuxiliaryView = 3
@@ -104,6 +113,7 @@ class DrawingViewTypeConstants:
 
 class DrawingViewOrientationConstants:
     """Drawing view orientation constants for AddPartView (empirically verified)"""
+
     Front = 5
     Top = 6
     Right = 7
@@ -115,13 +125,14 @@ class DrawingViewOrientationConstants:
 
 class RenderModeConstants:
     """View render mode constants (from type library: seRenderMode*)"""
+
     seRenderModeUndefined = 0
     seRenderModeWireframe = 1
     seRenderModeWiremesh = 2
     seRenderModeOutline = 3
     seRenderModeBoundary = 4
-    seRenderModeVHL = 6              # Hidden edges visible
-    seRenderModeSmooth = 8           # Shaded
+    seRenderModeVHL = 6  # Hidden edges visible
+    seRenderModeSmooth = 8  # Shaded
     seRenderModeSmoothMesh = 9
     seRenderModeSmoothVHL = 10
     seRenderModeSmoothBoundary = 11  # Shaded with edges
@@ -133,6 +144,7 @@ class AssemblyRelationConstants:
     Note: These are large integers used as COM type identifiers,
     not small sequential enum values.
     """
+
     igGroundRelation3d = 1959028688
     igPlanarRelation3d = -2058948880
     igAxialRelation3d = 1472929712
@@ -147,12 +159,14 @@ class AssemblyRelationConstants:
 
 class ModelingModeConstants:
     """Modeling mode constants (from type library)"""
+
     seModelingModeSynchronous = 1
     seModelingModeOrdered = 2
 
 
 class TreatmentTypeConstants:
     """Treatment type constants for extruded surfaces (from type library)"""
+
     seTreatmentNone = 0
     seTreatmentCrown = 1
     seTreatmentDraft = 2
@@ -161,6 +175,7 @@ class TreatmentTypeConstants:
 
 class DraftSideConstants:
     """Draft side constants (from type library)"""
+
     seDraftNone = 0
     seDraftInside = 1
     seDraftOutside = 2
@@ -168,24 +183,28 @@ class DraftSideConstants:
 
 class TreatmentCrownTypeConstants:
     """Crown type constants (from type library)"""
+
     seTreatmentCrownByRadius = 0
     seTreatmentCrownByOffset = 1
 
 
 class TreatmentCrownSideConstants:
     """Crown side constants (from type library)"""
+
     seTreatmentCrownSideInside = 0
     seTreatmentCrownSideOutside = 1
 
 
 class TreatmentCrownCurvatureSideConstants:
     """Crown curvature side constants (from type library)"""
+
     seTreatmentCrownCurvatureInside = 0
     seTreatmentCrownCurvatureOutside = 1
 
 
 class OffsetSideConstants:
     """Offset side constants (from type library)"""
+
     seOffsetNone = 0
     seOffsetInside = 1
     seOffsetOutside = 2
@@ -193,11 +212,13 @@ class OffsetSideConstants:
 
 class KeyPointExtentConstants:
     """Keypoint extent constants (from type library)"""
+
     igTangentNormal = 0
 
 
 class LoftSweepConstants:
     """Loft and sweep profile type constants (from type library)"""
+
     igProfileBasedCrossSection = 48
 
 
@@ -207,11 +228,13 @@ class LoftSweepConstants:
 # ExtrudedProtrusion was renamed to DirectionConstants
 ExtrudedProtrusion = DirectionConstants
 
+
 # FeatureOperationConstants - names not in type library, values unverified.
 # Kept as alias since features.py imports it (though the values are never
 # passed to any API call).
 class FeatureOperationConstants:
     """Feature operation type constants (NOT in type library - unverified)"""
+
     igFeatureAdd = 0
     igFeatureCut = 1
     igFeatureIntersect = 2
@@ -226,6 +249,7 @@ class MateTypeConstants:
 
     For verified constants, use AssemblyRelationConstants instead.
     """
+
     igMate = 0
     igPlanarAlign = 1
     igAxialAlign = 2
@@ -246,6 +270,7 @@ class AssemblyGlobalConstants:
 
     Used with Application.GetGlobalParameter / SetGlobalParameter.
     """
+
     seAssemblyGlobalTubeWallThickness = 1
     seAssemblyGlobalTubeOuterDiameter = 2
     seAssemblyGlobalMiterClearance = 3
@@ -269,7 +294,17 @@ class AssemblyGlobalConstants:
     seAssemblyGlobalAdjustableTubes = 21
 
 
+class FoldTypeConstants:
+    """Drawing view fold direction constants (from type library)"""
+
+    igFoldUp = 1
+    igFoldDown = 2
+    igFoldRight = 3
+    igFoldLeft = 4
+
+
 class SaveAsConstants:
     """File save format constants (values verified, names approximate)"""
+
     SaveAs = 0
     SaveCopyAs = 1

@@ -35,13 +35,10 @@ class DocumentManager:
                 "status": "created",
                 "type": "Part",
                 "name": doc.Name,
-                "path": doc.FullName if doc.FullName else "untitled"
+                "path": doc.FullName if doc.FullName else "untitled",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def create_assembly(self, template: str | None = None) -> dict[str, Any]:
         """Create a new assembly document"""
@@ -59,13 +56,10 @@ class DocumentManager:
                 "status": "created",
                 "type": "Assembly",
                 "name": doc.Name,
-                "path": doc.FullName if doc.FullName else "untitled"
+                "path": doc.FullName if doc.FullName else "untitled",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def create_sheet_metal(self, template: str | None = None) -> dict[str, Any]:
         """Create a new sheet metal document"""
@@ -83,13 +77,10 @@ class DocumentManager:
                 "status": "created",
                 "type": "SheetMetal",
                 "name": doc.Name,
-                "path": doc.FullName if doc.FullName else "untitled"
+                "path": doc.FullName if doc.FullName else "untitled",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def create_draft(self, template: str | None = None) -> dict[str, Any]:
         """Create a new draft document"""
@@ -107,13 +98,10 @@ class DocumentManager:
                 "status": "created",
                 "type": "Draft",
                 "name": doc.Name,
-                "path": doc.FullName if doc.FullName else "untitled"
+                "path": doc.FullName if doc.FullName else "untitled",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def open_document(self, file_path: str) -> dict[str, Any]:
         """Open an existing document"""
@@ -129,13 +117,10 @@ class DocumentManager:
                 "status": "opened",
                 "path": file_path,
                 "name": doc.Name,
-                "type": self._get_document_type(doc)
+                "type": self._get_document_type(doc),
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def save_document(self, file_path: str | None = None) -> dict[str, Any]:
         """Save the active document"""
@@ -145,23 +130,16 @@ class DocumentManager:
 
             if file_path:
                 self.active_document.SaveAs(file_path)
-                return {
-                    "status": "saved",
-                    "path": file_path,
-                    "name": self.active_document.Name
-                }
+                return {"status": "saved", "path": file_path, "name": self.active_document.Name}
             else:
                 self.active_document.Save()
                 return {
                     "status": "saved",
                     "path": self.active_document.FullName,
-                    "name": self.active_document.Name
+                    "name": self.active_document.Name,
                 }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def close_document(self, save: bool = True) -> dict[str, Any]:
         """Close the active document"""
@@ -193,11 +171,7 @@ class DocumentManager:
                 with contextlib.suppress(Exception):
                     app.DisplayAlerts = True
 
-            return {
-                "status": "closed",
-                "document": doc_name,
-                "saved": save
-            }
+            return {"status": "closed", "document": doc_name, "saved": save}
         except Exception as e:
             # Make sure alerts are re-enabled
             try:
@@ -205,10 +179,7 @@ class DocumentManager:
                 app.DisplayAlerts = True
             except Exception:
                 pass
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def list_documents(self) -> dict[str, Any]:
         """List all open documents"""
@@ -218,24 +189,20 @@ class DocumentManager:
 
             for i in range(app.Documents.Count):
                 doc = app.Documents.Item(i + 1)  # COM is 1-indexed
-                documents.append({
-                    "index": i,
-                    "name": doc.Name,
-                    "full_path": doc.FullName if doc.FullName else "untitled",
-                    "type": self._get_document_type(doc),
-                    "modified": not doc.Saved,
-                    "read_only": doc.ReadOnly
-                })
+                documents.append(
+                    {
+                        "index": i,
+                        "name": doc.Name,
+                        "full_path": doc.FullName if doc.FullName else "untitled",
+                        "type": self._get_document_type(doc),
+                        "modified": not doc.Saved,
+                        "read_only": doc.ReadOnly,
+                    }
+                )
 
-            return {
-                "documents": documents,
-                "count": len(documents)
-            }
+            return {"documents": documents, "count": len(documents)}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def activate_document(self, name_or_index) -> dict[str, Any]:
         """
@@ -277,14 +244,11 @@ class DocumentManager:
             return {
                 "status": "activated",
                 "name": doc.Name,
-                "path": doc.FullName if hasattr(doc, 'FullName') else "untitled",
-                "type": self._get_document_type(doc)
+                "path": doc.FullName if hasattr(doc, "FullName") else "untitled",
+                "type": self._get_document_type(doc),
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def undo(self) -> dict[str, Any]:
         """
@@ -298,10 +262,7 @@ class DocumentManager:
             doc.Undo()
             return {"status": "undone"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def redo(self) -> dict[str, Any]:
         """
@@ -315,10 +276,7 @@ class DocumentManager:
             doc.Redo()
             return {"status": "redone"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_active_document(self):
         """Get the active document object"""
@@ -344,14 +302,11 @@ class DocumentManager:
 
             return {
                 "type": doc_type,
-                "name": doc.Name if hasattr(doc, 'Name') else "Unknown",
-                "path": doc.FullName if hasattr(doc, 'FullName') else "untitled"
+                "name": doc.Name if hasattr(doc, "Name") else "Unknown",
+                "path": doc.FullName if hasattr(doc, "FullName") else "untitled",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def create_weldment(self, template: str | None = None) -> dict[str, Any]:
         """Create a new weldment document"""
@@ -369,13 +324,10 @@ class DocumentManager:
                 "status": "created",
                 "type": "Weldment",
                 "name": doc.Name,
-                "path": doc.FullName if doc.FullName else "untitled"
+                "path": doc.FullName if doc.FullName else "untitled",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def import_file(self, file_path: str) -> dict[str, Any]:
         """
@@ -401,13 +353,10 @@ class DocumentManager:
                 "status": "imported",
                 "path": file_path,
                 "name": doc.Name,
-                "type": self._get_document_type(doc)
+                "type": self._get_document_type(doc),
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_document_count(self) -> dict[str, Any]:
         """
@@ -420,10 +369,7 @@ class DocumentManager:
             app = self.connection.get_application()
             return {"count": app.Documents.Count}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def open_in_background(self, file_path: str) -> dict[str, Any]:
         """
@@ -450,13 +396,10 @@ class DocumentManager:
                 "status": "opened_in_background",
                 "path": file_path,
                 "name": doc.Name,
-                "type": self._get_document_type(doc)
+                "type": self._get_document_type(doc),
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def close_all_documents(self, save: bool = False) -> dict[str, Any]:
         """
@@ -514,10 +457,7 @@ class DocumentManager:
                 app.DisplayAlerts = True
             except Exception:
                 pass
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def _get_document_type(self, doc) -> str:
         """Determine document type"""
@@ -529,7 +469,7 @@ class DocumentManager:
                 DocumentTypeConstants.igDraftDocument: "Draft",
                 DocumentTypeConstants.igSheetMetalDocument: "SheetMetal",
                 DocumentTypeConstants.igWeldmentDocument: "Weldment",
-                DocumentTypeConstants.igWeldmentAssemblyDocument: "WeldmentAssembly"
+                DocumentTypeConstants.igWeldmentAssemblyDocument: "WeldmentAssembly",
             }
             return type_map.get(doc_type, f"Unknown({doc_type})")
         except Exception:

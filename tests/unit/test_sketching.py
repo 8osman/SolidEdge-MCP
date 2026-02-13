@@ -13,6 +13,7 @@ import pytest
 def sketch_mgr():
     """Create SketchManager with mocked dependencies."""
     from solidedge_mcp.backends.sketching import SketchManager
+
     dm = MagicMock()
     doc = MagicMock()
     dm.get_active_document.return_value = doc
@@ -23,6 +24,7 @@ def sketch_mgr():
 # ============================================================================
 # PROJECT REF PLANE
 # ============================================================================
+
 
 class TestProjectRefPlane:
     def test_success(self, sketch_mgr):
@@ -82,6 +84,7 @@ class TestProjectRefPlane:
 # OFFSET SKETCH 2D
 # ============================================================================
 
+
 class TestOffsetSketch2d:
     def test_success(self, sketch_mgr):
         sm, doc = sketch_mgr
@@ -111,3 +114,185 @@ class TestOffsetSketch2d:
         result = sm.offset_sketch_2d(-1.0, -1.0, 0.01)
         assert result["status"] == "offset"
         profile.Offset2d.assert_called_once_with(-1.0, -1.0, 0.01)
+
+
+# ============================================================================
+# SKETCH ROTATE
+# ============================================================================
+
+
+class TestSketchRotate:
+    def test_success(self, sketch_mgr):
+        sm, doc = sketch_mgr
+        profile = MagicMock()
+        sm.active_profile = profile
+
+        lines = MagicMock()
+        lines.Count = 0
+        profile.Lines2d = lines
+
+        circles = MagicMock()
+        circles.Count = 0
+        profile.Circles2d = circles
+
+        result = sm.sketch_rotate(0.0, 0.0, 90.0)
+        assert result["status"] == "rotated"
+        assert result["angle_degrees"] == 90.0
+
+    def test_no_active_sketch(self, sketch_mgr):
+        sm, doc = sketch_mgr
+        sm.active_profile = None
+
+        result = sm.sketch_rotate(0.0, 0.0, 45.0)
+        assert "error" in result
+        assert "No active sketch" in result["error"]
+
+    def test_with_lines(self, sketch_mgr):
+        sm, doc = sketch_mgr
+        profile = MagicMock()
+        sm.active_profile = profile
+
+        line = MagicMock()
+        line.StartPoint.X = 0.1
+        line.StartPoint.Y = 0.0
+        line.EndPoint.X = 0.1
+        line.EndPoint.Y = 0.1
+        lines = MagicMock()
+        lines.Count = 1
+        lines.Item.return_value = line
+        profile.Lines2d = lines
+
+        circles = MagicMock()
+        circles.Count = 0
+        profile.Circles2d = circles
+
+        result = sm.sketch_rotate(0.0, 0.0, 90.0)
+        assert result["status"] == "rotated"
+        assert result["elements_rotated"] == 1
+
+
+# ============================================================================
+# SKETCH SCALE
+# ============================================================================
+
+
+class TestSketchScale:
+    def test_success(self, sketch_mgr):
+        sm, doc = sketch_mgr
+        profile = MagicMock()
+        sm.active_profile = profile
+
+        lines = MagicMock()
+        lines.Count = 0
+        profile.Lines2d = lines
+
+        circles = MagicMock()
+        circles.Count = 0
+        profile.Circles2d = circles
+
+        result = sm.sketch_scale(0.0, 0.0, 2.0)
+        assert result["status"] == "scaled"
+        assert result["scale_factor"] == 2.0
+
+    def test_no_active_sketch(self, sketch_mgr):
+        sm, doc = sketch_mgr
+        sm.active_profile = None
+
+        result = sm.sketch_scale(0.0, 0.0, 2.0)
+        assert "error" in result
+        assert "No active sketch" in result["error"]
+
+    def test_with_circles(self, sketch_mgr):
+        sm, doc = sketch_mgr
+        profile = MagicMock()
+        sm.active_profile = profile
+
+        lines = MagicMock()
+        lines.Count = 0
+        profile.Lines2d = lines
+
+        circle = MagicMock()
+        circle.CenterPoint.X = 0.05
+        circle.CenterPoint.Y = 0.0
+        circle.Radius = 0.01
+        circles = MagicMock()
+        circles.Count = 1
+        circles.Item.return_value = circle
+        profile.Circles2d = circles
+
+        result = sm.sketch_scale(0.0, 0.0, 2.0)
+        assert result["status"] == "scaled"
+        assert result["elements_scaled"] == 1
+
+
+# ============================================================================
+# GET SKETCH MATRIX
+# ============================================================================
+
+
+class TestGetSketchMatrix:
+    def test_success(self, sketch_mgr):
+        sm, doc = sketch_mgr
+        profile = MagicMock()
+        sm.active_profile = profile
+
+        profile.GetMatrix.return_value = tuple(float(i) for i in range(16))
+        result = sm.get_sketch_matrix()
+        assert result["status"] == "ok"
+        assert len(result["matrix"]) == 16
+
+    def test_no_active_sketch(self, sketch_mgr):
+        sm, doc = sketch_mgr
+        sm.active_profile = None
+
+        result = sm.get_sketch_matrix()
+        assert "error" in result
+        assert "No active sketch" in result["error"]
+
+    def test_com_error(self, sketch_mgr):
+        sm, doc = sketch_mgr
+        profile = MagicMock()
+        sm.active_profile = profile
+        profile.GetMatrix.side_effect = Exception("COM error")
+
+        result = sm.get_sketch_matrix()
+        assert "error" in result
+
+
+# ============================================================================
+# CLEAN SKETCH GEOMETRY
+# ============================================================================
+
+
+class TestCleanSketchGeometry:
+    def test_success(self, sketch_mgr):
+        sm, doc = sketch_mgr
+        profile = MagicMock()
+        sm.active_profile = profile
+
+        result = sm.clean_sketch_geometry()
+        assert result["status"] == "cleaned"
+        profile.CleanGeometry2d.assert_called_once()
+
+    def test_no_active_sketch(self, sketch_mgr):
+        sm, doc = sketch_mgr
+        sm.active_profile = None
+
+        result = sm.clean_sketch_geometry()
+        assert "error" in result
+        assert "No active sketch" in result["error"]
+
+    def test_custom_params(self, sketch_mgr):
+        sm, doc = sketch_mgr
+        profile = MagicMock()
+        sm.active_profile = profile
+
+        result = sm.clean_sketch_geometry(
+            clean_points=False,
+            clean_splines=False,
+            clean_identical=True,
+            clean_small=True,
+            small_tolerance=0.001,
+        )
+        assert result["status"] == "cleaned"
+        profile.CleanGeometry2d.assert_called_once_with(0, False, False, True, True, None, 0.001)

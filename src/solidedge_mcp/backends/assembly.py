@@ -5,6 +5,7 @@ Handles assembly creation and component management.
 """
 
 import contextlib
+import math
 import os
 import traceback
 from typing import Any
@@ -17,8 +18,7 @@ class AssemblyManager:
         self.doc_manager = document_manager
 
     def add_component(
-        self, file_path: str,
-        x: float = 0, y: float = 0, z: float = 0
+        self, file_path: str, x: float = 0, y: float = 0, z: float = 0
     ) -> dict[str, Any]:
         """
         Add a component (part) to the active assembly.
@@ -39,7 +39,7 @@ class AssemblyManager:
 
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -49,10 +49,7 @@ class AssemblyManager:
                 occurrence = occurrences.AddByFilename(file_path)
             else:
                 # Place with transformation matrix (identity rotation + translation)
-                matrix = [1.0, 0.0, 0.0, 0.0,
-                          0.0, 1.0, 0.0, 0.0,
-                          0.0, 0.0, 1.0, 0.0,
-                          x,   y,   z,   1.0]
+                matrix = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, x, y, z, 1.0]
                 occurrence = occurrences.AddWithMatrix(file_path, matrix)
 
             # Get actual position from transform
@@ -66,18 +63,13 @@ class AssemblyManager:
                 "status": "added",
                 "file_path": file_path,
                 "name": (
-                    occurrence.Name
-                    if hasattr(occurrence, 'Name')
-                    else os.path.basename(file_path)
+                    occurrence.Name if hasattr(occurrence, "Name") else os.path.basename(file_path)
                 ),
                 "position": position,
-                "index": occurrences.Count - 1
+                "index": occurrences.Count - 1,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     # Alias for MCP tool compatibility
     place_component = add_component
@@ -95,7 +87,7 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -105,7 +97,7 @@ class AssemblyManager:
                 occurrence = occurrences.Item(i)
                 comp = {
                     "index": i - 1,
-                    "name": occurrence.Name if hasattr(occurrence, 'Name') else f"Component {i}",
+                    "name": occurrence.Name if hasattr(occurrence, "Name") else f"Component {i}",
                 }
 
                 # Get file path
@@ -131,20 +123,12 @@ class AssemblyManager:
 
                 components.append(comp)
 
-            return {
-                "components": components,
-                "count": len(components)
-            }
+            return {"components": components, "count": len(components)}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def create_mate(
-        self, mate_type: str,
-        component1_index: int,
-        component2_index: int
+        self, mate_type: str, component1_index: int, component2_index: int
     ) -> dict[str, Any]:
         """
         Create a mate/assembly relationship between components.
@@ -163,7 +147,7 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Relations3d'):
+            if not hasattr(doc, "Relations3d"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -179,13 +163,10 @@ class AssemblyManager:
                 "create mates.",
                 "mate_type": mate_type,
                 "component1": component1_index,
-                "component2": component2_index
+                "component2": component2_index,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_component_info(self, component_index: int) -> dict[str, Any]:
         """
@@ -214,7 +195,7 @@ class AssemblyManager:
 
             info = {
                 "index": component_index,
-                "name": occurrence.Name if hasattr(occurrence, 'Name') else "Unknown",
+                "name": occurrence.Name if hasattr(occurrence, "Name") else "Unknown",
             }
 
             # File path
@@ -251,14 +232,10 @@ class AssemblyManager:
 
             return info
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def update_component_position(
-        self, component_index: int,
-        x: float, y: float, z: float
+        self, component_index: int, x: float, y: float, z: float
     ) -> dict[str, Any]:
         """
         Update a component's position using a transformation matrix.
@@ -290,18 +267,15 @@ class AssemblyManager:
                 return {
                     "status": "position_updated",
                     "component": component_index,
-                    "position": [x, y, z]
+                    "position": [x, y, z],
                 }
             except Exception as e:
                 return {
                     "error": f"Could not update position: {e}",
-                    "note": "Position update may not be available for grounded components"
+                    "note": "Position update may not be available for grounded components",
                 }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def add_align_constraint(self, component1_index: int, component2_index: int) -> dict[str, Any]:
         """Add an align constraint between two components (requires UI for face selection)"""
@@ -309,12 +283,11 @@ class AssemblyManager:
             "error": "Constraint creation requires face/edge selection. Use Solid Edge UI.",
             "constraint_type": "align",
             "component1": component1_index,
-            "component2": component2_index
+            "component2": component2_index,
         }
 
     def add_angle_constraint(
-        self, component1_index: int,
-        component2_index: int, angle: float
+        self, component1_index: int, component2_index: int, angle: float
     ) -> dict[str, Any]:
         """Add an angle constraint between two components (requires UI for face selection)"""
         return {
@@ -322,36 +295,33 @@ class AssemblyManager:
             "constraint_type": "angle",
             "component1": component1_index,
             "component2": component2_index,
-            "angle": angle
+            "angle": angle,
         }
 
     def add_planar_align_constraint(
-        self, component1_index: int,
-        component2_index: int
+        self, component1_index: int, component2_index: int
     ) -> dict[str, Any]:
         """Add a planar align constraint (requires UI for face selection)"""
         return {
             "error": "Constraint creation requires face/edge selection. Use Solid Edge UI.",
             "constraint_type": "planar_align",
             "component1": component1_index,
-            "component2": component2_index
+            "component2": component2_index,
         }
 
     def add_axial_align_constraint(
-        self, component1_index: int,
-        component2_index: int
+        self, component1_index: int, component2_index: int
     ) -> dict[str, Any]:
         """Add an axial align constraint (requires UI for face selection)"""
         return {
             "error": "Constraint creation requires face/edge selection. Use Solid Edge UI.",
             "constraint_type": "axial_align",
             "component1": component1_index,
-            "component2": component2_index
+            "component2": component2_index,
         }
 
     def pattern_component(
-        self, component_index: int, count: int,
-        spacing: float, direction: str = "X"
+        self, component_index: int, count: int, spacing: float, direction: str = "X"
     ) -> dict[str, Any]:
         """
         Create a linear pattern of a component by placing copies with offset.
@@ -394,7 +364,7 @@ class AssemblyManager:
                 matrix = list(base_matrix)
                 matrix[dir_idx] = base_matrix[dir_idx] + (spacing * i)
                 occ = occurrences.AddWithMatrix(file_path, matrix)
-                placed.append(occ.Name if hasattr(occ, 'Name') else f"copy_{i}")
+                placed.append(occ.Name if hasattr(occ, "Name") else f"copy_{i}")
 
             return {
                 "status": "pattern_created",
@@ -402,13 +372,10 @@ class AssemblyManager:
                 "count": count,
                 "spacing": spacing,
                 "direction": direction,
-                "placed_names": placed
+                "placed_names": placed,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def suppress_component(self, component_index: int, suppress: bool = True) -> dict[str, Any]:
         """Suppress or unsuppress a component"""
@@ -421,18 +388,14 @@ class AssemblyManager:
 
             occurrence = occurrences.Item(component_index + 1)
 
-            if hasattr(occurrence, 'Suppress') and suppress:
+            if hasattr(occurrence, "Suppress") and suppress:
                 occurrence.Suppress()
-            elif hasattr(occurrence, 'Unsuppress') and not suppress:
+            elif hasattr(occurrence, "Unsuppress") and not suppress:
                 occurrence.Unsuppress()
             else:
                 return {"error": "Suppress/Unsuppress not available on this occurrence"}
 
-            return {
-                "status": "updated",
-                "component": component_index,
-                "suppressed": suppress
-            }
+            return {"status": "updated", "component": component_index, "suppressed": suppress}
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
@@ -451,7 +414,7 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -467,8 +430,9 @@ class AssemblyManager:
 
             # GetRangeBox returns two arrays via out params
             import array
-            min_point = array.array('d', [0.0, 0.0, 0.0])
-            max_point = array.array('d', [0.0, 0.0, 0.0])
+
+            min_point = array.array("d", [0.0, 0.0, 0.0])
+            max_point = array.array("d", [0.0, 0.0, 0.0])
 
             occurrence.GetRangeBox(min_point, max_point)
 
@@ -479,14 +443,11 @@ class AssemblyManager:
                 "size": [
                     max_point[0] - min_point[0],
                     max_point[1] - min_point[1],
-                    max_point[2] - min_point[2]
-                ]
+                    max_point[2] - min_point[2],
+                ],
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_bom(self) -> dict[str, Any]:
         """
@@ -501,7 +462,7 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -512,14 +473,14 @@ class AssemblyManager:
 
                 # Skip items excluded from BOM
                 try:
-                    if hasattr(occurrence, 'IncludeInBom') and not occurrence.IncludeInBom:
+                    if hasattr(occurrence, "IncludeInBom") and not occurrence.IncludeInBom:
                         continue
                 except Exception:
                     pass
 
                 # Skip pattern items (counted as part of pattern source)
                 try:
-                    if hasattr(occurrence, 'IsPatternItem') and occurrence.IsPatternItem:
+                    if hasattr(occurrence, "IsPatternItem") and occurrence.IsPatternItem:
                         continue
                 except Exception:
                     pass
@@ -531,32 +492,23 @@ class AssemblyManager:
                     file_path = f"Unknown_{i}"
 
                 name = (
-                    occurrence.Name
-                    if hasattr(occurrence, 'Name')
-                    else os.path.basename(file_path)
+                    occurrence.Name if hasattr(occurrence, "Name") else os.path.basename(file_path)
                 )
 
                 if file_path in bom_counts:
                     bom_counts[file_path]["quantity"] += 1
                 else:
-                    bom_counts[file_path] = {
-                        "name": name,
-                        "file_path": file_path,
-                        "quantity": 1
-                    }
+                    bom_counts[file_path] = {"name": name, "file_path": file_path, "quantity": 1}
 
             bom_items = list(bom_counts.values())
 
             return {
                 "total_occurrences": occurrences.Count,
                 "unique_parts": len(bom_items),
-                "bom": bom_items
+                "bom": bom_items,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_assembly_relations(self) -> dict[str, Any]:
         """
@@ -571,7 +523,7 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Relations3d'):
+            if not hasattr(doc, "Relations3d"):
                 return {"error": "Active document is not an assembly"}
 
             relations = doc.Relations3d
@@ -615,15 +567,9 @@ class AssemblyManager:
                 except Exception:
                     relation_list.append({"index": i - 1})
 
-            return {
-                "relations": relation_list,
-                "count": len(relation_list)
-            }
+            return {"relations": relation_list, "count": len(relation_list)}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_document_tree(self) -> dict[str, Any]:
         """
@@ -638,7 +584,7 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             def traverse_occurrence(occ, depth=0):
@@ -659,13 +605,13 @@ class AssemblyManager:
                     node["visible"] = occ.Visible
 
                 with contextlib.suppress(Exception):
-                    node["suppressed"] = occ.IsSuppressed if hasattr(occ, 'IsSuppressed') else False
+                    node["suppressed"] = occ.IsSuppressed if hasattr(occ, "IsSuppressed") else False
 
                 # Recurse into sub-occurrences
                 children = []
                 try:
                     sub_occs = occ.SubOccurrences
-                    if sub_occs and hasattr(sub_occs, 'Count'):
+                    if sub_occs and hasattr(sub_occs, "Count"):
                         for j in range(1, sub_occs.Count + 1):
                             try:
                                 child = sub_occs.Item(j)
@@ -693,13 +639,10 @@ class AssemblyManager:
             return {
                 "tree": tree,
                 "top_level_count": len(tree),
-                "document": doc.Name if hasattr(doc, 'Name') else "Unknown"
+                "document": doc.Name if hasattr(doc, "Name") else "Unknown",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def set_component_visibility(self, component_index: int, visible: bool) -> dict[str, Any]:
         """
@@ -715,7 +658,7 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -730,16 +673,9 @@ class AssemblyManager:
             occurrence = occurrences.Item(component_index + 1)
             occurrence.Visible = visible
 
-            return {
-                "status": "updated",
-                "component_index": component_index,
-                "visible": visible
-            }
+            return {"status": "updated", "component_index": component_index, "visible": visible}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def is_subassembly(self, component_index: int) -> dict[str, Any]:
         """
@@ -754,7 +690,7 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -776,9 +712,7 @@ class AssemblyManager:
                 try:
                     sub_occs = occurrence.SubOccurrences
                     result["is_subassembly"] = (
-                        sub_occs.Count > 0
-                        if hasattr(sub_occs, 'Count')
-                        else False
+                        sub_occs.Count > 0 if hasattr(sub_occs, "Count") else False
                     )
                 except Exception:
                     result["is_subassembly"] = False
@@ -788,10 +722,7 @@ class AssemblyManager:
 
             return result
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_component_display_name(self, component_index: int) -> dict[str, Any]:
         """
@@ -809,7 +740,7 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -837,10 +768,7 @@ class AssemblyManager:
 
             return result
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_occurrence_document(self, component_index: int) -> dict[str, Any]:
         """
@@ -855,7 +783,7 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -888,10 +816,7 @@ class AssemblyManager:
 
             return result
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_sub_occurrences(self, component_index: int) -> dict[str, Any]:
         """
@@ -909,7 +834,7 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -925,7 +850,7 @@ class AssemblyManager:
             children = []
             try:
                 sub_occs = occurrence.SubOccurrences
-                if sub_occs and hasattr(sub_occs, 'Count'):
+                if sub_occs and hasattr(sub_occs, "Count"):
                     for j in range(1, sub_occs.Count + 1):
                         try:
                             child = sub_occs.Item(j)
@@ -945,13 +870,10 @@ class AssemblyManager:
             return {
                 "component_index": component_index,
                 "sub_occurrences": children,
-                "count": len(children)
+                "count": len(children),
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def delete_component(self, component_index: int) -> dict[str, Any]:
         """
@@ -966,7 +888,7 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -980,22 +902,13 @@ class AssemblyManager:
 
             occurrence = occurrences.Item(component_index + 1)
             name = (
-                occurrence.Name
-                if hasattr(occurrence, 'Name')
-                else f"Component_{component_index}"
+                occurrence.Name if hasattr(occurrence, "Name") else f"Component_{component_index}"
             )
             occurrence.Delete()
 
-            return {
-                "status": "deleted",
-                "component_index": component_index,
-                "name": name
-            }
+            return {"status": "deleted", "component_index": component_index, "name": name}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def ground_component(self, component_index: int, ground: bool = True) -> dict[str, Any]:
         """
@@ -1011,7 +924,7 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -1029,10 +942,7 @@ class AssemblyManager:
                 # Add a ground constraint
                 relations = doc.Relations3d
                 relations.AddGround(occurrence)
-                return {
-                    "status": "grounded",
-                    "component_index": component_index
-                }
+                return {"status": "grounded", "component_index": component_index}
             else:
                 # Find and delete ground relation for this occurrence
                 relations = doc.Relations3d
@@ -1040,21 +950,15 @@ class AssemblyManager:
                     try:
                         rel = relations.Item(i)
                         # Ground relations have Type = 0
-                        if hasattr(rel, 'Type') and rel.Type == 0:
+                        if hasattr(rel, "Type") and rel.Type == 0:
                             rel.Delete()
-                            return {
-                                "status": "ungrounded",
-                                "component_index": component_index
-                            }
+                            return {"status": "ungrounded", "component_index": component_index}
                     except Exception:
                         continue
 
                 return {"error": "No ground relation found for this component"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def check_interference(self, component_index: int | None = None) -> dict[str, Any]:
         """
@@ -1072,7 +976,7 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -1080,8 +984,7 @@ class AssemblyManager:
             if occurrences.Count < 2:
                 return {
                     "status": "no_interference",
-                    "message": "Need at least 2 components"
-                    " for interference check"
+                    "message": "Need at least 2 components for interference check",
                 }
 
             import ctypes
@@ -1110,14 +1013,14 @@ class AssemblyManager:
                     ComparisonMethod=comparison_method,
                     NumElementsSet2=0,
                     AddInterferenceAsOccurrence=False,
-                    NumInterferences=num_interferences
+                    NumInterferences=num_interferences,
                 )
 
                 return {
                     "status": "checked",
                     "interference_found": interference_status.value != 0,
                     "num_interferences": num_interferences.value,
-                    "component_checked": component_index
+                    "component_checked": component_index,
                 }
             except Exception as e:
                 # CheckInterference has complex COM signature; report what we can
@@ -1126,14 +1029,11 @@ class AssemblyManager:
                     "note": "CheckInterference COM signature "
                     "is complex. Use Solid Edge UI for "
                     "reliable results.",
-                    "traceback": traceback.format_exc()
+                    "traceback": traceback.format_exc(),
                 }
 
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def replace_component(self, component_index: int, new_file_path: str) -> dict[str, Any]:
         """
@@ -1150,9 +1050,10 @@ class AssemblyManager:
         """
         try:
             import os
+
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             if not os.path.exists(new_file_path):
@@ -1180,13 +1081,10 @@ class AssemblyManager:
                 "status": "replaced",
                 "component_index": component_index,
                 "old_name": old_name,
-                "new_file": new_file_path
+                "new_file": new_file_path,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_component_transform(self, component_index: int) -> dict[str, Any]:
         """
@@ -1204,7 +1102,7 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -1240,10 +1138,7 @@ class AssemblyManager:
 
             return result
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_structured_bom(self) -> dict[str, Any]:
         """
@@ -1258,7 +1153,7 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -1287,7 +1182,7 @@ class AssemblyManager:
                 children = []
                 try:
                     sub_occs = occ.SubOccurrences
-                    if sub_occs and hasattr(sub_occs, 'Count') and sub_occs.Count > 0:
+                    if sub_occs and hasattr(sub_occs, "Count") and sub_occs.Count > 0:
                         item["type"] = "assembly"
                         for j in range(1, sub_occs.Count + 1):
                             try:
@@ -1315,17 +1210,13 @@ class AssemblyManager:
             return {
                 "bom": bom,
                 "top_level_count": len(bom),
-                "document": doc.Name if hasattr(doc, 'Name') else "Unknown"
+                "document": doc.Name if hasattr(doc, "Name") else "Unknown",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def set_component_color(
-        self, component_index: int,
-        red: int, green: int, blue: int
+        self, component_index: int, red: int, green: int, blue: int
     ) -> dict[str, Any]:
         """
         Set the color of a component in the assembly.
@@ -1342,7 +1233,7 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -1372,17 +1263,13 @@ class AssemblyManager:
             return {
                 "status": "updated",
                 "component_index": component_index,
-                "color": [red, green, blue]
+                "color": [red, green, blue],
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def occurrence_move(
-        self, component_index: int,
-        dx: float, dy: float, dz: float
+        self, component_index: int, dx: float, dy: float, dz: float
     ) -> dict[str, Any]:
         """
         Move a component by a relative delta.
@@ -1401,7 +1288,7 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -1416,21 +1303,21 @@ class AssemblyManager:
             occurrence = occurrences.Item(component_index + 1)
             occurrence.Move(dx, dy, dz)
 
-            return {
-                "status": "moved",
-                "component_index": component_index,
-                "delta": [dx, dy, dz]
-            }
+            return {"status": "moved", "component_index": component_index, "delta": [dx, dy, dz]}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def occurrence_rotate(self, component_index: int,
-                          axis_x1: float, axis_y1: float, axis_z1: float,
-                          axis_x2: float, axis_y2: float, axis_z2: float,
-                          angle: float) -> dict[str, Any]:
+    def occurrence_rotate(
+        self,
+        component_index: int,
+        axis_x1: float,
+        axis_y1: float,
+        axis_z1: float,
+        axis_x2: float,
+        axis_y2: float,
+        axis_z2: float,
+        angle: float,
+    ) -> dict[str, Any]:
         """
         Rotate a component around an axis.
 
@@ -1451,7 +1338,7 @@ class AssemblyManager:
 
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -1465,25 +1352,27 @@ class AssemblyManager:
 
             occurrence = occurrences.Item(component_index + 1)
             angle_rad = math.radians(angle)
-            occurrence.Rotate(axis_x1, axis_y1, axis_z1,
-                              axis_x2, axis_y2, axis_z2,
-                              angle_rad)
+            occurrence.Rotate(axis_x1, axis_y1, axis_z1, axis_x2, axis_y2, axis_z2, angle_rad)
 
             return {
                 "status": "rotated",
                 "component_index": component_index,
                 "axis": [[axis_x1, axis_y1, axis_z1], [axis_x2, axis_y2, axis_z2]],
-                "angle_degrees": angle
+                "angle_degrees": angle,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def set_component_transform(self, component_index: int,
-                                 origin_x: float, origin_y: float, origin_z: float,
-                                 angle_x: float, angle_y: float, angle_z: float) -> dict[str, Any]:
+    def set_component_transform(
+        self,
+        component_index: int,
+        origin_x: float,
+        origin_y: float,
+        origin_z: float,
+        angle_x: float,
+        angle_y: float,
+        angle_z: float,
+    ) -> dict[str, Any]:
         """
         Set a component's full transform (position + rotation).
 
@@ -1507,7 +1396,7 @@ class AssemblyManager:
 
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -1529,16 +1418,14 @@ class AssemblyManager:
                 "status": "updated",
                 "component_index": component_index,
                 "origin": [origin_x, origin_y, origin_z],
-                "angles_degrees": [angle_x, angle_y, angle_z]
+                "angles_degrees": [angle_x, angle_y, angle_z],
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def set_component_origin(self, component_index: int,
-                              x: float, y: float, z: float) -> dict[str, Any]:
+    def set_component_origin(
+        self, component_index: int, x: float, y: float, z: float
+    ) -> dict[str, Any]:
         """
         Set a component's origin (position only, no rotation change).
 
@@ -1556,7 +1443,7 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -1571,19 +1458,11 @@ class AssemblyManager:
             occurrence = occurrences.Item(component_index + 1)
             occurrence.PutOrigin(x, y, z)
 
-            return {
-                "status": "updated",
-                "component_index": component_index,
-                "origin": [x, y, z]
-            }
+            return {"status": "updated", "component_index": component_index, "origin": [x, y, z]}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def mirror_component(self, component_index: int,
-                          plane_index: int) -> dict[str, Any]:
+    def mirror_component(self, component_index: int, plane_index: int) -> dict[str, Any]:
         """
         Mirror a component across a reference plane.
 
@@ -1599,7 +1478,7 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             occurrences = doc.Occurrences
@@ -1622,13 +1501,157 @@ class AssemblyManager:
             return {
                 "status": "mirrored",
                 "component_index": component_index,
-                "plane_index": plane_index
+                "plane_index": plane_index,
             }
         except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def add_component_with_transform(
+        self,
+        file_path: str,
+        origin_x: float = 0,
+        origin_y: float = 0,
+        origin_z: float = 0,
+        angle_x: float = 0,
+        angle_y: float = 0,
+        angle_z: float = 0,
+    ) -> dict[str, Any]:
+        """
+        Add a component with position and Euler rotation angles.
+
+        Uses Occurrences.AddWithTransform(filename, ox, oy, oz, ax, ay, az)
+        where angles are in radians.
+
+        Args:
+            file_path: Path to the part or assembly file
+            origin_x, origin_y, origin_z: Position in meters
+            angle_x, angle_y, angle_z: Rotation angles in degrees
+
+        Returns:
+            Dict with status and component info
+        """
+        try:
+            if not os.path.exists(file_path):
+                return {"error": f"File not found: {file_path}"}
+
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, "Occurrences"):
+                return {"error": "Active document is not an assembly"}
+
+            occurrences = doc.Occurrences
+            ax_rad = math.radians(angle_x)
+            ay_rad = math.radians(angle_y)
+            az_rad = math.radians(angle_z)
+
+            occurrence = occurrences.AddWithTransform(
+                file_path, origin_x, origin_y, origin_z, ax_rad, ay_rad, az_rad
+            )
+
             return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
+                "status": "added",
+                "file_path": file_path,
+                "name": occurrence.Name
+                if hasattr(occurrence, "Name")
+                else os.path.basename(file_path),
+                "origin": [origin_x, origin_y, origin_z],
+                "angles_degrees": [angle_x, angle_y, angle_z],
+                "index": occurrences.Count - 1,
             }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def delete_relation(self, relation_index: int) -> dict[str, Any]:
+        """
+        Delete an assembly relation (constraint) by index.
+
+        Args:
+            relation_index: 0-based index of the relation
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, "Relations3d"):
+                return {"error": "Active document is not an assembly"}
+
+            relations = doc.Relations3d
+
+            if relation_index < 0 or relation_index >= relations.Count:
+                return {
+                    "error": f"Invalid relation index: {relation_index}. Count: {relations.Count}"
+                }
+
+            rel = relations.Item(relation_index + 1)
+            name = ""
+            with contextlib.suppress(Exception):
+                name = rel.Name
+
+            rel.Delete()
+
+            return {"status": "deleted", "relation_index": relation_index, "name": name}
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def get_relation_info(self, relation_index: int) -> dict[str, Any]:
+        """
+        Get detailed information about a specific assembly relation.
+
+        Args:
+            relation_index: 0-based index of the relation
+
+        Returns:
+            Dict with relation type, status, offset, and connected elements
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, "Relations3d"):
+                return {"error": "Active document is not an assembly"}
+
+            relations = doc.Relations3d
+
+            if relation_index < 0 or relation_index >= relations.Count:
+                return {
+                    "error": f"Invalid relation index: {relation_index}. Count: {relations.Count}"
+                }
+
+            rel = relations.Item(relation_index + 1)
+
+            type_names = {
+                0: "Ground",
+                1: "Axial",
+                2: "Planar",
+                3: "Connect",
+                4: "Angle",
+                5: "Tangent",
+                6: "Cam",
+                7: "Gear",
+                8: "ParallelAxis",
+                9: "Center",
+            }
+
+            info = {"relation_index": relation_index}
+
+            with contextlib.suppress(Exception):
+                info["type"] = rel.Type
+                info["type_name"] = type_names.get(rel.Type, f"Unknown({rel.Type})")
+            with contextlib.suppress(Exception):
+                info["status"] = rel.Status
+            with contextlib.suppress(Exception):
+                info["name"] = rel.Name
+            with contextlib.suppress(Exception):
+                info["suppressed"] = rel.Suppressed
+            with contextlib.suppress(Exception):
+                info["offset"] = rel.Offset
+            with contextlib.suppress(Exception):
+                info["normals_aligned"] = rel.NormalsAligned
+
+            return info
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_occurrence_count(self) -> dict[str, Any]:
         """
@@ -1640,12 +1663,9 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Occurrences'):
+            if not hasattr(doc, "Occurrences"):
                 return {"error": "Active document is not an assembly"}
 
             return {"count": doc.Occurrences.Count}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}

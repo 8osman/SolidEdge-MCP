@@ -21,7 +21,7 @@ class QueryManager:
     def _get_first_model(self):
         """Get the first model from the active document."""
         doc = self.doc_manager.get_active_document()
-        if not hasattr(doc, 'Models'):
+        if not hasattr(doc, "Models"):
             raise Exception("Document does not have a Models collection")
         models = doc.Models
         if models.Count == 0:
@@ -47,9 +47,7 @@ class QueryManager:
             # ComputePhysicalPropertiesWithSpecifiedDensity(Density, Accuracy)
             # Returns tuple: (volume, area, mass, cog, cov, moi, principal_moi,
             #                  principal_axes, radii_of_gyration, ?, ?)
-            result = model.ComputePhysicalPropertiesWithSpecifiedDensity(
-                density, 0.99
-            )
+            result = model.ComputePhysicalPropertiesWithSpecifiedDensity(density, 0.99)
 
             volume = result[0] if len(result) > 0 else 0
             surface_area = result[1] if len(result) > 1 else 0
@@ -82,14 +80,11 @@ class QueryManager:
                     "mass": "kg",
                     "density": "kg/m³",
                     "moments_of_inertia": "kg·m²",
-                    "coordinates": "meters"
-                }
+                    "coordinates": "meters",
+                },
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_bounding_box(self) -> dict[str, Any]:
         """
@@ -116,15 +111,12 @@ class QueryManager:
                 "dimensions": {
                     "x": max_pt[0] - min_pt[0],
                     "y": max_pt[1] - min_pt[1],
-                    "z": max_pt[2] - min_pt[2]
+                    "z": max_pt[2] - min_pt[2],
                 },
-                "units": "meters"
+                "units": "meters",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def list_features(self) -> dict[str, Any]:
         """
@@ -141,14 +133,14 @@ class QueryManager:
             features = []
 
             # Use DesignEdgebarFeatures for the full feature tree
-            if hasattr(doc, 'DesignEdgebarFeatures'):
+            if hasattr(doc, "DesignEdgebarFeatures"):
                 debf = doc.DesignEdgebarFeatures
                 for i in range(1, debf.Count + 1):
                     try:
                         feat = debf.Item(i)
                         feat_info = {
                             "index": i - 1,
-                            "name": feat.Name if hasattr(feat, 'Name') else f"Feature_{i}",
+                            "name": feat.Name if hasattr(feat, "Name") else f"Feature_{i}",
                         }
                         features.append(feat_info)
                     except Exception:
@@ -161,24 +153,19 @@ class QueryManager:
                         feat = model_features.Item(i)
                         feat_info = {
                             "index": i - 1,
-                            "name": feat.Name if hasattr(feat, 'Name') else f"Feature_{i}",
+                            "name": feat.Name if hasattr(feat, "Name") else f"Feature_{i}",
                         }
                         features.append(feat_info)
                     except Exception:
                         features.append({"index": i - 1, "name": f"Feature_{i}"})
 
-            return {
-                "features": features,
-                "count": len(features)
-            }
+            return {"features": features, "count": len(features)}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def measure_distance(self, x1: float, y1: float, z1: float,
-                        x2: float, y2: float, z2: float) -> dict[str, Any]:
+    def measure_distance(
+        self, x1: float, y1: float, z1: float, x2: float, y2: float, z2: float
+    ) -> dict[str, Any]:
         """
         Measure distance between two points.
 
@@ -198,20 +185,13 @@ class QueryManager:
 
             return {
                 "distance": distance,
-                "delta": {
-                    "x": dx,
-                    "y": dy,
-                    "z": dz
-                },
+                "delta": {"x": dx, "y": dy, "z": dz},
                 "point1": [x1, y1, z1],
                 "point2": [x2, y2, z2],
-                "units": "meters"
+                "units": "meters",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_document_properties(self) -> dict[str, Any]:
         """Get document properties and metadata"""
@@ -219,23 +199,23 @@ class QueryManager:
             doc = self.doc_manager.get_active_document()
 
             properties = {
-                "name": doc.Name if hasattr(doc, 'Name') else "Unknown",
-                "path": doc.FullName if hasattr(doc, 'FullName') else "Unsaved",
-                "modified": not doc.Saved if hasattr(doc, 'Saved') else False,
-                "read_only": doc.ReadOnly if hasattr(doc, 'ReadOnly') else False
+                "name": doc.Name if hasattr(doc, "Name") else "Unknown",
+                "path": doc.FullName if hasattr(doc, "FullName") else "Unsaved",
+                "modified": not doc.Saved if hasattr(doc, "Saved") else False,
+                "read_only": doc.ReadOnly if hasattr(doc, "ReadOnly") else False,
             }
 
             # Try to get summary info
             try:
-                if hasattr(doc, 'SummaryInfo'):
+                if hasattr(doc, "SummaryInfo"):
                     summary = doc.SummaryInfo
-                    if hasattr(summary, 'Title'):
+                    if hasattr(summary, "Title"):
                         properties["title"] = summary.Title
-                    if hasattr(summary, 'Author'):
+                    if hasattr(summary, "Author"):
                         properties["author"] = summary.Author
-                    if hasattr(summary, 'Subject'):
+                    if hasattr(summary, "Subject"):
                         properties["subject"] = summary.Subject
-                    if hasattr(summary, 'Comments'):
+                    if hasattr(summary, "Comments"):
                         properties["comments"] = summary.Comments
             except Exception:
                 pass
@@ -251,10 +231,7 @@ class QueryManager:
 
             return properties
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_feature_count(self) -> dict[str, Any]:
         """Get count of features in the document"""
@@ -263,27 +240,24 @@ class QueryManager:
 
             counts = {}
 
-            if hasattr(doc, 'DesignEdgebarFeatures'):
+            if hasattr(doc, "DesignEdgebarFeatures"):
                 counts["features"] = doc.DesignEdgebarFeatures.Count
 
-            if hasattr(doc, 'Models'):
+            if hasattr(doc, "Models"):
                 counts["models"] = doc.Models.Count
 
-            if hasattr(doc, 'ProfileSets'):
+            if hasattr(doc, "ProfileSets"):
                 counts["sketches"] = doc.ProfileSets.Count
 
-            if hasattr(doc, 'RefPlanes'):
+            if hasattr(doc, "RefPlanes"):
                 counts["ref_planes"] = doc.RefPlanes.Count
 
-            if hasattr(doc, 'Variables'):
+            if hasattr(doc, "Variables"):
                 counts["variables"] = doc.Variables.Count
 
             return counts
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     # =================================================================
     # REFERENCE PLANES
@@ -302,7 +276,7 @@ class QueryManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'RefPlanes'):
+            if not hasattr(doc, "RefPlanes"):
                 return {"error": "Document does not have reference planes"}
 
             ref_planes = doc.RefPlanes
@@ -335,13 +309,10 @@ class QueryManager:
                 "count": len(planes),
                 "note": "Use plane index (1-based) in "
                 "create_sketch_on_plane or "
-                "create_ref_plane_by_offset"
+                "create_ref_plane_by_offset",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     # =================================================================
     # VARIABLES
@@ -367,7 +338,7 @@ class QueryManager:
                     var = variables.Item(i)
                     var_info = {
                         "index": i - 1,
-                        "name": var.DisplayName if hasattr(var, 'DisplayName') else f"Var_{i}",
+                        "name": var.DisplayName if hasattr(var, "DisplayName") else f"Var_{i}",
                     }
                     with contextlib.suppress(Exception):
                         var_info["value"] = var.Value
@@ -379,15 +350,9 @@ class QueryManager:
                 except Exception:
                     var_list.append({"index": i - 1, "name": f"Var_{i}"})
 
-            return {
-                "variables": var_list,
-                "count": len(var_list)
-            }
+            return {"variables": var_list, "count": len(var_list)}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_variable(self, name: str) -> dict[str, Any]:
         """
@@ -407,7 +372,7 @@ class QueryManager:
             for i in range(1, variables.Count + 1):
                 try:
                     var = variables.Item(i)
-                    display_name = var.DisplayName if hasattr(var, 'DisplayName') else ""
+                    display_name = var.DisplayName if hasattr(var, "DisplayName") else ""
                     if display_name == name:
                         result = {"name": name, "index": i - 1}
                         with contextlib.suppress(Exception):
@@ -422,10 +387,7 @@ class QueryManager:
 
             return {"error": f"Variable '{name}' not found"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def set_variable(self, name: str, value: float) -> dict[str, Any]:
         """
@@ -445,7 +407,7 @@ class QueryManager:
             for i in range(1, variables.Count + 1):
                 try:
                     var = variables.Item(i)
-                    display_name = var.DisplayName if hasattr(var, 'DisplayName') else ""
+                    display_name = var.DisplayName if hasattr(var, "DisplayName") else ""
                     if display_name == name:
                         old_value = var.Value
                         var.Value = value
@@ -453,17 +415,14 @@ class QueryManager:
                             "status": "updated",
                             "name": name,
                             "old_value": old_value,
-                            "new_value": value
+                            "new_value": value,
                         }
                 except Exception:
                     continue
 
             return {"error": f"Variable '{name}' not found"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def add_variable(self, name: str, formula: str, units_type: str = None) -> dict[str, Any]:
         """
@@ -489,11 +448,7 @@ class QueryManager:
             else:
                 var = variables.Add(name, formula)
 
-            result = {
-                "status": "created",
-                "name": name,
-                "formula": formula
-            }
+            result = {"status": "created", "name": name, "formula": formula}
             with contextlib.suppress(Exception):
                 result["value"] = var.Value
             with contextlib.suppress(Exception):
@@ -501,10 +456,47 @@ class QueryManager:
 
             return result
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def set_variable_formula(self, name: str, formula: str) -> dict[str, Any]:
+        """
+        Set the formula of an existing variable by display name.
+
+        Args:
+            name: Variable display name
+            formula: New formula string (e.g., '0.025', 'V1 * 2')
+
+        Returns:
+            Dict with old/new formula and current value
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            variables = doc.Variables
+
+            for i in range(1, variables.Count + 1):
+                try:
+                    var = variables.Item(i)
+                    display_name = var.DisplayName if hasattr(var, "DisplayName") else ""
+                    if display_name == name:
+                        old_formula = ""
+                        with contextlib.suppress(Exception):
+                            old_formula = var.Formula
+                        var.Formula = formula
+                        result = {
+                            "status": "updated",
+                            "name": name,
+                            "old_formula": old_formula,
+                            "new_formula": formula,
+                        }
+                        with contextlib.suppress(Exception):
+                            result["value"] = var.Value
+                        return result
+                except Exception:
+                    continue
+
+            return {"error": f"Variable '{name}' not found"}
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     # =================================================================
     # CUSTOM PROPERTIES
@@ -529,13 +521,13 @@ class QueryManager:
             for ps_idx in range(1, prop_sets.Count + 1):
                 try:
                     ps = prop_sets.Item(ps_idx)
-                    ps_name = ps.Name if hasattr(ps, 'Name') else f"Set_{ps_idx}"
+                    ps_name = ps.Name if hasattr(ps, "Name") else f"Set_{ps_idx}"
 
                     props = {}
                     for p_idx in range(1, ps.Count + 1):
                         try:
                             prop = ps.Item(p_idx)
-                            prop_name = prop.Name if hasattr(prop, 'Name') else f"Prop_{p_idx}"
+                            prop_name = prop.Name if hasattr(prop, "Name") else f"Prop_{p_idx}"
                             try:
                                 props[prop_name] = prop.Value
                             except Exception:
@@ -547,15 +539,9 @@ class QueryManager:
                 except Exception:
                     continue
 
-            return {
-                "property_sets": properties,
-                "count": len(properties)
-            }
+            return {"property_sets": properties, "count": len(properties)}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def set_custom_property(self, name: str, value: str) -> dict[str, Any]:
         """
@@ -579,7 +565,7 @@ class QueryManager:
             for ps_idx in range(1, prop_sets.Count + 1):
                 try:
                     ps = prop_sets.Item(ps_idx)
-                    if hasattr(ps, 'Name') and ps.Name == "Custom":
+                    if hasattr(ps, "Name") and ps.Name == "Custom":
                         custom_ps = ps
                         break
                 except Exception:
@@ -592,30 +578,23 @@ class QueryManager:
             for p_idx in range(1, custom_ps.Count + 1):
                 try:
                     prop = custom_ps.Item(p_idx)
-                    if hasattr(prop, 'Name') and prop.Name == name:
+                    if hasattr(prop, "Name") and prop.Name == name:
                         old_value = prop.Value
                         prop.Value = value
                         return {
                             "status": "updated",
                             "name": name,
                             "old_value": old_value,
-                            "new_value": value
+                            "new_value": value,
                         }
                 except Exception:
                     continue
 
             # Property doesn't exist, add it
             custom_ps.Add(name, value)
-            return {
-                "status": "created",
-                "name": name,
-                "value": value
-            }
+            return {"status": "created", "name": name, "value": value}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def delete_custom_property(self, name: str) -> dict[str, Any]:
         """
@@ -635,16 +614,13 @@ class QueryManager:
             for ps_idx in range(1, prop_sets.Count + 1):
                 try:
                     ps = prop_sets.Item(ps_idx)
-                    if hasattr(ps, 'Name') and ps.Name == "Custom":
+                    if hasattr(ps, "Name") and ps.Name == "Custom":
                         for p_idx in range(1, ps.Count + 1):
                             try:
                                 prop = ps.Item(p_idx)
-                                if hasattr(prop, 'Name') and prop.Name == name:
+                                if hasattr(prop, "Name") and prop.Name == name:
                                     prop.Delete()
-                                    return {
-                                        "status": "deleted",
-                                        "name": name
-                                    }
+                                    return {"status": "deleted", "name": name}
                             except Exception:
                                 continue
                         return {"error": f"Property '{name}' not found in Custom set"}
@@ -653,10 +629,7 @@ class QueryManager:
 
             return {"error": "Custom property set not found"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     # =================================================================
     # BODY TOPOLOGY QUERIES
@@ -681,12 +654,12 @@ class QueryManager:
 
             # Query type constants (from SE type library)
             query_types = {
-                6: "plane",      # igQueryPlane
+                6: "plane",  # igQueryPlane
                 10: "cylinder",  # igQueryCylinder
-                7: "cone",       # igQueryCone
-                9: "sphere",     # igQuerySphere
-                8: "torus",      # igQueryTorus
-                5: "spline",     # igQuerySpline
+                7: "cone",  # igQueryCone
+                9: "sphere",  # igQuerySphere
+                8: "torus",  # igQueryTorus
+                5: "spline",  # igQuerySpline
             }
 
             # Build a set of face indices per geometry type
@@ -699,7 +672,7 @@ class QueryManager:
                             tf = typed_faces.Item(j)
                             # Use (area, edge_count) as a fingerprint
                             area = tf.Area
-                            ec = tf.Edges.Count if hasattr(tf.Edges, 'Count') else 0
+                            ec = tf.Edges.Count if hasattr(tf.Edges, "Count") else 0
                             key = (round(area, 12), ec)
                             geo_type_map[key] = qname
                         except Exception:
@@ -718,7 +691,7 @@ class QueryManager:
                     with contextlib.suppress(Exception):
                         face_info["area"] = face.Area
                     try:
-                        edge_count = face.Edges.Count if hasattr(face.Edges, 'Count') else 0
+                        edge_count = face.Edges.Count if hasattr(face.Edges, "Count") else 0
                         face_info["edge_count"] = edge_count
                     except Exception:
                         pass
@@ -732,15 +705,9 @@ class QueryManager:
                 except Exception:
                     face_list.append({"index": i - 1})
 
-            return {
-                "faces": face_list,
-                "count": len(face_list)
-            }
+            return {"faces": face_list, "count": len(face_list)}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_body_edges(self) -> dict[str, Any]:
         """
@@ -764,12 +731,9 @@ class QueryManager:
                 try:
                     face = faces.Item(fi)
                     edges = face.Edges
-                    edge_count = edges.Count if hasattr(edges, 'Count') else 0
+                    edge_count = edges.Count if hasattr(edges, "Count") else 0
                     total_edges += edge_count
-                    face_edges.append({
-                        "face_index": fi - 1,
-                        "edge_count": edge_count
-                    })
+                    face_edges.append({"face_index": fi - 1, "edge_count": edge_count})
                 except Exception:
                     face_edges.append({"face_index": fi - 1, "edge_count": 0})
 
@@ -777,13 +741,10 @@ class QueryManager:
                 "face_edges": face_edges,
                 "total_face_count": faces.Count,
                 "total_edge_references": total_edges,
-                "note": "Edge count includes shared edges (counted once per face)"
+                "note": "Edge count includes shared edges (counted once per face)",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_face_info(self, face_index: int) -> dict[str, Any]:
         """
@@ -813,21 +774,18 @@ class QueryManager:
                 info["area"] = face.Area
             try:
                 edges = face.Edges
-                info["edge_count"] = edges.Count if hasattr(edges, 'Count') else 0
+                info["edge_count"] = edges.Count if hasattr(edges, "Count") else 0
             except Exception:
                 pass
             try:
                 vertices = face.Vertices
-                info["vertex_count"] = vertices.Count if hasattr(vertices, 'Count') else 0
+                info["vertex_count"] = vertices.Count if hasattr(vertices, "Count") else 0
             except Exception:
                 pass
 
             return info
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     # =================================================================
     # PERFORMANCE & RECOMPUTE
@@ -862,15 +820,15 @@ class QueryManager:
             # GetFacetData(Tolerance, FacetCount, Points,
             # Normals, TextureCoords, StyleIDs, FaceIDs,
             # bHonourPrefs)
-            points = arr_mod.array('d', [])
-            normals = arr_mod.array('d', [])
-            texture_coords = arr_mod.array('d', [])
-            style_ids = arr_mod.array('i', [])
-            face_ids = arr_mod.array('i', [])
+            points = arr_mod.array("d", [])
+            normals = arr_mod.array("d", [])
+            texture_coords = arr_mod.array("d", [])
+            style_ids = arr_mod.array("i", [])
+            face_ids = arr_mod.array("i", [])
 
             try:
                 result_data = body.GetFacetData(
-                    tolerance,     # Tolerance
+                    tolerance,  # Tolerance
                 )
 
                 # GetFacetData returns a tuple of
@@ -884,7 +842,7 @@ class QueryManager:
                         "facet_count": facet_count,
                         "point_count": len(pts) // 3 if pts else 0,
                         "tolerance": tolerance,
-                        "has_data": facet_count > 0
+                        "has_data": facet_count > 0,
                     }
             except Exception:
                 pass
@@ -893,16 +851,21 @@ class QueryManager:
             try:
                 facet_count = 0
                 body.GetFacetData(
-                    tolerance, facet_count, points,
-                    normals, texture_coords,
-                    style_ids, face_ids, False
+                    tolerance,
+                    facet_count,
+                    points,
+                    normals,
+                    texture_coords,
+                    style_ids,
+                    face_ids,
+                    False,
                 )
 
                 return {
                     "facet_count": facet_count,
                     "point_count": len(points) // 3 if points else 0,
                     "tolerance": tolerance,
-                    "has_data": len(points) > 0
+                    "has_data": len(points) > 0,
                 }
             except Exception as e2:
                 return {
@@ -910,14 +873,11 @@ class QueryManager:
                     "note": "Body facet data may require "
                     "specific COM marshaling. "
                     "Try export_stl() instead.",
-                    "traceback": traceback.format_exc()
+                    "traceback": traceback.format_exc(),
                 }
 
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_solid_bodies(self) -> dict[str, Any]:
         """
@@ -942,7 +902,7 @@ class QueryManager:
                     body_info = {
                         "index": i - 1,
                         "type": "design",
-                        "name": model.Name if hasattr(model, 'Name') else f"Model_{i}",
+                        "name": model.Name if hasattr(model, "Name") else f"Model_{i}",
                     }
 
                     try:
@@ -974,7 +934,7 @@ class QueryManager:
                         body_info = {
                             "index": len(bodies),
                             "type": "construction",
-                            "name": cm.Name if hasattr(cm, 'Name') else f"Construction_{i}",
+                            "name": cm.Name if hasattr(cm, "Name") else f"Construction_{i}",
                         }
                         with contextlib.suppress(Exception):
                             body_info["is_solid"] = body.IsSolid
@@ -984,15 +944,9 @@ class QueryManager:
             except Exception:
                 pass  # No Constructions collection
 
-            return {
-                "total_bodies": len(bodies),
-                "bodies": bodies
-            }
+            return {"total_bodies": len(bodies), "bodies": bodies}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_modeling_mode(self) -> dict[str, Any]:
         """
@@ -1012,17 +966,11 @@ class QueryManager:
                     mode_name = "ordered"
                 else:
                     mode_name = f"unknown ({mode})"
-                return {
-                    "mode": mode_name,
-                    "mode_value": mode
-                }
+                return {"mode": mode_name, "mode_value": mode}
             except Exception:
                 return {"error": "ModelingMode not available on this document type"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def set_modeling_mode(self, mode: str) -> dict[str, Any]:
         """
@@ -1061,15 +1009,12 @@ class QueryManager:
                         "ordered"
                         if new_mode == ModelingModeConstants.seModelingModeOrdered
                         else "synchronous"
-                    )
+                    ),
                 }
             except Exception as e:
                 return {"error": f"Cannot change modeling mode: {e}"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def suppress_feature(self, feature_name: str) -> dict[str, Any]:
         """
@@ -1092,19 +1037,13 @@ class QueryManager:
                 try:
                     if feat.Name == feature_name:
                         feat.Suppress()
-                        return {
-                            "status": "suppressed",
-                            "feature": feature_name
-                        }
+                        return {"status": "suppressed", "feature": feature_name}
                 except Exception:
                     continue
 
             return {"error": f"Feature '{feature_name}' not found"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def unsuppress_feature(self, feature_name: str) -> dict[str, Any]:
         """
@@ -1125,19 +1064,13 @@ class QueryManager:
                 try:
                     if feat.Name == feature_name:
                         feat.Unsuppress()
-                        return {
-                            "status": "unsuppressed",
-                            "feature": feature_name
-                        }
+                        return {"status": "unsuppressed", "feature": feature_name}
                 except Exception:
                     continue
 
             return {"error": f"Feature '{feature_name}' not found"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_select_set(self) -> dict[str, Any]:
         """
@@ -1164,7 +1097,7 @@ class QueryManager:
                         item_info["type"] = str(type(item).__name__)
 
                     try:
-                        if hasattr(item, 'Name'):
+                        if hasattr(item, "Name"):
                             item_info["name"] = item.Name
                     except Exception:
                         pass
@@ -1173,15 +1106,9 @@ class QueryManager:
                 except Exception:
                     items.append({"index": i - 1, "error": "could not read"})
 
-            return {
-                "count": count,
-                "items": items
-            }
+            return {"count": count, "items": items}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def clear_select_set(self) -> dict[str, Any]:
         """
@@ -1199,15 +1126,9 @@ class QueryManager:
             old_count = select_set.Count
             select_set.RemoveAll()
 
-            return {
-                "status": "cleared",
-                "items_removed": old_count
-            }
+            return {"status": "cleared", "items_removed": old_count}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def select_add(self, object_type: str, index: int) -> dict[str, Any]:
         """
@@ -1266,13 +1187,10 @@ class QueryManager:
                 "status": "added",
                 "object_type": object_type,
                 "index": index,
-                "selection_count": select_set.Count
+                "selection_count": select_set.Count,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def select_remove(self, index: int) -> dict[str, Any]:
         """
@@ -1296,16 +1214,9 @@ class QueryManager:
 
             select_set.Remove(com_index)
 
-            return {
-                "status": "removed",
-                "index": index,
-                "selection_count": select_set.Count
-            }
+            return {"status": "removed", "index": index, "selection_count": select_set.Count}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def select_all(self) -> dict[str, Any]:
         """
@@ -1321,15 +1232,9 @@ class QueryManager:
             select_set = doc.SelectSet
             select_set.AddAll()
 
-            return {
-                "status": "selected_all",
-                "selection_count": select_set.Count
-            }
+            return {"status": "selected_all", "selection_count": select_set.Count}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def select_copy(self) -> dict[str, Any]:
         """
@@ -1349,15 +1254,9 @@ class QueryManager:
 
             select_set.Copy()
 
-            return {
-                "status": "copied",
-                "items_copied": select_set.Count
-            }
+            return {"status": "copied", "items_copied": select_set.Count}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def select_cut(self) -> dict[str, Any]:
         """
@@ -1378,15 +1277,9 @@ class QueryManager:
             count = select_set.Count
             select_set.Cut()
 
-            return {
-                "status": "cut",
-                "items_cut": count
-            }
+            return {"status": "cut", "items_cut": count}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def select_delete(self) -> dict[str, Any]:
         """
@@ -1407,15 +1300,9 @@ class QueryManager:
             count = select_set.Count
             select_set.Delete()
 
-            return {
-                "status": "deleted",
-                "items_deleted": count
-            }
+            return {"status": "deleted", "items_deleted": count}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def select_suspend_display(self) -> dict[str, Any]:
         """
@@ -1432,10 +1319,7 @@ class QueryManager:
             doc.SelectSet.SuspendDisplay()
             return {"status": "display_suspended"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def select_resume_display(self) -> dict[str, Any]:
         """
@@ -1452,10 +1336,7 @@ class QueryManager:
             doc.SelectSet.ResumeDisplay()
             return {"status": "display_resumed"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def select_refresh_display(self) -> dict[str, Any]:
         """
@@ -1472,10 +1353,7 @@ class QueryManager:
             doc.SelectSet.RefreshDisplay()
             return {"status": "display_refreshed"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     # =================================================================
     # BODY APPEARANCE & MATERIAL
@@ -1511,13 +1389,10 @@ class QueryManager:
             return {
                 "status": "set",
                 "color": {"red": red, "green": green, "blue": blue},
-                "hex": f"#{red:02x}{green:02x}{blue:02x}"
+                "hex": f"#{red:02x}{green:02x}{blue:02x}",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def set_material_density(self, density: float) -> dict[str, Any]:
         """
@@ -1539,9 +1414,7 @@ class QueryManager:
                 return {"error": f"Density must be positive, got {density}"}
 
             # Recompute with new density
-            result = model.ComputePhysicalPropertiesWithSpecifiedDensity(
-                density, 0.99
-            )
+            result = model.ComputePhysicalPropertiesWithSpecifiedDensity(density, 0.99)
 
             mass = result[2] if len(result) > 2 else 0
             volume = result[0] if len(result) > 0 else 0
@@ -1551,13 +1424,10 @@ class QueryManager:
                 "density": density,
                 "mass": mass,
                 "volume": volume,
-                "units": {"density": "kg/m³", "mass": "kg", "volume": "m³"}
+                "units": {"density": "kg/m³", "mass": "kg", "volume": "m³"},
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_edge_count(self) -> dict[str, Any]:
         """
@@ -1580,7 +1450,7 @@ class QueryManager:
                 try:
                     face = faces.Item(fi)
                     edges = face.Edges
-                    if hasattr(edges, 'Count'):
+                    if hasattr(edges, "Count"):
                         total_edges += edges.Count
                 except Exception:
                     pass
@@ -1588,13 +1458,10 @@ class QueryManager:
             return {
                 "total_edge_references": total_edges,
                 "face_count": faces.Count,
-                "note": "Shared edges are counted once per face"
+                "note": "Shared edges are counted once per face",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def recompute(self) -> dict[str, Any]:
         """
@@ -1623,10 +1490,7 @@ class QueryManager:
 
             return {"status": "recomputed"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_design_edgebar_features(self) -> dict[str, Any]:
         """
@@ -1641,7 +1505,7 @@ class QueryManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'DesignEdgebarFeatures'):
+            if not hasattr(doc, "DesignEdgebarFeatures"):
                 return {"error": "DesignEdgebarFeatures not available"}
 
             features = doc.DesignEdgebarFeatures
@@ -1663,15 +1527,9 @@ class QueryManager:
                 except Exception:
                     feature_list.append({"index": i - 1, "name": f"Feature_{i}"})
 
-            return {
-                "features": feature_list,
-                "count": len(feature_list)
-            }
+            return {"features": feature_list, "count": len(feature_list)}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def rename_feature(self, old_name: str, new_name: str) -> dict[str, Any]:
         """
@@ -1687,7 +1545,7 @@ class QueryManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'DesignEdgebarFeatures'):
+            if not hasattr(doc, "DesignEdgebarFeatures"):
                 return {"error": "DesignEdgebarFeatures not available"}
 
             features = doc.DesignEdgebarFeatures
@@ -1695,22 +1553,15 @@ class QueryManager:
             for i in range(1, features.Count + 1):
                 try:
                     feat = features.Item(i)
-                    if hasattr(feat, 'Name') and feat.Name == old_name:
+                    if hasattr(feat, "Name") and feat.Name == old_name:
                         feat.Name = new_name
-                        return {
-                            "status": "renamed",
-                            "old_name": old_name,
-                            "new_name": new_name
-                        }
+                        return {"status": "renamed", "old_name": old_name, "new_name": new_name}
                 except Exception:
                     continue
 
             return {"error": f"Feature '{old_name}' not found"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def set_document_property(self, name: str, value: str) -> dict[str, Any]:
         """
@@ -1728,7 +1579,7 @@ class QueryManager:
             doc = self.doc_manager.get_active_document()
 
             # SummaryInfo contains standard document properties
-            if not hasattr(doc, 'SummaryInfo'):
+            if not hasattr(doc, "SummaryInfo"):
                 return {"error": "SummaryInfo not available on this document"}
 
             summary = doc.SummaryInfo
@@ -1746,23 +1597,13 @@ class QueryManager:
 
             prop_attr = prop_map.get(name)
             if prop_attr is None:
-                return {
-                    "error": f"Unknown property: {name}. "
-                             f"Valid: {', '.join(prop_map.keys())}"
-                }
+                return {"error": f"Unknown property: {name}. Valid: {', '.join(prop_map.keys())}"}
 
             setattr(summary, prop_attr, value)
 
-            return {
-                "status": "set",
-                "property": name,
-                "value": value
-            }
+            return {"status": "set", "property": name, "value": value}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_face_area(self, face_index: int) -> dict[str, Any]:
         """
@@ -1780,10 +1621,7 @@ class QueryManager:
             faces = body.Faces(FaceQueryConstants.igQueryAll)
 
             if face_index < 0 or face_index >= faces.Count:
-                return {
-                    "error": f"Invalid face index: {face_index}. "
-                             f"Body has {faces.Count} faces."
-                }
+                return {"error": f"Invalid face index: {face_index}. Body has {faces.Count} faces."}
 
             face = faces.Item(face_index + 1)
 
@@ -1792,13 +1630,10 @@ class QueryManager:
             return {
                 "face_index": face_index,
                 "area": area,
-                "area_mm2": area * 1e6  # Convert m² to mm²
+                "area_mm2": area * 1e6,  # Convert m² to mm²
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_surface_area(self) -> dict[str, Any]:
         """
@@ -1814,10 +1649,7 @@ class QueryManager:
             # Try body.SurfaceArea first
             try:
                 area = body.SurfaceArea
-                return {
-                    "surface_area": area,
-                    "surface_area_mm2": area * 1e6
-                }
+                return {"surface_area": area, "surface_area_mm2": area * 1e6}
             except Exception:
                 pass
 
@@ -1835,13 +1667,10 @@ class QueryManager:
                 "surface_area": total_area,
                 "surface_area_mm2": total_area * 1e6,
                 "face_count": faces.Count,
-                "method": "sum_of_faces"
+                "method": "sum_of_faces",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_volume(self) -> dict[str, Any]:
         """
@@ -1858,13 +1687,10 @@ class QueryManager:
             return {
                 "volume": volume,
                 "volume_mm3": volume * 1e9,  # m³ to mm³
-                "volume_cm3": volume * 1e6   # m³ to cm³
+                "volume_cm3": volume * 1e6,  # m³ to cm³
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_face_count(self) -> dict[str, Any]:
         """
@@ -1877,14 +1703,9 @@ class QueryManager:
             doc, model = self._get_first_model()
             body = model.Body
             faces = body.Faces(FaceQueryConstants.igQueryAll)
-            return {
-                "face_count": faces.Count
-            }
+            return {"face_count": faces.Count}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_edge_info(self, face_index: int, edge_index: int) -> dict[str, Any]:
         """
@@ -1937,10 +1758,7 @@ class QueryManager:
 
             return info
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def set_face_color(self, face_index: int, red: int, green: int, blue: int) -> dict[str, Any]:
         """
@@ -1977,16 +1795,9 @@ class QueryManager:
                     ole_color = red | (green << 8) | (blue << 16)
                     face.Color = ole_color
 
-            return {
-                "status": "updated",
-                "face_index": face_index,
-                "color": [red, green, blue]
-            }
+            return {"status": "updated", "face_index": face_index, "color": [red, green, blue]}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_center_of_gravity(self) -> dict[str, Any]:
         """
@@ -2018,11 +1829,7 @@ class QueryManager:
                 if cog_x is not None:
                     return {
                         "center_of_gravity": [cog_x, cog_y, cog_z],
-                        "center_of_gravity_mm": [
-                            cog_x * 1000,
-                            cog_y * 1000,
-                            cog_z * 1000
-                        ]
+                        "center_of_gravity_mm": [cog_x * 1000, cog_y * 1000, cog_z * 1000],
                     }
             except Exception:
                 pass
@@ -2032,15 +1839,9 @@ class QueryManager:
             result = model.ComputePhysicalPropertiesWithSpecifiedDensity(7850.0, 0.001)
             # result[3] is the center of gravity tuple
             cog = result[3]
-            return {
-                "center_of_gravity": list(cog),
-                "center_of_gravity_mm": [c * 1000 for c in cog]
-            }
+            return {"center_of_gravity": list(cog), "center_of_gravity_mm": [c * 1000 for c in cog]}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_moments_of_inertia(self) -> dict[str, Any]:
         """
@@ -2059,18 +1860,13 @@ class QueryManager:
             principal_moi = result[6]
 
             return {
-                "moments_of_inertia": list(moi) if hasattr(moi, '__iter__') else moi,
+                "moments_of_inertia": list(moi) if hasattr(moi, "__iter__") else moi,
                 "principal_moments": (
-                    list(principal_moi)
-                    if hasattr(principal_moi, '__iter__')
-                    else principal_moi
+                    list(principal_moi) if hasattr(principal_moi, "__iter__") else principal_moi
                 ),
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def delete_feature(self, feature_name: str) -> dict[str, Any]:
         """
@@ -2087,28 +1883,22 @@ class QueryManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'DesignEdgebarFeatures'):
+            if not hasattr(doc, "DesignEdgebarFeatures"):
                 return {"error": "Document does not support feature deletion"}
 
             debf = doc.DesignEdgebarFeatures
             for i in range(1, debf.Count + 1):
                 try:
                     feat = debf.Item(i)
-                    if hasattr(feat, 'Name') and feat.Name == feature_name:
+                    if hasattr(feat, "Name") and feat.Name == feature_name:
                         feat.Delete()
-                        return {
-                            "status": "deleted",
-                            "feature_name": feature_name
-                        }
+                        return {"status": "deleted", "feature_name": feature_name}
                 except Exception:
                     continue
 
             return {"error": f"Feature '{feature_name}' not found"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_feature_status(self, feature_name: str) -> dict[str, Any]:
         """
@@ -2125,18 +1915,15 @@ class QueryManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'DesignEdgebarFeatures'):
+            if not hasattr(doc, "DesignEdgebarFeatures"):
                 return {"error": "DesignEdgebarFeatures not available"}
 
             features = doc.DesignEdgebarFeatures
             for i in range(1, features.Count + 1):
                 try:
                     feat = features.Item(i)
-                    if hasattr(feat, 'Name') and feat.Name == feature_name:
-                        result = {
-                            "feature_name": feature_name,
-                            "index": i - 1
-                        }
+                    if hasattr(feat, "Name") and feat.Name == feature_name:
+                        result = {"feature_name": feature_name, "index": i - 1}
                         with contextlib.suppress(Exception):
                             result["status"] = feat.Status
                         with contextlib.suppress(Exception):
@@ -2154,10 +1941,7 @@ class QueryManager:
 
             return {"error": f"Feature '{feature_name}' not found"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_feature_profiles(self, feature_name: str) -> dict[str, Any]:
         """
@@ -2174,7 +1958,7 @@ class QueryManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'DesignEdgebarFeatures'):
+            if not hasattr(doc, "DesignEdgebarFeatures"):
                 return {"error": "DesignEdgebarFeatures not available"}
 
             features = doc.DesignEdgebarFeatures
@@ -2182,7 +1966,7 @@ class QueryManager:
             for i in range(1, features.Count + 1):
                 try:
                     feat = features.Item(i)
-                    if hasattr(feat, 'Name') and feat.Name == feature_name:
+                    if hasattr(feat, "Name") and feat.Name == feature_name:
                         target = feat
                         break
                 except Exception:
@@ -2201,7 +1985,7 @@ class QueryManager:
                     else:
                         profile_array = result
 
-                    if profile_array is not None and hasattr(profile_array, '__iter__'):
+                    if profile_array is not None and hasattr(profile_array, "__iter__"):
                         for p in profile_array:
                             p_info = {}
                             with contextlib.suppress(Exception):
@@ -2213,19 +1997,69 @@ class QueryManager:
                 return {
                     "feature_name": feature_name,
                     "profiles": [],
-                    "note": f"GetProfiles not supported: {str(e)}"
+                    "note": f"GetProfiles not supported: {str(e)}",
                 }
 
-            return {
-                "feature_name": feature_name,
-                "profiles": profiles,
-                "count": len(profiles)
-            }
+            return {"feature_name": feature_name, "profiles": profiles, "count": len(profiles)}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def get_feature_parents(self, feature_name: str) -> dict[str, Any]:
+        """
+        Get the parent features of a named feature.
+
+        Reads the .Parents collection from DesignEdgebarFeatures to find
+        which features were used to create the named feature.
+
+        Args:
+            feature_name: Name of the feature to inspect
+
+        Returns:
+            Dict with list of parent feature names
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, "DesignEdgebarFeatures"):
+                return {"error": "DesignEdgebarFeatures not available"}
+
+            features = doc.DesignEdgebarFeatures
+            target = None
+            for i in range(1, features.Count + 1):
+                try:
+                    feat = features.Item(i)
+                    if hasattr(feat, "Name") and feat.Name == feature_name:
+                        target = feat
+                        break
+                except Exception:
+                    continue
+
+            if target is None:
+                return {"error": f"Feature '{feature_name}' not found"}
+
+            parents = []
+            try:
+                parent_coll = target.Parents
+                if parent_coll and hasattr(parent_coll, "Count"):
+                    for j in range(1, parent_coll.Count + 1):
+                        try:
+                            parent = parent_coll.Item(j)
+                            p_info = {"index": j - 1}
+                            with contextlib.suppress(Exception):
+                                p_info["name"] = parent.Name
+                            parents.append(p_info)
+                        except Exception:
+                            parents.append({"index": j - 1, "name": "unknown"})
+            except Exception as e:
+                return {
+                    "feature_name": feature_name,
+                    "parents": [],
+                    "note": f"Parents collection not available: {e}",
+                }
+
+            return {"feature_name": feature_name, "parents": parents, "count": len(parents)}
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_vertex_count(self) -> dict[str, Any]:
         """
@@ -2247,7 +2081,7 @@ class QueryManager:
                 try:
                     face = faces.Item(fi)
                     vertices = face.Vertices
-                    if hasattr(vertices, 'Count'):
+                    if hasattr(vertices, "Count"):
                         total_vertices += vertices.Count
                 except Exception:
                     pass
@@ -2255,13 +2089,10 @@ class QueryManager:
             return {
                 "total_vertex_references": total_vertices,
                 "face_count": faces.Count,
-                "note": "Shared vertices are counted once per face"
+                "note": "Shared vertices are counted once per face",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_body_color(self) -> dict[str, Any]:
         """
@@ -2280,12 +2111,7 @@ class QueryManager:
                 red = color & 0xFF
                 green = (color >> 8) & 0xFF
                 blue = (color >> 16) & 0xFF
-                return {
-                    "red": red,
-                    "green": green,
-                    "blue": blue,
-                    "ole_color": color
-                }
+                return {"red": red, "green": green, "blue": blue, "ole_color": color}
             except Exception:
                 # Try alternative
                 try:
@@ -2294,14 +2120,20 @@ class QueryManager:
                 except Exception:
                     return {"error": "Could not determine body color"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def measure_angle(self, x1: float, y1: float, z1: float,
-                      x2: float, y2: float, z2: float,
-                      x3: float, y3: float, z3: float) -> dict[str, Any]:
+    def measure_angle(
+        self,
+        x1: float,
+        y1: float,
+        z1: float,
+        x2: float,
+        y2: float,
+        z2: float,
+        x3: float,
+        y3: float,
+        z3: float,
+    ) -> dict[str, Any]:
         """
         Measure the angle between three points (vertex at point 2).
 
@@ -2322,11 +2154,11 @@ class QueryManager:
             v2 = (x3 - x2, y3 - y2, z3 - z2)
 
             # Dot product
-            dot = v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2]
+            dot = v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]
 
             # Magnitudes
-            mag1 = math.sqrt(v1[0]**2 + v1[1]**2 + v1[2]**2)
-            mag2 = math.sqrt(v2[0]**2 + v2[1]**2 + v2[2]**2)
+            mag1 = math.sqrt(v1[0] ** 2 + v1[1] ** 2 + v1[2] ** 2)
+            mag2 = math.sqrt(v2[0] ** 2 + v2[1] ** 2 + v2[2] ** 2)
 
             if mag1 == 0 or mag2 == 0:
                 return {"error": "One or more vectors have zero length"}
@@ -2336,16 +2168,9 @@ class QueryManager:
             angle_rad = math.acos(cos_angle)
             angle_deg = math.degrees(angle_rad)
 
-            return {
-                "angle_degrees": angle_deg,
-                "angle_radians": angle_rad,
-                "vertex": [x2, y2, z2]
-            }
+            return {"angle_degrees": angle_deg, "angle_radians": angle_rad, "vertex": [x2, y2, z2]}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_material_table(self) -> dict[str, Any]:
         """
@@ -2360,9 +2185,17 @@ class QueryManager:
             doc = self.doc_manager.get_active_document()
 
             material_vars = {}
-            material_names = ["Density", "Mass", "Volume", "Surface_Area",
-                             "YoungsModulus", "PoissonsRatio", "ThermalExpansionCoefficient",
-                             "ThermalConductivity", "Material"]
+            material_names = [
+                "Density",
+                "Mass",
+                "Volume",
+                "Surface_Area",
+                "YoungsModulus",
+                "PoissonsRatio",
+                "ThermalExpansionCoefficient",
+                "ThermalConductivity",
+                "Material",
+            ]
 
             try:
                 variables = doc.Variables
@@ -2375,9 +2208,7 @@ class QueryManager:
                                 material_vars[name] = var.Value
                             except Exception:
                                 material_vars[name] = (
-                                    str(var.Formula)
-                                    if hasattr(var, 'Formula')
-                                    else "N/A"
+                                    str(var.Formula) if hasattr(var, "Formula") else "N/A"
                                 )
                     except Exception:
                         continue
@@ -2386,7 +2217,7 @@ class QueryManager:
 
             # Also try to get material name from properties
             try:
-                if hasattr(doc, 'Properties'):
+                if hasattr(doc, "Properties"):
                     props = doc.Properties
                     for i in range(1, props.Count + 1):
                         try:
@@ -2403,15 +2234,9 @@ class QueryManager:
             except Exception:
                 pass
 
-            return {
-                "material_properties": material_vars,
-                "property_count": len(material_vars)
-            }
+            return {"material_properties": material_vars, "property_count": len(material_vars)}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_feature_dimensions(self, feature_name: str) -> dict[str, Any]:
         """
@@ -2460,7 +2285,7 @@ class QueryManager:
                     if dim_array is not None:
                         try:
                             # Try iterating as a collection
-                            if hasattr(dim_array, '__iter__'):
+                            if hasattr(dim_array, "__iter__"):
                                 for dim in dim_array:
                                     dim_info = {}
                                     with contextlib.suppress(Exception):
@@ -2477,19 +2302,16 @@ class QueryManager:
                 return {
                     "feature_name": feature_name,
                     "dimensions": [],
-                    "note": f"GetDimensions not supported: {str(e)}"
+                    "note": f"GetDimensions not supported: {str(e)}",
                 }
 
             return {
                 "feature_name": feature_name,
                 "dimensions": dimensions,
-                "count": len(dimensions)
+                "count": len(dimensions),
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_material_list(self) -> dict[str, Any]:
         """
@@ -2519,18 +2341,12 @@ class QueryManager:
             if material_list is not None:
                 if isinstance(material_list, (list, tuple)):
                     materials = list(material_list)
-                elif hasattr(material_list, '__iter__'):
+                elif hasattr(material_list, "__iter__"):
                     materials = [str(m) for m in material_list]
 
-            return {
-                "materials": materials,
-                "count": len(materials)
-            }
+            return {"materials": materials, "count": len(materials)}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def set_material(self, material_name: str) -> dict[str, Any]:
         """
@@ -2551,15 +2367,9 @@ class QueryManager:
 
             mat_table.ApplyMaterial(doc, material_name)
 
-            return {
-                "status": "applied",
-                "material": material_name
-            }
+            return {"status": "applied", "material": material_name}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_material_property(self, material_name: str, property_index: int) -> dict[str, Any]:
         """
@@ -2585,19 +2395,11 @@ class QueryManager:
 
             value = mat_table.GetMatPropValue(material_name, property_index)
 
-            return {
-                "material": material_name,
-                "property_index": property_index,
-                "value": value
-            }
+            return {"material": material_name, "property_index": property_index, "value": value}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def query_variables(self, pattern: str = "*",
-                        case_insensitive: bool = True) -> dict[str, Any]:
+    def query_variables(self, pattern: str = "*", case_insensitive: bool = True) -> dict[str, Any]:
         """
         Search variables by name pattern.
 
@@ -2624,10 +2426,11 @@ class QueryManager:
                 # Fallback: manual filtering if Query method not available
                 matches = []
                 import fnmatch
+
                 for i in range(1, variables.Count + 1):
                     try:
                         var = variables.Item(i)
-                        name = var.Name if hasattr(var, 'Name') else str(i)
+                        name = var.Name if hasattr(var, "Name") else str(i)
                         if case_insensitive:
                             match = fnmatch.fnmatch(name.lower(), pattern.lower())
                         else:
@@ -2646,7 +2449,7 @@ class QueryManager:
                     "pattern": pattern,
                     "matches": matches,
                     "count": len(matches),
-                    "method": "fallback_fnmatch"
+                    "method": "fallback_fnmatch",
                 }
 
             # Process Query results
@@ -2668,16 +2471,9 @@ class QueryManager:
                 except Exception:
                     pass
 
-            return {
-                "pattern": pattern,
-                "matches": matches,
-                "count": len(matches)
-            }
+            return {"pattern": pattern, "matches": matches, "count": len(matches)}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_variable_formula(self, name: str) -> dict[str, Any]:
         """
@@ -2696,7 +2492,7 @@ class QueryManager:
             for i in range(1, variables.Count + 1):
                 try:
                     var = variables.Item(i)
-                    display_name = var.DisplayName if hasattr(var, 'DisplayName') else ""
+                    display_name = var.DisplayName if hasattr(var, "DisplayName") else ""
                     if display_name == name:
                         result = {"name": name}
                         try:
@@ -2711,10 +2507,7 @@ class QueryManager:
 
             return {"error": f"Variable '{name}' not found"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def rename_variable(self, old_name: str, new_name: str) -> dict[str, Any]:
         """
@@ -2736,23 +2529,16 @@ class QueryManager:
             for i in range(1, variables.Count + 1):
                 try:
                     var = variables.Item(i)
-                    display_name = var.DisplayName if hasattr(var, 'DisplayName') else ""
+                    display_name = var.DisplayName if hasattr(var, "DisplayName") else ""
                     if display_name == old_name:
                         var.DisplayName = new_name
-                        return {
-                            "status": "renamed",
-                            "old_name": old_name,
-                            "new_name": new_name
-                        }
+                        return {"status": "renamed", "old_name": old_name, "new_name": new_name}
                 except Exception:
                     continue
 
             return {"error": f"Variable '{old_name}' not found"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_variable_names(self, name: str) -> dict[str, Any]:
         """
@@ -2774,7 +2560,7 @@ class QueryManager:
             for i in range(1, variables.Count + 1):
                 try:
                     var = variables.Item(i)
-                    display_name = var.DisplayName if hasattr(var, 'DisplayName') else ""
+                    display_name = var.DisplayName if hasattr(var, "DisplayName") else ""
                     if display_name == name:
                         result = {"display_name": display_name}
                         try:
@@ -2789,10 +2575,7 @@ class QueryManager:
 
             return {"error": f"Variable '{name}' not found"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def translate_variable(self, name: str) -> dict[str, Any]:
         """
@@ -2823,10 +2606,7 @@ class QueryManager:
                 result["formula"] = var.Formula
             return result
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def copy_variable_to_clipboard(self, name: str) -> dict[str, Any]:
         """
@@ -2847,10 +2627,7 @@ class QueryManager:
             variables.CopyToClipboard(name)
             return {"status": "copied", "name": name}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def add_variable_from_clipboard(self, name: str, units_type: str = None) -> dict[str, Any]:
         """
@@ -2880,10 +2657,7 @@ class QueryManager:
                 result["value"] = new_var.Value
             return result
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     # =================================================================
     # LAYER MANAGEMENT
@@ -2901,7 +2675,7 @@ class QueryManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Layers'):
+            if not hasattr(doc, "Layers"):
                 return {"error": "Active document does not support layers"}
 
             layers_col = doc.Layers
@@ -2925,15 +2699,9 @@ class QueryManager:
                 except Exception:
                     continue
 
-            return {
-                "layers": layers,
-                "count": len(layers)
-            }
+            return {"layers": layers, "count": len(layers)}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def add_layer(self, name: str) -> dict[str, Any]:
         """
@@ -2950,22 +2718,15 @@ class QueryManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Layers'):
+            if not hasattr(doc, "Layers"):
                 return {"error": "Active document does not support layers"}
 
             layers = doc.Layers
             layers.Add(name)
 
-            return {
-                "status": "added",
-                "name": name,
-                "total_layers": layers.Count
-            }
+            return {"status": "added", "name": name, "total_layers": layers.Count}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def activate_layer(self, name_or_index) -> dict[str, Any]:
         """
@@ -2982,7 +2743,7 @@ class QueryManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Layers'):
+            if not hasattr(doc, "Layers"):
                 return {"error": "Active document does not support layers"}
 
             layers = doc.Layers
@@ -3006,22 +2767,14 @@ class QueryManager:
                     return {"error": f"Layer '{name_or_index}' not found"}
 
             layer.Activate()
-            layer_name = layer.Name if hasattr(layer, 'Name') else str(name_or_index)
+            layer_name = layer.Name if hasattr(layer, "Name") else str(name_or_index)
 
-            return {
-                "status": "activated",
-                "name": layer_name
-            }
+            return {"status": "activated", "name": layer_name}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def set_layer_properties(
-        self, name_or_index,
-        show: bool = None,
-        selectable: bool = None
+        self, name_or_index, show: bool = None, selectable: bool = None
     ) -> dict[str, Any]:
         """
         Set layer visibility and selectability properties.
@@ -3037,7 +2790,7 @@ class QueryManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            if not hasattr(doc, 'Layers'):
+            if not hasattr(doc, "Layers"):
                 return {"error": "Active document does not support layers"}
 
             layers = doc.Layers
@@ -3067,18 +2820,55 @@ class QueryManager:
                 layer.Locatable = selectable
                 updated["selectable"] = selectable
 
-            layer_name = layer.Name if hasattr(layer, 'Name') else str(name_or_index)
+            layer_name = layer.Name if hasattr(layer, "Name") else str(name_or_index)
 
-            return {
-                "status": "updated",
-                "name": layer_name,
-                "properties": updated
-            }
+            return {"status": "updated", "name": layer_name, "properties": updated}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def delete_layer(self, name_or_index) -> dict[str, Any]:
+        """
+        Delete a layer from the active document.
+
+        Cannot delete the active layer or a layer containing objects.
+
+        Args:
+            name_or_index: Layer name (str) or 0-based index (int)
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, "Layers"):
+                return {"error": "Active document does not support layers"}
+
+            layers = doc.Layers
+
+            if isinstance(name_or_index, int):
+                if name_or_index < 0 or name_or_index >= layers.Count:
+                    return {"error": f"Invalid layer index: {name_or_index}. Count: {layers.Count}"}
+                layer = layers.Item(name_or_index + 1)
+            else:
+                layer = None
+                for i in range(1, layers.Count + 1):
+                    try:
+                        lyr = layers.Item(i)
+                        if lyr.Name == name_or_index:
+                            layer = lyr
+                            break
+                    except Exception:
+                        continue
+                if layer is None:
+                    return {"error": f"Layer '{name_or_index}' not found"}
+
+            layer_name = layer.Name if hasattr(layer, "Name") else str(name_or_index)
+            layer.Delete()
+
+            return {"status": "deleted", "name": layer_name}
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     # =================================================================
     # FACESTYLE / APPEARANCE
@@ -3103,15 +2893,9 @@ class QueryManager:
             opacity = max(0.0, min(1.0, opacity))
             body.FaceStyle.Opacity = opacity
 
-            return {
-                "status": "set",
-                "opacity": opacity
-            }
+            return {"status": "set", "opacity": opacity}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def set_body_reflectivity(self, reflectivity: float) -> dict[str, Any]:
         """
@@ -3132,12 +2916,6 @@ class QueryManager:
             reflectivity = max(0.0, min(1.0, reflectivity))
             body.FaceStyle.Reflectivity = reflectivity
 
-            return {
-                "status": "set",
-                "reflectivity": reflectivity
-            }
+            return {"status": "set", "reflectivity": reflectivity}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}

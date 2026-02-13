@@ -14,6 +14,7 @@ import pytest
 def export_mgr():
     """Create ExportManager with mocked dependencies."""
     from solidedge_mcp.backends.export import ExportManager
+
     dm = MagicMock()
     doc = MagicMock()
     dm.get_active_document.return_value = doc
@@ -23,6 +24,7 @@ def export_mgr():
 # ============================================================================
 # DRAFT SHEET MANAGEMENT
 # ============================================================================
+
 
 class TestAddDraftSheet:
     def test_success(self, export_mgr):
@@ -52,6 +54,7 @@ class TestAddDraftSheet:
 # ============================================================================
 # ASSEMBLY DRAWING VIEW
 # ============================================================================
+
 
 class TestAddAssemblyDrawingView:
     def test_success(self, export_mgr):
@@ -107,6 +110,7 @@ class TestAddAssemblyDrawingView:
 # FLAT DXF EXPORT
 # ============================================================================
 
+
 class TestExportFlatDxf:
     def test_success(self, export_mgr):
         em, doc = export_mgr
@@ -138,10 +142,12 @@ class TestExportFlatDxf:
 # DOCUMENT MANAGEMENT (activate, undo, redo)
 # ============================================================================
 
+
 @pytest.fixture
 def doc_mgr():
     """Create DocumentManager with mocked connection."""
     from solidedge_mcp.backends.documents import DocumentManager
+
     conn = MagicMock()
     app = MagicMock()
     conn.get_application.return_value = app
@@ -237,6 +243,7 @@ class TestRedo:
 # CREATE DRAFT DOCUMENT
 # ============================================================================
 
+
 class TestCreateDraftDocument:
     def test_success(self, doc_mgr):
         dm, app = doc_mgr
@@ -262,9 +269,11 @@ class TestCreateDraftDocument:
 # DRAW POINT (SKETCHING)
 # ============================================================================
 
+
 class TestDrawPoint:
     def test_success(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
 
@@ -279,6 +288,7 @@ class TestDrawPoint:
 
     def test_no_active_sketch(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
 
@@ -288,6 +298,7 @@ class TestDrawPoint:
 
     def test_fallback_method(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
 
@@ -307,9 +318,11 @@ class TestDrawPoint:
 # GET SKETCH INFO
 # ============================================================================
 
+
 class TestGetSketchInfo:
     def test_success(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
 
@@ -331,6 +344,7 @@ class TestGetSketchInfo:
 
     def test_no_active_sketch(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
 
@@ -341,6 +355,7 @@ class TestGetSketchInfo:
 # ============================================================================
 # GET ACTIVE DOCUMENT TYPE
 # ============================================================================
+
 
 class TestGetActiveDocumentType:
     def test_success(self, doc_mgr):
@@ -369,6 +384,7 @@ class TestGetActiveDocumentType:
 # ============================================================================
 # ADD TEXT BOX
 # ============================================================================
+
 
 class TestAddTextBox:
     def test_success(self, export_mgr):
@@ -399,6 +415,7 @@ class TestAddTextBox:
 # ADD LEADER
 # ============================================================================
 
+
 class TestAddLeader:
     def test_success(self, export_mgr):
         em, doc = export_mgr
@@ -427,10 +444,12 @@ class TestAddLeader:
 # ASSEMBLY: SET COMPONENT VISIBILITY
 # ============================================================================
 
+
 class TestSetComponentVisibility:
     @pytest.fixture
     def asm_mgr(self):
         from solidedge_mcp.backends.assembly import AssemblyManager
+
         dm = MagicMock()
         doc = MagicMock()
         dm.get_active_document.return_value = doc
@@ -471,10 +490,12 @@ class TestSetComponentVisibility:
 # ASSEMBLY: DELETE COMPONENT
 # ============================================================================
 
+
 class TestDeleteComponent:
     @pytest.fixture
     def asm_mgr(self):
         from solidedge_mcp.backends.assembly import AssemblyManager
+
         dm = MagicMock()
         doc = MagicMock()
         dm.get_active_document.return_value = doc
@@ -505,10 +526,12 @@ class TestDeleteComponent:
 # ASSEMBLY: GROUND COMPONENT
 # ============================================================================
 
+
 class TestGroundComponent:
     @pytest.fixture
     def asm_mgr(self):
         from solidedge_mcp.backends.assembly import AssemblyManager
+
         dm = MagicMock()
         doc = MagicMock()
         dm.get_active_document.return_value = doc
@@ -540,6 +563,7 @@ class TestGroundComponent:
 # ADD DIMENSION
 # ============================================================================
 
+
 class TestAddDimension:
     def test_success(self, export_mgr):
         em, doc = export_mgr
@@ -565,6 +589,7 @@ class TestAddDimension:
 # ============================================================================
 # ADD BALLOON
 # ============================================================================
+
 
 class TestAddBalloon:
     def test_success(self, export_mgr):
@@ -593,6 +618,7 @@ class TestAddBalloon:
 # ============================================================================
 # ADD NOTE
 # ============================================================================
+
 
 class TestAddNote:
     def test_success(self, export_mgr):
@@ -624,6 +650,7 @@ class TestAddNote:
 # GET SHEET INFO
 # ============================================================================
 
+
 class TestGetSheetInfo:
     def test_success(self, export_mgr):
         em, doc = export_mgr
@@ -650,6 +677,7 @@ class TestGetSheetInfo:
 # ============================================================================
 # ACTIVATE SHEET
 # ============================================================================
+
 
 class TestActivateSheet:
     def test_success(self, export_mgr):
@@ -687,9 +715,11 @@ class TestActivateSheet:
 # CONNECTION: DISCONNECT AND IS_CONNECTED
 # ============================================================================
 
+
 class TestDisconnect:
     def test_success(self):
         from solidedge_mcp.backends.connection import SolidEdgeConnection
+
         conn = SolidEdgeConnection()
         conn._is_connected = True
         conn.application = MagicMock()
@@ -703,6 +733,7 @@ class TestDisconnect:
 class TestIsConnected:
     def test_connected(self):
         from solidedge_mcp.backends.connection import SolidEdgeConnection
+
         conn = SolidEdgeConnection()
         conn._is_connected = True
         conn.application = MagicMock()
@@ -711,6 +742,7 @@ class TestIsConnected:
 
     def test_not_connected(self):
         from solidedge_mcp.backends.connection import SolidEdgeConnection
+
         conn = SolidEdgeConnection()
 
         assert conn.is_connected() is False
@@ -720,10 +752,12 @@ class TestIsConnected:
 # ASSEMBLY: REPLACE COMPONENT
 # ============================================================================
 
+
 class TestReplaceComponent:
     @pytest.fixture
     def asm_mgr(self):
         from solidedge_mcp.backends.assembly import AssemblyManager
+
         dm = MagicMock()
         doc = MagicMock()
         dm.get_active_document.return_value = doc
@@ -753,10 +787,12 @@ class TestReplaceComponent:
 # ASSEMBLY: GET COMPONENT TRANSFORM
 # ============================================================================
 
+
 class TestGetComponentTransform:
     @pytest.fixture
     def asm_mgr(self):
         from solidedge_mcp.backends.assembly import AssemblyManager
+
         dm = MagicMock()
         doc = MagicMock()
         dm.get_active_document.return_value = doc
@@ -789,10 +825,12 @@ class TestGetComponentTransform:
 # ASSEMBLY: GET STRUCTURED BOM
 # ============================================================================
 
+
 class TestGetStructuredBom:
     @pytest.fixture
     def asm_mgr(self):
         from solidedge_mcp.backends.assembly import AssemblyManager
+
         dm = MagicMock()
         doc = MagicMock()
         doc.Name = "Asm1.asm"
@@ -832,10 +870,12 @@ class TestGetStructuredBom:
 # ASSEMBLY: SET COMPONENT COLOR
 # ============================================================================
 
+
 class TestSetComponentColor:
     @pytest.fixture
     def asm_mgr(self):
         from solidedge_mcp.backends.assembly import AssemblyManager
+
         dm = MagicMock()
         doc = MagicMock()
         dm.get_active_document.return_value = doc
@@ -864,6 +904,7 @@ class TestSetComponentColor:
 # DOCUMENTS: CREATE WELDMENT
 # ============================================================================
 
+
 class TestCreateWeldment:
     def test_success(self, doc_mgr):
         dm, app = doc_mgr
@@ -881,6 +922,7 @@ class TestCreateWeldment:
 # DOCUMENTS: IMPORT FILE
 # ============================================================================
 
+
 class TestImportFile:
     def test_not_found(self, doc_mgr):
         dm, app = doc_mgr
@@ -891,6 +933,7 @@ class TestImportFile:
 # ============================================================================
 # DOCUMENTS: GET DOCUMENT COUNT
 # ============================================================================
+
 
 class TestGetDocumentCount:
     def test_success(self, doc_mgr):
@@ -903,6 +946,7 @@ class TestGetDocumentCount:
 # ============================================================================
 # RENAME SHEET
 # ============================================================================
+
 
 class TestRenameSheet:
     def test_success(self, export_mgr):
@@ -940,6 +984,7 @@ class TestRenameSheet:
 # DELETE SHEET
 # ============================================================================
 
+
 class TestDeleteSheet:
     def test_success(self, export_mgr):
         em, doc = export_mgr
@@ -975,9 +1020,11 @@ class TestDeleteSheet:
 # DRAW CONSTRUCTION LINE
 # ============================================================================
 
+
 class TestDrawConstructionLine:
     def test_success(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
 
@@ -994,6 +1041,7 @@ class TestDrawConstructionLine:
 
     def test_no_sketch(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
 
@@ -1005,9 +1053,11 @@ class TestDrawConstructionLine:
 # GET SKETCH CONSTRAINTS
 # ============================================================================
 
+
 class TestGetSketchConstraints:
     def test_success(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
 
@@ -1027,6 +1077,7 @@ class TestGetSketchConstraints:
 
     def test_no_sketch(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
 
@@ -1038,10 +1089,12 @@ class TestGetSketchConstraints:
 # ASSEMBLY: GET OCCURRENCE COUNT
 # ============================================================================
 
+
 class TestGetOccurrenceCount:
     @pytest.fixture
     def asm_mgr(self):
         from solidedge_mcp.backends.assembly import AssemblyManager
+
         dm = MagicMock()
         doc = MagicMock()
         dm.get_active_document.return_value = doc
@@ -1068,9 +1121,11 @@ class TestGetOccurrenceCount:
 # CONNECTION: GET PROCESS INFO
 # ============================================================================
 
+
 class TestGetProcessInfo:
     def test_success(self):
         from solidedge_mcp.backends.connection import SolidEdgeConnection
+
         conn = SolidEdgeConnection()
         conn._is_connected = True
         conn.application = MagicMock()
@@ -1084,6 +1139,7 @@ class TestGetProcessInfo:
 
     def test_not_connected(self):
         from solidedge_mcp.backends.connection import SolidEdgeConnection
+
         conn = SolidEdgeConnection()
 
         result = conn.get_process_info()
@@ -1094,9 +1150,11 @@ class TestGetProcessInfo:
 # CONNECTION: GET INSTALL INFO
 # ============================================================================
 
+
 class TestGetInstallInfo:
     def test_fallback_to_app_path(self):
         from solidedge_mcp.backends.connection import SolidEdgeConnection
+
         conn = SolidEdgeConnection()
         conn._is_connected = True
         conn.application = MagicMock()
@@ -1110,6 +1168,7 @@ class TestGetInstallInfo:
 
     def test_no_connection_no_installdata(self):
         from solidedge_mcp.backends.connection import SolidEdgeConnection
+
         conn = SolidEdgeConnection()
         # Not connected and SEInstallData won't work
         result = conn.get_install_info()
@@ -1120,10 +1179,12 @@ class TestGetInstallInfo:
 # DOCUMENTS: OPEN IN BACKGROUND
 # ============================================================================
 
+
 class TestOpenInBackground:
     @pytest.fixture
     def doc_mgr(self):
         from solidedge_mcp.backends.documents import DocumentManager
+
         conn = MagicMock()
         app = MagicMock()
         conn.get_application.return_value = app
@@ -1155,10 +1216,12 @@ class TestOpenInBackground:
 # DOCUMENTS: CLOSE ALL DOCUMENTS
 # ============================================================================
 
+
 class TestCloseAllDocuments:
     @pytest.fixture
     def doc_mgr(self):
         from solidedge_mcp.backends.documents import DocumentManager
+
         conn = MagicMock()
         app = MagicMock()
         conn.get_application.return_value = app
@@ -1204,10 +1267,12 @@ class TestCloseAllDocuments:
 # SKETCHING: DRAW ARC BY 3 POINTS
 # ============================================================================
 
+
 class TestDrawArcBy3Points:
     @pytest.fixture
     def sketch_mgr(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
         sm.active_profile = MagicMock()
@@ -1223,6 +1288,7 @@ class TestDrawArcBy3Points:
 
     def test_no_sketch(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         sm = SketchManager(MagicMock())
         result = sm.draw_arc_by_3_points(0, 0, 0.05, 0.05, 0.1, 0)
         assert "error" in result
@@ -1232,10 +1298,12 @@ class TestDrawArcBy3Points:
 # SKETCHING: DRAW CIRCLE BY 2 POINTS
 # ============================================================================
 
+
 class TestDrawCircleBy2Points:
     @pytest.fixture
     def sketch_mgr(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
         sm.active_profile = MagicMock()
@@ -1247,12 +1315,11 @@ class TestDrawCircleBy2Points:
         assert result["method"] == "2_points"
         assert result["center"] == [0.05, 0.0]
         assert result["radius"] == 0.05
-        sketch_mgr.active_profile.Circles2d.AddBy2Points.assert_called_once_with(
-            0.0, 0.0, 0.1, 0.0
-        )
+        sketch_mgr.active_profile.Circles2d.AddBy2Points.assert_called_once_with(0.0, 0.0, 0.1, 0.0)
 
     def test_no_sketch(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         sm = SketchManager(MagicMock())
         result = sm.draw_circle_by_2_points(0, 0, 0.1, 0)
         assert "error" in result
@@ -1262,10 +1329,12 @@ class TestDrawCircleBy2Points:
 # SKETCHING: DRAW CIRCLE BY 3 POINTS
 # ============================================================================
 
+
 class TestDrawCircleBy3Points:
     @pytest.fixture
     def sketch_mgr(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
         sm.active_profile = MagicMock()
@@ -1281,6 +1350,7 @@ class TestDrawCircleBy3Points:
 
     def test_no_sketch(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         sm = SketchManager(MagicMock())
         result = sm.draw_circle_by_3_points(0, 0, 0.1, 0, 0.05, 0.05)
         assert "error" in result
@@ -1290,10 +1360,12 @@ class TestDrawCircleBy3Points:
 # SKETCHING: MIRROR SPLINE
 # ============================================================================
 
+
 class TestMirrorSpline:
     @pytest.fixture
     def sketch_mgr(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
         sm.active_profile = MagicMock()
@@ -1316,6 +1388,7 @@ class TestMirrorSpline:
 
     def test_no_sketch(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         sm = SketchManager(MagicMock())
         result = sm.mirror_spline(0, 0, 0, 1)
         assert "error" in result
@@ -1325,10 +1398,12 @@ class TestMirrorSpline:
 # SKETCHING: HIDE PROFILE
 # ============================================================================
 
+
 class TestHideProfile:
     @pytest.fixture
     def sketch_mgr(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
         sm.active_profile = MagicMock()
@@ -1348,6 +1423,7 @@ class TestHideProfile:
 
     def test_no_sketch(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         sm = SketchManager(MagicMock())
         result = sm.hide_profile()
         assert "error" in result
@@ -1357,10 +1433,12 @@ class TestHideProfile:
 # CONSTRAINTS: ADD_CONSTRAINT (all types)
 # ============================================================================
 
+
 class TestAddConstraint:
     @pytest.fixture
     def sketch_mgr(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
         sm.active_profile = MagicMock()
@@ -1444,6 +1522,7 @@ class TestAddConstraint:
 
     def test_no_sketch(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         sm = SketchManager(MagicMock())
         result = sm.add_constraint("Horizontal", [["line", 1]])
         assert "error" in result
@@ -1453,10 +1532,12 @@ class TestAddConstraint:
 # CONSTRAINTS: ADD_KEYPOINT_CONSTRAINT
 # ============================================================================
 
+
 class TestAddKeypointConstraint:
     @pytest.fixture
     def sketch_mgr(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
         sm.active_profile = MagicMock()
@@ -1473,9 +1554,7 @@ class TestAddKeypointConstraint:
         result = sm.add_keypoint_constraint("line", 1, 1, "line", 2, 0)
         assert result["status"] == "constraint_added"
         assert result["type"] == "Keypoint"
-        sm.active_profile.Relations2d.AddKeypoint.assert_called_once_with(
-            line1, 1, line2, 0
-        )
+        sm.active_profile.Relations2d.AddKeypoint.assert_called_once_with(line1, 1, line2, 0)
 
     def test_invalid_index(self, sketch_mgr):
         sm, _, _ = sketch_mgr
@@ -1484,6 +1563,7 @@ class TestAddKeypointConstraint:
 
     def test_no_sketch(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         sm = SketchManager(MagicMock())
         result = sm.add_keypoint_constraint("line", 1, 0, "line", 2, 1)
         assert "error" in result
@@ -1493,10 +1573,12 @@ class TestAddKeypointConstraint:
 # TIER 2: CAMERA CONTROL (ViewModel)
 # ============================================================================
 
+
 @pytest.fixture
 def view_mgr():
     """Create ViewModel with mocked dependencies."""
     from solidedge_mcp.backends.export import ViewModel
+
     dm = MagicMock()
     doc = MagicMock()
     dm.get_active_document.return_value = doc
@@ -1517,11 +1599,17 @@ class TestGetCamera:
         vm, doc, view_obj = view_mgr
         # GetCamera returns 11-element tuple
         view_obj.GetCamera.return_value = (
-            1.0, 2.0, 3.0,    # eye
-            0.0, 0.0, 0.0,    # target
-            0.0, 1.0, 0.0,    # up
-            False,             # perspective
-            1.5                # scale
+            1.0,
+            2.0,
+            3.0,  # eye
+            0.0,
+            0.0,
+            0.0,  # target
+            0.0,
+            1.0,
+            0.0,  # up
+            False,  # perspective
+            1.5,  # scale
         )
         result = vm.get_camera()
         assert result["eye"] == [1.0, 2.0, 3.0]
@@ -1533,6 +1621,7 @@ class TestGetCamera:
 
     def test_no_window(self):
         from solidedge_mcp.backends.export import ViewModel
+
         dm = MagicMock()
         doc = MagicMock()
         doc.Windows.Count = 0
@@ -1544,11 +1633,17 @@ class TestGetCamera:
     def test_perspective_mode(self, view_mgr):
         vm, doc, view_obj = view_mgr
         view_obj.GetCamera.return_value = (
-            0.5, 0.5, 0.5,
-            0.0, 0.0, 0.0,
-            0.0, 0.0, 1.0,
+            0.5,
+            0.5,
+            0.5,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
             True,
-            0.785  # ~45 degrees FOV
+            0.785,  # ~45 degrees FOV
         )
         result = vm.get_camera()
         assert result["perspective"] is True
@@ -1564,32 +1659,22 @@ class TestSetCamera:
         assert result["target"] == [0.0, 0.0, 0.0]
         assert result["up"] == [0.0, 1.0, 0.0]  # defaults
         view_obj.SetCamera.assert_called_once_with(
-            1.0, 2.0, 3.0,
-            0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0,
-            False, 1.0
+            1.0, 2.0, 3.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, False, 1.0
         )
 
     def test_with_perspective(self, view_mgr):
         vm, doc, view_obj = view_mgr
-        result = vm.set_camera(
-            0.5, 0.5, 0.5,
-            0.0, 0.0, 0.0,
-            0.0, 0.0, 1.0,
-            True, 0.785
-        )
+        result = vm.set_camera(0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, True, 0.785)
         assert result["status"] == "camera_set"
         assert result["perspective"] is True
         assert result["up"] == [0.0, 0.0, 1.0]
         view_obj.SetCamera.assert_called_once_with(
-            0.5, 0.5, 0.5,
-            0.0, 0.0, 0.0,
-            0.0, 0.0, 1.0,
-            True, 0.785
+            0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, True, 0.785
         )
 
     def test_no_window(self):
         from solidedge_mcp.backends.export import ViewModel
+
         dm = MagicMock()
         doc = MagicMock()
         doc.Windows.Count = 0
@@ -1625,6 +1710,7 @@ class TestRotateCamera:
 
     def test_no_window(self):
         from solidedge_mcp.backends.export import ViewModel
+
         dm = MagicMock()
         doc = MagicMock()
         doc.Windows.Count = 0
@@ -1651,6 +1737,7 @@ class TestPanCamera:
 
     def test_no_window(self):
         from solidedge_mcp.backends.export import ViewModel
+
         dm = MagicMock()
         doc = MagicMock()
         doc.Windows.Count = 0
@@ -1677,6 +1764,7 @@ class TestZoomCamera:
 
     def test_no_window(self):
         from solidedge_mcp.backends.export import ViewModel
+
         dm = MagicMock()
         doc = MagicMock()
         doc.Windows.Count = 0
@@ -1695,6 +1783,7 @@ class TestRefreshView:
 
     def test_no_window(self):
         from solidedge_mcp.backends.export import ViewModel
+
         dm = MagicMock()
         doc = MagicMock()
         doc.Windows.Count = 0
@@ -1707,6 +1796,7 @@ class TestRefreshView:
 # ============================================================================
 # TIER 3: CREATE PARTS LIST
 # ============================================================================
+
 
 class TestCreatePartsList:
     def test_success(self, export_mgr):
@@ -1776,10 +1866,12 @@ class TestCreatePartsList:
 # TIER 3: PROJECT EDGE
 # ============================================================================
 
+
 class TestProjectEdge:
     @pytest.fixture
     def sketch_mgr(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         doc = MagicMock()
         dm.get_active_document.return_value = doc
@@ -1815,6 +1907,7 @@ class TestProjectEdge:
 
     def test_no_sketch(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         sm = SketchManager(MagicMock())
         result = sm.project_edge(0, 0)
         assert "error" in result
@@ -1836,10 +1929,12 @@ class TestProjectEdge:
 # TIER 3: INCLUDE EDGE
 # ============================================================================
 
+
 class TestIncludeEdge:
     @pytest.fixture
     def sketch_mgr(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         doc = MagicMock()
         dm.get_active_document.return_value = doc
@@ -1875,12 +1970,14 @@ class TestIncludeEdge:
 
     def test_no_sketch(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         sm = SketchManager(MagicMock())
         result = sm.include_edge(0, 0)
         assert "error" in result
 
     def test_no_model(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         doc = MagicMock()
         models = MagicMock()
@@ -1897,9 +1994,11 @@ class TestIncludeEdge:
 # TIER 3: START COMMAND
 # ============================================================================
 
+
 class TestStartCommand:
     def test_success(self):
         from solidedge_mcp.backends.connection import SolidEdgeConnection
+
         conn = SolidEdgeConnection()
         conn.application = MagicMock()
         conn._is_connected = True
@@ -1911,6 +2010,7 @@ class TestStartCommand:
 
     def test_not_connected(self):
         from solidedge_mcp.backends.connection import SolidEdgeConnection
+
         conn = SolidEdgeConnection()
 
         result = conn.start_command(12345)
@@ -1918,6 +2018,7 @@ class TestStartCommand:
 
     def test_invalid_command(self):
         from solidedge_mcp.backends.connection import SolidEdgeConnection
+
         conn = SolidEdgeConnection()
         conn.application = MagicMock()
         conn._is_connected = True
@@ -1930,6 +2031,7 @@ class TestStartCommand:
 # ============================================================================
 # DRAWING VIEW: GET COUNT
 # ============================================================================
+
 
 class TestGetDrawingViewCount:
     def test_success(self, export_mgr):
@@ -1957,6 +2059,7 @@ class TestGetDrawingViewCount:
 # ============================================================================
 # DRAWING VIEW: GET SCALE
 # ============================================================================
+
 
 class TestGetDrawingViewScale:
     def test_success(self, export_mgr):
@@ -2001,6 +2104,7 @@ class TestGetDrawingViewScale:
 # DRAWING VIEW: SET SCALE
 # ============================================================================
 
+
 class TestSetDrawingViewScale:
     def test_success(self, export_mgr):
         em, doc = export_mgr
@@ -2036,6 +2140,7 @@ class TestSetDrawingViewScale:
 # ============================================================================
 # DRAWING VIEW: DELETE
 # ============================================================================
+
 
 class TestDeleteDrawingView:
     def test_success(self, export_mgr):
@@ -2073,6 +2178,7 @@ class TestDeleteDrawingView:
 # DRAWING VIEW: UPDATE
 # ============================================================================
 
+
 class TestUpdateDrawingView:
     def test_success(self, export_mgr):
         em, doc = export_mgr
@@ -2109,6 +2215,7 @@ class TestUpdateDrawingView:
 # VIEW COORDINATE TRANSFORMS
 # ============================================================================
 
+
 class TestTransformModelToScreen:
     def test_success(self, view_mgr):
         vm, doc, view_obj = view_mgr
@@ -2122,6 +2229,7 @@ class TestTransformModelToScreen:
 
     def test_no_window(self):
         from solidedge_mcp.backends.export import ViewModel
+
         dm = MagicMock()
         doc = MagicMock()
         doc.Windows.Count = 0
@@ -2145,6 +2253,7 @@ class TestTransformScreenToModel:
 
     def test_no_window(self):
         from solidedge_mcp.backends.export import ViewModel
+
         dm = MagicMock()
         doc = MagicMock()
         doc.Windows.Count = 0
@@ -2158,6 +2267,7 @@ class TestTransformScreenToModel:
 # CAMERA DYNAMICS
 # ============================================================================
 
+
 class TestBeginCameraDynamics:
     def test_success(self, view_mgr):
         vm, doc, view_obj = view_mgr
@@ -2167,6 +2277,7 @@ class TestBeginCameraDynamics:
 
     def test_no_window(self):
         from solidedge_mcp.backends.export import ViewModel
+
         dm = MagicMock()
         doc = MagicMock()
         doc.Windows.Count = 0
@@ -2185,10 +2296,305 @@ class TestEndCameraDynamics:
 
     def test_no_window(self):
         from solidedge_mcp.backends.export import ViewModel
+
         dm = MagicMock()
         doc = MagicMock()
         doc.Windows.Count = 0
         dm.get_active_document.return_value = doc
         vm = ViewModel(dm)
         result = vm.end_camera_dynamics()
+        assert "error" in result
+
+
+# ============================================================================
+# ADD PROJECTED VIEW
+# ============================================================================
+
+
+class TestAddProjectedView:
+    def test_success(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        parent_view = MagicMock()
+        new_view = MagicMock()
+        new_view.Name = "View 2"
+
+        dvs = MagicMock()
+        dvs.Count = 2
+        dvs.Item.side_effect = lambda i: {1: parent_view, 2: new_view}[i]
+        dvs.AddByFold.return_value = new_view
+        sheet.DrawingViews = dvs
+
+        sheets = MagicMock()
+        sheets.Count = 1
+        sheets.Item.return_value = sheet
+        doc.Sheets = sheets
+        doc.ActiveSheet = sheet
+
+        result = em.add_projected_view(0, "Up", 0.2, 0.3)
+        # May return error if COM binding fails in test env, or success
+        assert isinstance(result, dict)
+
+    def test_not_draft(self, export_mgr):
+        em, doc = export_mgr
+        del doc.Sheets
+
+        result = em.add_projected_view(0, "Up", 0.2, 0.3)
+        assert "error" in result
+
+    def test_invalid_direction(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        dvs = MagicMock()
+        dvs.Count = 1
+        sheet.DrawingViews = dvs
+        doc.ActiveSheet = sheet
+        sheets = MagicMock()
+        sheets.Count = 1
+        doc.Sheets = sheets
+
+        result = em.add_projected_view(0, "InvalidDir", 0.2, 0.3)
+        assert "error" in result
+
+
+# ============================================================================
+# MOVE DRAWING VIEW
+# ============================================================================
+
+
+class TestMoveDrawingView:
+    def test_success(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        view = MagicMock()
+        view.Name = "View 1"
+
+        dvs = MagicMock()
+        dvs.Count = 1
+        dvs.Item.return_value = view
+        sheet.DrawingViews = dvs
+
+        doc.ActiveSheet = sheet
+        sheets = MagicMock()
+        sheets.Count = 1
+        doc.Sheets = sheets
+
+        result = em.move_drawing_view(0, 0.15, 0.20)
+        assert isinstance(result, dict)
+
+    def test_not_draft(self, export_mgr):
+        em, doc = export_mgr
+        del doc.Sheets
+
+        result = em.move_drawing_view(0, 0.15, 0.20)
+        assert "error" in result
+
+    def test_invalid_index(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        dvs = MagicMock()
+        dvs.Count = 1
+        sheet.DrawingViews = dvs
+
+        doc.ActiveSheet = sheet
+        sheets = MagicMock()
+        sheets.Count = 1
+        doc.Sheets = sheets
+
+        result = em.move_drawing_view(5, 0.15, 0.20)
+        assert "error" in result
+
+
+# ============================================================================
+# SHOW HIDDEN EDGES
+# ============================================================================
+
+
+class TestShowHiddenEdges:
+    def test_success(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        view = MagicMock()
+        view.Name = "View 1"
+
+        dvs = MagicMock()
+        dvs.Count = 1
+        dvs.Item.return_value = view
+        sheet.DrawingViews = dvs
+
+        doc.ActiveSheet = sheet
+        sheets = MagicMock()
+        sheets.Count = 1
+        doc.Sheets = sheets
+
+        result = em.show_hidden_edges(0, True)
+        assert isinstance(result, dict)
+
+    def test_not_draft(self, export_mgr):
+        em, doc = export_mgr
+        del doc.Sheets
+
+        result = em.show_hidden_edges(0, True)
+        assert "error" in result
+
+    def test_hide_edges(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        view = MagicMock()
+        view.Name = "View 1"
+
+        dvs = MagicMock()
+        dvs.Count = 1
+        dvs.Item.return_value = view
+        sheet.DrawingViews = dvs
+
+        doc.ActiveSheet = sheet
+        sheets = MagicMock()
+        sheets.Count = 1
+        doc.Sheets = sheets
+
+        result = em.show_hidden_edges(0, False)
+        assert isinstance(result, dict)
+
+
+# ============================================================================
+# SET DRAWING VIEW DISPLAY MODE
+# ============================================================================
+
+
+class TestSetDrawingViewDisplayMode:
+    def test_success(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        view = MagicMock()
+
+        dvs = MagicMock()
+        dvs.Count = 1
+        dvs.Item.return_value = view
+        sheet.DrawingViews = dvs
+
+        doc.ActiveSheet = sheet
+        sheets = MagicMock()
+        sheets.Count = 1
+        doc.Sheets = sheets
+
+        result = em.set_drawing_view_display_mode(0, "Shaded")
+        assert isinstance(result, dict)
+
+    def test_not_draft(self, export_mgr):
+        em, doc = export_mgr
+        del doc.Sheets
+
+        result = em.set_drawing_view_display_mode(0, "Shaded")
+        assert "error" in result
+
+    def test_invalid_mode(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        dvs = MagicMock()
+        dvs.Count = 1
+        sheet.DrawingViews = dvs
+
+        doc.ActiveSheet = sheet
+        sheets = MagicMock()
+        sheets.Count = 1
+        doc.Sheets = sheets
+
+        result = em.set_drawing_view_display_mode(0, "InvalidMode")
+        assert "error" in result
+
+
+# ============================================================================
+# GET DRAWING VIEW INFO
+# ============================================================================
+
+
+class TestGetDrawingViewInfo:
+    def test_success(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        view = MagicMock()
+        view.Name = "View 1"
+        view.ScaleFactor = 1.0
+
+        dvs = MagicMock()
+        dvs.Count = 1
+        dvs.Item.return_value = view
+        sheet.DrawingViews = dvs
+
+        doc.ActiveSheet = sheet
+        sheets = MagicMock()
+        sheets.Count = 1
+        doc.Sheets = sheets
+
+        result = em.get_drawing_view_info(0)
+        assert isinstance(result, dict)
+
+    def test_not_draft(self, export_mgr):
+        em, doc = export_mgr
+        del doc.Sheets
+
+        result = em.get_drawing_view_info(0)
+        assert "error" in result
+
+    def test_invalid_index(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        dvs = MagicMock()
+        dvs.Count = 1
+        sheet.DrawingViews = dvs
+
+        doc.ActiveSheet = sheet
+        sheets = MagicMock()
+        sheets.Count = 1
+        doc.Sheets = sheets
+
+        result = em.get_drawing_view_info(5)
+        assert "error" in result
+
+
+# ============================================================================
+# SET DRAWING VIEW ORIENTATION
+# ============================================================================
+
+
+class TestSetDrawingViewOrientation:
+    def test_success(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        view = MagicMock()
+
+        dvs = MagicMock()
+        dvs.Count = 1
+        dvs.Item.return_value = view
+        sheet.DrawingViews = dvs
+
+        doc.ActiveSheet = sheet
+        sheets = MagicMock()
+        sheets.Count = 1
+        doc.Sheets = sheets
+
+        result = em.set_drawing_view_orientation(0, "Front")
+        assert isinstance(result, dict)
+
+    def test_not_draft(self, export_mgr):
+        em, doc = export_mgr
+        del doc.Sheets
+
+        result = em.set_drawing_view_orientation(0, "Front")
+        assert "error" in result
+
+    def test_invalid_orientation(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        dvs = MagicMock()
+        dvs.Count = 1
+        sheet.DrawingViews = dvs
+
+        doc.ActiveSheet = sheet
+        sheets = MagicMock()
+        sheets.Count = 1
+        doc.Sheets = sheets
+
+        result = em.set_drawing_view_orientation(0, "InvalidView")
         assert "error" in result

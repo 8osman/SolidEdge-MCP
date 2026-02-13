@@ -25,6 +25,7 @@ def conn():
 # ACTIVATE APPLICATION
 # ============================================================================
 
+
 class TestActivateApplication:
     def test_success(self, conn):
         result = conn.activate_application()
@@ -40,6 +41,7 @@ class TestActivateApplication:
 # ============================================================================
 # ABORT COMMAND
 # ============================================================================
+
 
 class TestAbortCommand:
     def test_abort_all(self, conn):
@@ -64,6 +66,7 @@ class TestAbortCommand:
 # GET ACTIVE ENVIRONMENT
 # ============================================================================
 
+
 class TestGetActiveEnvironment:
     def test_success(self, conn):
         env = MagicMock()
@@ -85,6 +88,7 @@ class TestGetActiveEnvironment:
 # ============================================================================
 # STATUS BAR
 # ============================================================================
+
 
 class TestGetStatusBar:
     def test_success(self, conn):
@@ -115,6 +119,7 @@ class TestSetStatusBar:
 # ============================================================================
 # VISIBLE
 # ============================================================================
+
 
 class TestGetVisible:
     def test_visible(self, conn):
@@ -158,6 +163,7 @@ class TestSetVisible:
 # GET GLOBAL PARAMETER
 # ============================================================================
 
+
 class TestGetGlobalParameter:
     def test_success(self, conn):
         conn.application.GetGlobalParameter.return_value = 0.005
@@ -181,6 +187,7 @@ class TestGetGlobalParameter:
 # ============================================================================
 # SET GLOBAL PARAMETER
 # ============================================================================
+
 
 class TestSetGlobalParameter:
     def test_success(self, conn):

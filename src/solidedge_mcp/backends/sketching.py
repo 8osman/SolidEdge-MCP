@@ -40,12 +40,12 @@ class SketchManager:
 
             # Map plane names to indices
             plane_map = {
-                "Top": 1,     # XZ plane (top view)
-                "Front": 2,   # XY plane (front view)
-                "Right": 3,   # YZ plane (right view)
+                "Top": 1,  # XZ plane (top view)
+                "Front": 2,  # XY plane (front view)
+                "Right": 3,  # YZ plane (right view)
                 "XZ": 1,
                 "XY": 2,
-                "YZ": 3
+                "YZ": 3,
             }
 
             plane_index = plane_map.get(plane)
@@ -75,13 +75,10 @@ class SketchManager:
             return {
                 "status": "created",
                 "plane": plane,
-                "sketch_id": profile_set.Name if hasattr(profile_set, 'Name') else "sketch"
+                "sketch_id": profile_set.Name if hasattr(profile_set, "Name") else "sketch",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def create_sketch_on_plane_index(self, plane_index: int) -> dict[str, Any]:
         """
@@ -116,13 +113,10 @@ class SketchManager:
             return {
                 "status": "created",
                 "plane_index": plane_index,
-                "sketch_id": profile_set.Name if hasattr(profile_set, 'Name') else "sketch"
+                "sketch_id": profile_set.Name if hasattr(profile_set, "Name") else "sketch",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def draw_line(self, x1: float, y1: float, x2: float, y2: float) -> dict[str, Any]:
         """Draw a line in the active sketch"""
@@ -136,17 +130,9 @@ class SketchManager:
             # Add line
             lines.AddBy2Points(x1, y1, x2, y2)
 
-            return {
-                "status": "created",
-                "type": "line",
-                "start": [x1, y1],
-                "end": [x2, y2]
-            }
+            return {"status": "created", "type": "line", "start": [x1, y1], "end": [x2, y2]}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def draw_circle(self, center_x: float, center_y: float, radius: float) -> dict[str, Any]:
         """Draw a circle in the active sketch"""
@@ -164,13 +150,10 @@ class SketchManager:
                 "status": "created",
                 "type": "circle",
                 "center": [center_x, center_y],
-                "radius": radius
+                "radius": radius,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def draw_rectangle(self, x1: float, y1: float, x2: float, y2: float) -> dict[str, Any]:
         """Draw a rectangle in the active sketch"""
@@ -192,16 +175,14 @@ class SketchManager:
                 "type": "rectangle",
                 "corner1": [x1, y1],
                 "corner2": [x2, y2],
-                "lines": 4
+                "lines": 4,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def draw_arc(self, center_x: float, center_y: float, radius: float,
-                 start_angle: float, end_angle: float) -> dict[str, Any]:
+    def draw_arc(
+        self, center_x: float, center_y: float, radius: float, start_angle: float, end_angle: float
+    ) -> dict[str, Any]:
         """
         Draw an arc in the active sketch.
 
@@ -228,11 +209,7 @@ class SketchManager:
             arcs = self.active_profile.Arcs2d
 
             # Add arc by center and endpoints
-            arcs.AddByCenterStartEnd(
-                center_x, center_y,
-                start_x, start_y,
-                end_x, end_y
-            )
+            arcs.AddByCenterStartEnd(center_x, center_y, start_x, start_y, end_x, end_y)
 
             return {
                 "status": "created",
@@ -240,17 +217,13 @@ class SketchManager:
                 "center": [center_x, center_y],
                 "radius": radius,
                 "start_angle": start_angle,
-                "end_angle": end_angle
+                "end_angle": end_angle,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def draw_polygon(
-        self, center_x: float, center_y: float,
-        radius: float, sides: int
+        self, center_x: float, center_y: float, radius: float, sides: int
     ) -> dict[str, Any]:
         """Draw a regular polygon"""
         try:
@@ -283,19 +256,18 @@ class SketchManager:
                 "type": "polygon",
                 "center": [center_x, center_y],
                 "radius": radius,
-                "sides": sides
+                "sides": sides,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def draw_ellipse(
-        self, center_x: float, center_y: float,
+        self,
+        center_x: float,
+        center_y: float,
         major_radius: float,
         minor_radius: float,
-        angle: float = 0.0
+        angle: float = 0.0,
     ) -> dict[str, Any]:
         """
         Draw an ellipse in the active sketch.
@@ -321,11 +293,7 @@ class SketchManager:
             axis_x = math.cos(angle_rad)
             axis_y = math.sin(angle_rad)
 
-            ellipses.AddByCenter(
-                center_x, center_y,
-                major_radius, minor_radius,
-                axis_x, axis_y
-            )
+            ellipses.AddByCenter(center_x, center_y, major_radius, minor_radius, axis_x, axis_y)
 
             return {
                 "status": "created",
@@ -333,13 +301,10 @@ class SketchManager:
                 "center": [center_x, center_y],
                 "major_radius": major_radius,
                 "minor_radius": minor_radius,
-                "angle": angle
+                "angle": angle,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def draw_spline(self, points: list) -> dict[str, Any]:
         """
@@ -373,24 +338,27 @@ class SketchManager:
             splines.AddByPoints(
                 3,  # Order (cubic spline)
                 len(points),  # NumPoints
-                tuple(point_array)  # PointArray (flattened x,y,x,y,...)
+                tuple(point_array),  # PointArray (flattened x,y,x,y,...)
             )
 
             return {
                 "status": "created",
                 "type": "spline",
                 "points": points,
-                "num_points": len(points)
+                "num_points": len(points),
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def draw_arc_by_3_points(self, start_x: float, start_y: float,
-                             center_x: float, center_y: float,
-                             end_x: float, end_y: float) -> dict[str, Any]:
+    def draw_arc_by_3_points(
+        self,
+        start_x: float,
+        start_y: float,
+        center_x: float,
+        center_y: float,
+        end_x: float,
+        end_y: float,
+    ) -> dict[str, Any]:
         """
         Draw an arc defined by start point, center point, and end point.
 
@@ -407,11 +375,7 @@ class SketchManager:
                 return {"error": "No active sketch. Call create_sketch() first"}
 
             arcs = self.active_profile.Arcs2d
-            arcs.AddByStartCenterEnd(
-                start_x, start_y,
-                center_x, center_y,
-                end_x, end_y
-            )
+            arcs.AddByStartCenterEnd(start_x, start_y, center_x, center_y, end_x, end_y)
 
             return {
                 "status": "created",
@@ -419,16 +383,12 @@ class SketchManager:
                 "start": [start_x, start_y],
                 "center": [center_x, center_y],
                 "end": [end_x, end_y],
-                "method": "start_center_end"
+                "method": "start_center_end",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def draw_circle_by_2_points(self, x1: float, y1: float,
-                                 x2: float, y2: float) -> dict[str, Any]:
+    def draw_circle_by_2_points(self, x1: float, y1: float, x2: float, y2: float) -> dict[str, Any]:
         """
         Draw a circle defined by two diametrically opposite points.
 
@@ -457,17 +417,14 @@ class SketchManager:
                 "type": "circle",
                 "center": [center_x, center_y],
                 "radius": radius,
-                "method": "2_points"
+                "method": "2_points",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def draw_circle_by_3_points(self, x1: float, y1: float,
-                                 x2: float, y2: float,
-                                 x3: float, y3: float) -> dict[str, Any]:
+    def draw_circle_by_3_points(
+        self, x1: float, y1: float, x2: float, y2: float, x3: float, y3: float
+    ) -> dict[str, Any]:
         """
         Draw a circle through three points.
 
@@ -494,17 +451,14 @@ class SketchManager:
                 "point1": [x1, y1],
                 "point2": [x2, y2],
                 "point3": [x3, y3],
-                "method": "3_points"
+                "method": "3_points",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def mirror_spline(self, axis_x1: float, axis_y1: float,
-                       axis_x2: float, axis_y2: float,
-                       copy: bool = True) -> dict[str, Any]:
+    def mirror_spline(
+        self, axis_x1: float, axis_y1: float, axis_x2: float, axis_y2: float, copy: bool = True
+    ) -> dict[str, Any]:
         """
         Mirror B-spline curves across a line defined by two points.
 
@@ -543,13 +497,10 @@ class SketchManager:
                 "type": "mirror_spline",
                 "mirror_axis": [[axis_x1, axis_y1], [axis_x2, axis_y2]],
                 "copy": copy,
-                "mirrored_count": mirror_count
+                "mirrored_count": mirror_count,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def hide_profile(self, visible: bool = False) -> dict[str, Any]:
         """
@@ -570,15 +521,9 @@ class SketchManager:
 
             self.active_profile.Visible = visible
 
-            return {
-                "status": "updated",
-                "visible": visible
-            }
+            return {"status": "updated", "visible": visible}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def draw_point(self, x: float, y: float) -> dict[str, Any]:
         """
@@ -606,7 +551,7 @@ class SketchManager:
                     "status": "created",
                     "type": "point",
                     "position": [x, y],
-                    "method": "Holes2d"
+                    "method": "Holes2d",
                 }
             except Exception:
                 pass
@@ -619,13 +564,10 @@ class SketchManager:
                 "status": "created",
                 "type": "point",
                 "position": [x, y],
-                "method": "construction_circle"
+                "method": "construction_circle",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def set_axis_of_revolution(self, x1: float, y1: float, x2: float, y2: float) -> dict[str, Any]:
         """
@@ -659,13 +601,10 @@ class SketchManager:
                 "status": "axis_set",
                 "start": [x1, y1],
                 "end": [x2, y2],
-                "note": "Axis of revolution set. Close sketch and use create_revolve()."
+                "note": "Axis of revolution set. Close sketch and use create_revolve().",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def _get_sketch_element(self, element_type: str, index: int):
         """
@@ -691,18 +630,13 @@ class SketchManager:
         }
         collection_name = type_map.get(element_type.lower())
         if not collection_name:
-            valid_types = ', '.join(type_map.keys())
-            raise ValueError(
-                f"Unknown element type: "
-                f"'{element_type}'. Use: {valid_types}"
-            )
+            valid_types = ", ".join(type_map.keys())
+            raise ValueError(f"Unknown element type: '{element_type}'. Use: {valid_types}")
 
         collection = getattr(profile, collection_name)
         if index < 1 or index > collection.Count:
             raise ValueError(
-                f"Index {index} out of range for "
-                f"{element_type} "
-                f"(count: {collection.Count})"
+                f"Index {index} out of range for {element_type} (count: {collection.Count})"
             )
 
         return collection.Item(index)
@@ -777,22 +711,21 @@ class SketchManager:
                     "Concentric, Tangent"
                 }
 
-            return {
-                "status": "constraint_added",
-                "type": constraint_type,
-                "elements": elements
-            }
+            return {"status": "constraint_added", "type": constraint_type, "elements": elements}
         except ValueError as e:
             return {"error": str(e)}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def add_keypoint_constraint(self, element1_type: str, element1_index: int,
-                                 keypoint1: int, element2_type: str,
-                                 element2_index: int, keypoint2: int) -> dict[str, Any]:
+    def add_keypoint_constraint(
+        self,
+        element1_type: str,
+        element1_index: int,
+        keypoint1: int,
+        element2_type: str,
+        element2_index: int,
+        keypoint2: int,
+    ) -> dict[str, Any]:
         """
         Add a keypoint constraint connecting two sketch elements at specific points.
 
@@ -823,15 +756,12 @@ class SketchManager:
                 "status": "constraint_added",
                 "type": "Keypoint",
                 "element1": [element1_type, element1_index, keypoint1],
-                "element2": [element2_type, element2_index, keypoint2]
+                "element2": [element2_type, element2_index, keypoint2],
             }
         except ValueError as e:
             return {"error": str(e)}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def close_sketch(self) -> dict[str, Any]:
         """Close/finish the active sketch"""
@@ -857,12 +787,10 @@ class SketchManager:
             result = {
                 "status": "closed",
                 "sketch_id": (
-                    self.active_sketch.Name
-                    if hasattr(self.active_sketch, 'Name')
-                    else "sketch"
+                    self.active_sketch.Name if hasattr(self.active_sketch, "Name") else "sketch"
                 ),
                 "has_revolution_axis": self.active_refaxis is not None,
-                "accumulated_profiles": len(self.accumulated_profiles)
+                "accumulated_profiles": len(self.accumulated_profiles),
             }
 
             # NOTE: We keep active_profile valid after closing so it can be used
@@ -872,10 +800,7 @@ class SketchManager:
 
             return result
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_sketch_info(self) -> dict[str, Any]:
         """
@@ -917,10 +842,7 @@ class SketchManager:
 
             return info
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_active_sketch(self):
         """Get the active sketch object"""
@@ -976,13 +898,10 @@ class SketchManager:
                 "status": "created",
                 "type": "sketch_fillet",
                 "radius": radius,
-                "fillet_count": fillet_count
+                "fillet_count": fillet_count,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def sketch_chamfer(self, distance: float) -> dict[str, Any]:
         """
@@ -1020,13 +939,10 @@ class SketchManager:
                 "status": "created",
                 "type": "sketch_chamfer",
                 "distance": distance,
-                "chamfer_count": chamfer_count
+                "chamfer_count": chamfer_count,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def sketch_offset(self, distance: float) -> dict[str, Any]:
         """
@@ -1049,11 +965,7 @@ class SketchManager:
             # Try using the profile offset method
             try:
                 profile.OffsetProfile(distance)
-                return {
-                    "status": "created",
-                    "type": "sketch_offset",
-                    "distance": distance
-                }
+                return {"status": "created", "type": "sketch_offset", "distance": distance}
             except Exception:
                 pass
 
@@ -1087,13 +999,10 @@ class SketchManager:
                 "status": "created",
                 "type": "sketch_offset",
                 "distance": distance,
-                "offset_lines": offset_count
+                "offset_lines": offset_count,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def sketch_mirror(self, axis: str = "X") -> dict[str, Any]:
         """
@@ -1154,13 +1063,10 @@ class SketchManager:
                 "status": "created",
                 "type": "sketch_mirror",
                 "axis": axis,
-                "mirrored_elements": mirror_count
+                "mirrored_elements": mirror_count,
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def draw_construction_line(self, x1: float, y1: float, x2: float, y2: float) -> dict[str, Any]:
         """
@@ -1190,13 +1096,10 @@ class SketchManager:
                 "status": "created",
                 "type": "construction_line",
                 "start": [x1, y1],
-                "end": [x2, y2]
+                "end": [x2, y2],
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def project_edge(self, face_index: int, edge_index: int) -> dict[str, Any]:
         """
@@ -1243,13 +1146,10 @@ class SketchManager:
                 "status": "projected",
                 "face_index": face_index,
                 "edge_index": edge_index,
-                "projected_geometry": str(type(projected).__name__) if projected else "unknown"
+                "projected_geometry": str(type(projected).__name__) if projected else "unknown",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def include_edge(self, face_index: int, edge_index: int) -> dict[str, Any]:
         """
@@ -1297,13 +1197,10 @@ class SketchManager:
                 "status": "included",
                 "face_index": face_index,
                 "edge_index": edge_index,
-                "geometry_2d": str(type(result).__name__) if result else "unknown"
+                "geometry_2d": str(type(result).__name__) if result else "unknown",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def project_ref_plane(self, plane_index: int) -> dict[str, Any]:
         """
@@ -1335,16 +1232,14 @@ class SketchManager:
             return {
                 "status": "projected",
                 "plane_index": plane_index,
-                "projected_geometry": str(type(result).__name__) if result else "unknown"
+                "projected_geometry": str(type(result).__name__) if result else "unknown",
             }
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def offset_sketch_2d(self, offset_side_x: float, offset_side_y: float,
-                          offset_distance: float) -> dict[str, Any]:
+    def offset_sketch_2d(
+        self, offset_side_x: float, offset_side_y: float, offset_distance: float
+    ) -> dict[str, Any]:
         """
         Offset the active sketch profile in 2D.
 
@@ -1370,13 +1265,249 @@ class SketchManager:
                 "status": "offset",
                 "offset_side_x": offset_side_x,
                 "offset_side_y": offset_side_y,
-                "offset_distance": offset_distance
+                "offset_distance": offset_distance,
             }
         except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def sketch_rotate(
+        self, center_x: float, center_y: float, angle_degrees: float
+    ) -> dict[str, Any]:
+        """
+        Rotate all sketch geometry around a center point.
+
+        Transforms line endpoints, circle centers, and arc centers by the
+        rotation angle. No native Profile.Rotate() in the COM API.
+
+        Args:
+            center_x: Rotation center X (meters)
+            center_y: Rotation center Y (meters)
+            angle_degrees: Rotation angle in degrees (CCW positive)
+
+        Returns:
+            Dict with status and count of rotated elements
+        """
+        try:
+            if not self.active_profile:
+                return {"error": "No active sketch. Call create_sketch() first"}
+
+            angle_rad = math.radians(angle_degrees)
+            cos_a = math.cos(angle_rad)
+            sin_a = math.sin(angle_rad)
+            cx, cy = center_x, center_y
+
+            def rotate_point(x, y):
+                dx, dy = x - cx, y - cy
+                return cx + dx * cos_a - dy * sin_a, cy + dx * sin_a + dy * cos_a
+
+            profile = self.active_profile
+            rotated = 0
+
+            # Rotate lines
+            lines = profile.Lines2d
+            original_count = lines.Count
+            new_lines = []
+            for i in range(1, original_count + 1):
+                try:
+                    line = lines.Item(i)
+                    x1, y1 = line.StartPoint.X, line.StartPoint.Y
+                    x2, y2 = line.EndPoint.X, line.EndPoint.Y
+                    rx1, ry1 = rotate_point(x1, y1)
+                    rx2, ry2 = rotate_point(x2, y2)
+                    new_lines.append((rx1, ry1, rx2, ry2))
+                except Exception:
+                    pass
+
+            # Remove old lines and add rotated ones
+            for i in range(original_count, 0, -1):
+                with contextlib.suppress(Exception):
+                    lines.Item(i).Delete()
+            for coords in new_lines:
+                lines.AddBy2Points(*coords)
+                rotated += 1
+
+            # Rotate circles
+            circles = profile.Circles2d
+            original_count = circles.Count
+            new_circles = []
+            for i in range(1, original_count + 1):
+                try:
+                    circle = circles.Item(i)
+                    ccx, ccy = circle.CenterPoint.X, circle.CenterPoint.Y
+                    r = circle.Radius
+                    rx, ry = rotate_point(ccx, ccy)
+                    new_circles.append((rx, ry, r))
+                except Exception:
+                    pass
+
+            for i in range(original_count, 0, -1):
+                with contextlib.suppress(Exception):
+                    circles.Item(i).Delete()
+            for c in new_circles:
+                circles.AddByCenterRadius(*c)
+                rotated += 1
+
             return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
+                "status": "rotated",
+                "center": [center_x, center_y],
+                "angle_degrees": angle_degrees,
+                "elements_rotated": rotated,
             }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def sketch_scale(self, center_x: float, center_y: float, scale_factor: float) -> dict[str, Any]:
+        """
+        Scale all sketch geometry relative to a center point.
+
+        Transforms line endpoints and circle centers/radii by the scale factor.
+
+        Args:
+            center_x: Scale center X (meters)
+            center_y: Scale center Y (meters)
+            scale_factor: Scale factor (>1 enlarges, <1 shrinks)
+
+        Returns:
+            Dict with status and count of scaled elements
+        """
+        try:
+            if not self.active_profile:
+                return {"error": "No active sketch. Call create_sketch() first"}
+
+            if scale_factor <= 0:
+                return {"error": "Scale factor must be positive"}
+
+            cx, cy = center_x, center_y
+
+            def scale_point(x, y):
+                return cx + (x - cx) * scale_factor, cy + (y - cy) * scale_factor
+
+            profile = self.active_profile
+            scaled = 0
+
+            # Scale lines
+            lines = profile.Lines2d
+            original_count = lines.Count
+            new_lines = []
+            for i in range(1, original_count + 1):
+                try:
+                    line = lines.Item(i)
+                    x1, y1 = line.StartPoint.X, line.StartPoint.Y
+                    x2, y2 = line.EndPoint.X, line.EndPoint.Y
+                    sx1, sy1 = scale_point(x1, y1)
+                    sx2, sy2 = scale_point(x2, y2)
+                    new_lines.append((sx1, sy1, sx2, sy2))
+                except Exception:
+                    pass
+
+            for i in range(original_count, 0, -1):
+                with contextlib.suppress(Exception):
+                    lines.Item(i).Delete()
+            for coords in new_lines:
+                lines.AddBy2Points(*coords)
+                scaled += 1
+
+            # Scale circles
+            circles = profile.Circles2d
+            original_count = circles.Count
+            new_circles = []
+            for i in range(1, original_count + 1):
+                try:
+                    circle = circles.Item(i)
+                    ccx, ccy = circle.CenterPoint.X, circle.CenterPoint.Y
+                    r = circle.Radius
+                    sx, sy = scale_point(ccx, ccy)
+                    new_circles.append((sx, sy, r * scale_factor))
+                except Exception:
+                    pass
+
+            for i in range(original_count, 0, -1):
+                with contextlib.suppress(Exception):
+                    circles.Item(i).Delete()
+            for c in new_circles:
+                circles.AddByCenterRadius(*c)
+                scaled += 1
+
+            return {
+                "status": "scaled",
+                "center": [center_x, center_y],
+                "scale_factor": scale_factor,
+                "elements_scaled": scaled,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def get_sketch_matrix(self) -> dict[str, Any]:
+        """
+        Get the coordinate system matrix of the active sketch profile.
+
+        Returns the transformation matrix from sketch 2D space to model 3D space.
+
+        Returns:
+            Dict with matrix elements
+        """
+        try:
+            if not self.active_profile:
+                return {"error": "No active sketch. Call create_sketch() first"}
+
+            result = self.active_profile.GetMatrix()
+
+            if isinstance(result, tuple):
+                return {"status": "ok", "matrix": list(result)}
+            else:
+                return {"status": "ok", "matrix": result}
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def clean_sketch_geometry(
+        self,
+        clean_points: bool = True,
+        clean_splines: bool = True,
+        clean_identical: bool = True,
+        clean_small: bool = True,
+        small_tolerance: float = 0.0001,
+    ) -> dict[str, Any]:
+        """
+        Clean up duplicate, small, or invalid geometry in the active sketch.
+
+        Uses Profile.CleanGeometry2d to remove duplicate points, simplify
+        splines, remove identical curves, and delete small elements.
+
+        Args:
+            clean_points: Remove duplicate/coincident points
+            clean_splines: Simplify spline curves
+            clean_identical: Remove identical overlapping curves
+            clean_small: Remove very small elements
+            small_tolerance: Size threshold for small element removal (meters)
+
+        Returns:
+            Dict with status
+        """
+        try:
+            if not self.active_profile:
+                return {"error": "No active sketch. Call create_sketch() first"}
+
+            profile = self.active_profile
+            profile.CleanGeometry2d(
+                0,  # reserved
+                clean_points,
+                clean_splines,
+                clean_identical,
+                clean_small,
+                None,  # reserved
+                small_tolerance,
+            )
+
+            return {
+                "status": "cleaned",
+                "clean_points": clean_points,
+                "clean_splines": clean_splines,
+                "clean_identical": clean_identical,
+                "clean_small": clean_small,
+                "small_tolerance": small_tolerance,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_sketch_constraints(self) -> dict[str, Any]:
         """
@@ -1408,12 +1539,6 @@ class SketchManager:
             except Exception:
                 pass
 
-            return {
-                "constraints": constraints,
-                "count": len(constraints)
-            }
+            return {"constraints": constraints, "count": len(constraints)}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}

@@ -49,8 +49,7 @@ class SolidEdgeConnection:
                         print("Started new Solid Edge instance")
                     else:
                         raise Exception(
-                            "No Solid Edge instance found "
-                            "and start_if_needed=False"
+                            "No Solid Edge instance found and start_if_needed=False"
                         ) from None
 
             self._is_connected = True
@@ -66,11 +65,7 @@ class SolidEdgeConnection:
             }
         except Exception as e:
             self._is_connected = False
-            return {
-                "status": "error",
-                "message": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"status": "error", "message": str(e), "traceback": traceback.format_exc()}
 
     def disconnect(self) -> dict[str, Any]:
         """Disconnect from Solid Edge (does not close the application)"""
@@ -99,10 +94,7 @@ class SolidEdgeConnection:
 
             return info
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_application_info(self) -> dict[str, Any]:
         """Alias for get_info() for consistency with MCP tool name"""
@@ -143,10 +135,7 @@ class SolidEdgeConnection:
         except Exception as e:
             self.application = None
             self._is_connected = False
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_process_info(self) -> dict[str, Any]:
         """
@@ -216,7 +205,7 @@ class SolidEdgeConnection:
         delay_compute: bool = None,
         screen_updating: bool = None,
         interactive: bool = None,
-        display_alerts: bool = None
+        display_alerts: bool = None,
     ) -> dict[str, Any]:
         """
         Set application performance flags for batch operations.
@@ -267,15 +256,9 @@ class SolidEdgeConnection:
                 except Exception as e:
                     settings["display_alerts_error"] = str(e)
 
-            return {
-                "status": "updated",
-                "settings": settings
-            }
+            return {"status": "updated", "settings": settings}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def start_command(self, command_id: int) -> dict[str, Any]:
         """
@@ -296,10 +279,7 @@ class SolidEdgeConnection:
             self.application.StartCommand(command_id)
             return {"status": "success", "command_id": command_id}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def do_idle(self) -> dict[str, Any]:
         """
@@ -317,10 +297,7 @@ class SolidEdgeConnection:
             self.application.DoIdle()
             return {"status": "success"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def activate_application(self) -> dict[str, Any]:
         """
@@ -336,10 +313,7 @@ class SolidEdgeConnection:
             self.application.Activate()
             return {"status": "activated"}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def abort_command(self, abort_all: bool = True) -> dict[str, Any]:
         """
@@ -359,10 +333,7 @@ class SolidEdgeConnection:
             self.application.AbortCommand(abort_all)
             return {"status": "aborted", "abort_all": abort_all}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_active_environment(self) -> dict[str, Any]:
         """
@@ -388,10 +359,7 @@ class SolidEdgeConnection:
 
             return result
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_status_bar(self) -> dict[str, Any]:
         """
@@ -405,10 +373,7 @@ class SolidEdgeConnection:
             text = self.application.StatusBar
             return {"status": "success", "text": text}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def set_status_bar(self, text: str) -> dict[str, Any]:
         """
@@ -425,10 +390,7 @@ class SolidEdgeConnection:
             self.application.StatusBar = text
             return {"status": "set", "text": text}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_visible(self) -> dict[str, Any]:
         """
@@ -442,10 +404,7 @@ class SolidEdgeConnection:
             visible = self.application.Visible
             return {"status": "success", "visible": visible}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def set_visible(self, visible: bool) -> dict[str, Any]:
         """
@@ -462,10 +421,7 @@ class SolidEdgeConnection:
             self.application.Visible = visible
             return {"status": "set", "visible": visible}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def get_global_parameter(self, parameter: int) -> dict[str, Any]:
         """
@@ -483,16 +439,9 @@ class SolidEdgeConnection:
         try:
             self.ensure_connected()
             value = self.application.GetGlobalParameter(parameter)
-            return {
-                "status": "success",
-                "parameter": parameter,
-                "value": value
-            }
+            return {"status": "success", "parameter": parameter, "value": value}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def set_global_parameter(self, parameter: int, value) -> dict[str, Any]:
         """
@@ -511,13 +460,6 @@ class SolidEdgeConnection:
         try:
             self.ensure_connected()
             self.application.SetGlobalParameter(parameter, value)
-            return {
-                "status": "set",
-                "parameter": parameter,
-                "value": value
-            }
+            return {"status": "set", "parameter": parameter, "value": value}
         except Exception as e:
-            return {
-                "error": str(e),
-                "traceback": traceback.format_exc()
-            }
+            return {"error": str(e), "traceback": traceback.format_exc()}

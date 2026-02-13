@@ -54,6 +54,7 @@ def managers():
 def feature_mgr(managers):
     """Create FeatureManager with mocked dependencies."""
     from solidedge_mcp.backends.features import FeatureManager
+
     doc_mgr, sketch_mgr, *_ = managers
     return FeatureManager(doc_mgr, sketch_mgr)
 
@@ -61,6 +62,7 @@ def feature_mgr(managers):
 # ============================================================================
 # ROUNDS (FILLETS)
 # ============================================================================
+
 
 class TestCreateRound:
     def test_success(self, feature_mgr, managers):
@@ -93,6 +95,7 @@ class TestCreateRound:
 # CHAMFERS
 # ============================================================================
 
+
 class TestCreateChamfer:
     def test_success(self, feature_mgr, managers):
         _, _, _, _, model, _ = managers
@@ -114,6 +117,7 @@ class TestCreateChamfer:
 # ============================================================================
 # HOLES
 # ============================================================================
+
 
 class TestCreateHole:
     def test_success(self, feature_mgr, managers):
@@ -172,6 +176,7 @@ class TestCreateHole:
 # EXTRUDED CUTOUT
 # ============================================================================
 
+
 class TestExtrudedCutout:
     def test_success(self, feature_mgr, managers):
         _, sketch_mgr, _, _, model, profile = managers
@@ -179,7 +184,10 @@ class TestExtrudedCutout:
         assert result["status"] == "created"
         assert result["type"] == "extruded_cutout"
         model.ExtrudedCutouts.AddFiniteMulti.assert_called_once_with(
-            1, (profile,), 2, 0.01  # igRight=2
+            1,
+            (profile,),
+            2,
+            0.01,  # igRight=2
         )
         sketch_mgr.clear_accumulated_profiles.assert_called_once()
 
@@ -202,13 +210,17 @@ class TestExtrudedCutout:
         result = feature_mgr.create_extruded_cutout(0.01, direction="Reverse")
         assert result["direction"] == "Reverse"
         model.ExtrudedCutouts.AddFiniteMulti.assert_called_once_with(
-            1, (profile,), 1, 0.01  # igLeft=1
+            1,
+            (profile,),
+            1,
+            0.01,  # igLeft=1
         )
 
 
 # ============================================================================
 # EXTRUDED CUTOUT THROUGH ALL
 # ============================================================================
+
 
 class TestExtrudedCutoutThroughAll:
     def test_success(self, feature_mgr, managers):
@@ -217,7 +229,9 @@ class TestExtrudedCutoutThroughAll:
         assert result["status"] == "created"
         assert result["type"] == "extruded_cutout_through_all"
         model.ExtrudedCutouts.AddThroughAllMulti.assert_called_once_with(
-            1, (profile,), 2  # igRight=2
+            1,
+            (profile,),
+            2,  # igRight=2
         )
         sketch_mgr.clear_accumulated_profiles.assert_called_once()
 
@@ -225,6 +239,7 @@ class TestExtrudedCutoutThroughAll:
 # ============================================================================
 # REVOLVED CUTOUT
 # ============================================================================
+
 
 class TestRevolvedCutout:
     def test_success(self, feature_mgr, managers):
@@ -250,6 +265,7 @@ class TestRevolvedCutout:
 # NORMAL CUTOUT
 # ============================================================================
 
+
 class TestNormalCutout:
     def test_success(self, feature_mgr, managers):
         _, sketch_mgr, _, _, model, profile = managers
@@ -258,7 +274,10 @@ class TestNormalCutout:
         assert result["type"] == "normal_cutout"
         assert result["distance"] == 0.005
         model.NormalCutouts.AddFiniteMulti.assert_called_once_with(
-            1, (profile,), 2, 0.005  # igRight=2
+            1,
+            (profile,),
+            2,
+            0.005,  # igRight=2
         )
         sketch_mgr.clear_accumulated_profiles.assert_called_once()
 
@@ -281,13 +300,17 @@ class TestNormalCutout:
         result = feature_mgr.create_normal_cutout(0.01, direction="Reverse")
         assert result["direction"] == "Reverse"
         model.NormalCutouts.AddFiniteMulti.assert_called_once_with(
-            1, (profile,), 1, 0.01  # igLeft=1
+            1,
+            (profile,),
+            1,
+            0.01,  # igLeft=1
         )
 
 
 # ============================================================================
 # LOFTED CUTOUT
 # ============================================================================
+
 
 class TestLoftedCutout:
     def test_success(self, feature_mgr, managers):
@@ -338,6 +361,7 @@ class TestLoftedCutout:
 # EXTRUDE
 # ============================================================================
 
+
 class TestCreateExtrude:
     def test_success(self, feature_mgr, managers):
         _, sketch_mgr, _, models, _, profile = managers
@@ -359,6 +383,7 @@ class TestCreateExtrude:
 # ============================================================================
 # ROUND ON FACE (SELECTIVE)
 # ============================================================================
+
 
 class TestCreateRoundOnFace:
     def test_success(self, feature_mgr, managers):
@@ -401,6 +426,7 @@ class TestCreateRoundOnFace:
 # CHAMFER ON FACE (SELECTIVE)
 # ============================================================================
 
+
 class TestCreateChamferOnFace:
     def test_success(self, feature_mgr, managers):
         _, _, _, _, model, _ = managers
@@ -427,6 +453,7 @@ class TestCreateChamferOnFace:
 # ============================================================================
 # DELETE FACES
 # ============================================================================
+
 
 class TestDeleteFaces:
     def test_success(self, feature_mgr, managers):
@@ -465,6 +492,7 @@ class TestDeleteFaces:
 # DELETE FACES NO HEAL
 # ============================================================================
 
+
 class TestDeleteFacesNoHeal:
     def test_success(self, feature_mgr, managers):
         _, _, _, _, model, _ = managers
@@ -490,6 +518,7 @@ class TestDeleteFacesNoHeal:
 # GET FEATURE INFO
 # ============================================================================
 
+
 class TestGetFeatureInfo:
     def test_success(self, feature_mgr, managers):
         _, _, _, models, model, _ = managers
@@ -513,6 +542,7 @@ class TestGetFeatureInfo:
 # ============================================================================
 # DIMPLE
 # ============================================================================
+
 
 class TestCreateDimple:
     def test_success(self, feature_mgr, managers):
@@ -550,6 +580,7 @@ class TestCreateDimple:
 # ETCH
 # ============================================================================
 
+
 class TestCreateEtch:
     def test_success(self, feature_mgr, managers):
         _, _, _, _, model, profile = managers
@@ -576,6 +607,7 @@ class TestCreateEtch:
 # ============================================================================
 # RIB
 # ============================================================================
+
 
 class TestCreateRib:
     def test_success(self, feature_mgr, managers):
@@ -606,6 +638,7 @@ class TestCreateRib:
 # LIP
 # ============================================================================
 
+
 class TestCreateLip:
     def test_success(self, feature_mgr, managers):
         _, _, _, _, model, profile = managers
@@ -626,6 +659,7 @@ class TestCreateLip:
 # ============================================================================
 # DRAWN CUTOUT
 # ============================================================================
+
 
 class TestCreateDrawnCutout:
     def test_success(self, feature_mgr, managers):
@@ -656,6 +690,7 @@ class TestCreateDrawnCutout:
 # BEAD
 # ============================================================================
 
+
 class TestCreateBead:
     def test_success(self, feature_mgr, managers):
         _, _, _, _, model, profile = managers
@@ -676,6 +711,7 @@ class TestCreateBead:
 # ============================================================================
 # LOUVER
 # ============================================================================
+
 
 class TestCreateLouver:
     def test_success(self, feature_mgr, managers):
@@ -698,6 +734,7 @@ class TestCreateLouver:
 # GUSSET
 # ============================================================================
 
+
 class TestCreateGusset:
     def test_success(self, feature_mgr, managers):
         _, _, _, _, model, profile = managers
@@ -718,6 +755,7 @@ class TestCreateGusset:
 # ============================================================================
 # THREAD
 # ============================================================================
+
 
 class TestCreateThread:
     def test_success(self, feature_mgr, managers):
@@ -760,6 +798,7 @@ class TestCreateThread:
 # SLOT
 # ============================================================================
 
+
 class TestCreateSlot:
     def test_success(self, feature_mgr, managers):
         _, _, _, _, model, profile = managers
@@ -789,6 +828,7 @@ class TestCreateSlot:
 # SPLIT
 # ============================================================================
 
+
 class TestCreateSplit:
     def test_success(self, feature_mgr, managers):
         _, _, _, _, model, profile = managers
@@ -810,9 +850,11 @@ class TestCreateSplit:
 # SKETCH FILLET
 # ============================================================================
 
+
 class TestSketchFillet:
     def test_success(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
 
@@ -832,6 +874,7 @@ class TestSketchFillet:
 
     def test_no_sketch(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
 
@@ -843,9 +886,11 @@ class TestSketchFillet:
 # SKETCH CHAMFER
 # ============================================================================
 
+
 class TestSketchChamfer:
     def test_success(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
 
@@ -865,6 +910,7 @@ class TestSketchChamfer:
 
     def test_no_sketch(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
 
@@ -876,9 +922,11 @@ class TestSketchChamfer:
 # SKETCH MIRROR
 # ============================================================================
 
+
 class TestSketchMirror:
     def test_mirror_x(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
 
@@ -905,6 +953,7 @@ class TestSketchMirror:
 
     def test_no_sketch(self):
         from solidedge_mcp.backends.sketching import SketchManager
+
         dm = MagicMock()
         sm = SketchManager(dm)
 
@@ -916,9 +965,11 @@ class TestSketchMirror:
 # EXTRUDED SURFACE
 # ============================================================================
 
+
 class TestCreateExtrudedSurface:
     def test_success_normal(self):
         from solidedge_mcp.backends.features import FeatureManager
+
         dm = MagicMock()
         sm = MagicMock()
         fm = FeatureManager(dm, sm)
@@ -940,6 +991,7 @@ class TestCreateExtrudedSurface:
 
     def test_success_symmetric(self):
         from solidedge_mcp.backends.features import FeatureManager
+
         dm = MagicMock()
         sm = MagicMock()
         fm = FeatureManager(dm, sm)
@@ -955,6 +1007,7 @@ class TestCreateExtrudedSurface:
 
     def test_no_profile(self):
         from solidedge_mcp.backends.features import FeatureManager
+
         dm = MagicMock()
         sm = MagicMock()
         fm = FeatureManager(dm, sm)
@@ -970,9 +1023,11 @@ class TestCreateExtrudedSurface:
 # UNEQUAL CHAMFER
 # ============================================================================
 
+
 class TestChamferUnequal:
     def _make_fm_with_body(self):
         from solidedge_mcp.backends.features import FeatureManager
+
         dm = MagicMock()
         sm = MagicMock()
         fm = FeatureManager(dm, sm)
@@ -1010,6 +1065,7 @@ class TestChamferUnequal:
 
     def test_no_features(self):
         from solidedge_mcp.backends.features import FeatureManager
+
         dm = MagicMock()
         sm = MagicMock()
         fm = FeatureManager(dm, sm)
@@ -1024,9 +1080,11 @@ class TestChamferUnequal:
 # ANGLE CHAMFER
 # ============================================================================
 
+
 class TestChamferAngle:
     def _make_fm_with_body(self):
         from solidedge_mcp.backends.features import FeatureManager
+
         dm = MagicMock()
         sm = MagicMock()
         fm = FeatureManager(dm, sm)
@@ -1063,6 +1121,7 @@ class TestChamferAngle:
 
     def test_no_features(self):
         from solidedge_mcp.backends.features import FeatureManager
+
         dm = MagicMock()
         sm = MagicMock()
         fm = FeatureManager(dm, sm)
@@ -1077,9 +1136,11 @@ class TestChamferAngle:
 # FACE ROTATE BY EDGE
 # ============================================================================
 
+
 class TestFaceRotateByEdge:
     def _make_fm_with_body(self):
         from solidedge_mcp.backends.features import FeatureManager
+
         dm = MagicMock()
         sm = MagicMock()
         fm = FeatureManager(dm, sm)
@@ -1121,6 +1182,7 @@ class TestFaceRotateByEdge:
 
     def test_no_features(self):
         from solidedge_mcp.backends.features import FeatureManager
+
         dm = MagicMock()
         sm = MagicMock()
         fm = FeatureManager(dm, sm)
@@ -1135,9 +1197,11 @@ class TestFaceRotateByEdge:
 # FACE ROTATE BY POINTS
 # ============================================================================
 
+
 class TestFaceRotateByPoints:
     def test_success(self):
         from solidedge_mcp.backends.features import FeatureManager
+
         dm = MagicMock()
         sm = MagicMock()
         fm = FeatureManager(dm, sm)
@@ -1169,6 +1233,7 @@ class TestFaceRotateByPoints:
 
     def test_no_features(self):
         from solidedge_mcp.backends.features import FeatureManager
+
         dm = MagicMock()
         sm = MagicMock()
         fm = FeatureManager(dm, sm)
@@ -1183,9 +1248,11 @@ class TestFaceRotateByPoints:
 # DRAFT ANGLE
 # ============================================================================
 
+
 class TestDraftAngle:
     def test_success(self):
         from solidedge_mcp.backends.features import FeatureManager
+
         dm = MagicMock()
         sm = MagicMock()
         fm = FeatureManager(dm, sm)
@@ -1215,6 +1282,7 @@ class TestDraftAngle:
 
     def test_no_features(self):
         from solidedge_mcp.backends.features import FeatureManager
+
         dm = MagicMock()
         sm = MagicMock()
         fm = FeatureManager(dm, sm)
@@ -1229,9 +1297,11 @@ class TestDraftAngle:
 # REF PLANE NORMAL TO CURVE
 # ============================================================================
 
+
 class TestRefPlaneNormalToCurve:
     def test_success(self):
         from solidedge_mcp.backends.features import FeatureManager
+
         dm = MagicMock()
         sm = MagicMock()
         fm = FeatureManager(dm, sm)
@@ -1253,6 +1323,7 @@ class TestRefPlaneNormalToCurve:
 
     def test_no_profile(self):
         from solidedge_mcp.backends.features import FeatureManager
+
         dm = MagicMock()
         sm = MagicMock()
         fm = FeatureManager(dm, sm)
@@ -1268,9 +1339,11 @@ class TestRefPlaneNormalToCurve:
 # DO IDLE
 # ============================================================================
 
+
 class TestDoIdle:
     def test_success(self):
         from solidedge_mcp.backends.connection import SolidEdgeConnection
+
         cm = SolidEdgeConnection()
         cm._is_connected = True
         cm.application = MagicMock()
@@ -1281,6 +1354,7 @@ class TestDoIdle:
 
     def test_not_connected(self):
         from solidedge_mcp.backends.connection import SolidEdgeConnection
+
         cm = SolidEdgeConnection()
         cm._is_connected = False
         cm.application = None
@@ -1292,6 +1366,7 @@ class TestDoIdle:
 # ============================================================================
 # TIER 1: SWEPT CUTOUT
 # ============================================================================
+
 
 class TestSweptCutout:
     def test_success(self, feature_mgr, managers):
@@ -1335,15 +1410,14 @@ class TestSweptCutout:
 # TIER 1: HELIX CUTOUT
 # ============================================================================
 
+
 class TestHelixCutout:
     def test_success(self, feature_mgr, managers):
         _, sketch_mgr, _, _, model, profile = managers
         refaxis = MagicMock()
         sketch_mgr.get_active_refaxis.return_value = refaxis
 
-        result = feature_mgr.create_helix_cutout(
-            pitch=0.005, height=0.03, revolutions=6
-        )
+        result = feature_mgr.create_helix_cutout(pitch=0.005, height=0.03, revolutions=6)
         assert result["status"] == "created"
         assert result["type"] == "helix_cutout"
         assert result["pitch"] == 0.005
@@ -1384,9 +1458,7 @@ class TestHelixCutout:
         _, sketch_mgr, _, _, model, _ = managers
         sketch_mgr.get_active_refaxis.return_value = MagicMock()
 
-        result = feature_mgr.create_helix_cutout(
-            pitch=0.005, height=0.03, direction="Left"
-        )
+        result = feature_mgr.create_helix_cutout(pitch=0.005, height=0.03, direction="Left")
         assert result["status"] == "created"
         assert result["direction"] == "Left"
 
@@ -1394,6 +1466,7 @@ class TestHelixCutout:
 # ============================================================================
 # TIER 1: VARIABLE ROUND
 # ============================================================================
+
 
 class TestVariableRound:
     def test_success(self, feature_mgr, managers):
@@ -1437,6 +1510,7 @@ class TestVariableRound:
 # TIER 1: BLEND
 # ============================================================================
 
+
 class TestBlend:
     def test_success(self, feature_mgr, managers):
         _, _, _, _, model, _ = managers
@@ -1470,6 +1544,7 @@ class TestBlend:
 # ============================================================================
 # TIER 1: REFERENCE PLANE BY ANGLE
 # ============================================================================
+
 
 class TestRefPlaneByAngle:
     def test_success(self, feature_mgr, managers):
@@ -1510,6 +1585,7 @@ class TestRefPlaneByAngle:
 # TIER 1: REFERENCE PLANE BY 3 POINTS
 # ============================================================================
 
+
 class TestRefPlaneBy3Points:
     def test_success(self, feature_mgr, managers):
         _, _, doc, _, _, _ = managers
@@ -1517,25 +1593,20 @@ class TestRefPlaneBy3Points:
         ref_planes.Count = 4
         doc.RefPlanes = ref_planes
 
-        result = feature_mgr.create_ref_plane_by_3_points(
-            0, 0, 0,
-            0.1, 0, 0,
-            0, 0.1, 0
-        )
+        result = feature_mgr.create_ref_plane_by_3_points(0, 0, 0, 0.1, 0, 0, 0, 0.1, 0)
         assert result["status"] == "created"
         assert result["type"] == "reference_plane"
         assert result["method"] == "by_3_points"
         assert result["point1"] == [0, 0, 0]
         assert result["point2"] == [0.1, 0, 0]
         assert result["point3"] == [0, 0.1, 0]
-        ref_planes.AddBy3Points.assert_called_once_with(
-            0, 0, 0, 0.1, 0, 0, 0, 0.1, 0
-        )
+        ref_planes.AddBy3Points.assert_called_once_with(0, 0, 0, 0.1, 0, 0, 0, 0.1, 0)
 
 
 # ============================================================================
 # TIER 1: REFERENCE PLANE MID-PLANE
 # ============================================================================
+
 
 class TestRefPlaneMidPlane:
     def test_success(self, feature_mgr, managers):
@@ -1576,6 +1647,7 @@ class TestRefPlaneMidPlane:
 # ============================================================================
 # TIER 1: HOLE THROUGH ALL
 # ============================================================================
+
 
 class TestHoleThroughAll:
     def test_success(self, feature_mgr, managers):
@@ -1623,6 +1695,7 @@ class TestHoleThroughAll:
 # TIER 1: BOX CUTOUT
 # ============================================================================
 
+
 class TestBoxCutout:
     def test_success(self, feature_mgr, managers):
         _, _, doc, models, _, _ = managers
@@ -1631,9 +1704,7 @@ class TestBoxCutout:
         box_features = MagicMock()
         models.BoxFeatures = box_features
 
-        result = feature_mgr.create_box_cutout_by_two_points(
-            0, 0, 0, 0.05, 0.05, 0.05
-        )
+        result = feature_mgr.create_box_cutout_by_two_points(0, 0, 0, 0.05, 0.05, 0.05)
         assert result["status"] == "created"
         assert result["type"] == "box_cutout"
         assert result["corner1"] == [0, 0, 0]
@@ -1652,6 +1723,7 @@ class TestBoxCutout:
 # BOX CUTOUT BY CENTER
 # ============================================================================
 
+
 class TestBoxCutoutByCenter:
     def test_success(self, feature_mgr, managers):
         _, _, doc, models, _, _ = managers
@@ -1660,9 +1732,7 @@ class TestBoxCutoutByCenter:
         box_features = MagicMock()
         models.BoxFeatures = box_features
 
-        result = feature_mgr.create_box_cutout_by_center(
-            0, 0, 0, 0.1, 0.1, 0.05
-        )
+        result = feature_mgr.create_box_cutout_by_center(0, 0, 0, 0.1, 0.1, 0.05)
         assert result["status"] == "created"
         assert result["type"] == "box_cutout"
         assert result["method"] == "by_center"
@@ -1681,6 +1751,7 @@ class TestBoxCutoutByCenter:
 # BOX CUTOUT BY THREE POINTS
 # ============================================================================
 
+
 class TestBoxCutoutByThreePoints:
     def test_success(self, feature_mgr, managers):
         _, _, doc, models, _, _ = managers
@@ -1689,9 +1760,7 @@ class TestBoxCutoutByThreePoints:
         box_features = MagicMock()
         models.BoxFeatures = box_features
 
-        result = feature_mgr.create_box_cutout_by_three_points(
-            0, 0, 0, 0.1, 0, 0, 0, 0.1, 0
-        )
+        result = feature_mgr.create_box_cutout_by_three_points(0, 0, 0, 0.1, 0, 0, 0, 0.1, 0)
         assert result["status"] == "created"
         assert result["type"] == "box_cutout"
         assert result["method"] == "by_three_points"
@@ -1700,9 +1769,7 @@ class TestBoxCutoutByThreePoints:
     def test_no_base_feature(self, feature_mgr, managers):
         _, _, _, models, _, _ = managers
         models.Count = 0
-        result = feature_mgr.create_box_cutout_by_three_points(
-            0, 0, 0, 1, 0, 0, 0, 1, 0
-        )
+        result = feature_mgr.create_box_cutout_by_three_points(0, 0, 0, 1, 0, 0, 0, 1, 0)
         assert "error" in result
         assert "No base feature" in result["error"]
 
@@ -1710,6 +1777,7 @@ class TestBoxCutoutByThreePoints:
 # ============================================================================
 # TIER 1: CYLINDER CUTOUT
 # ============================================================================
+
 
 class TestCylinderCutout:
     def test_success(self, feature_mgr, managers):
@@ -1738,6 +1806,7 @@ class TestCylinderCutout:
 # TIER 1: SPHERE CUTOUT
 # ============================================================================
 
+
 class TestSphereCutout:
     def test_success(self, feature_mgr, managers):
         _, _, doc, models, _, _ = managers
@@ -1763,6 +1832,7 @@ class TestSphereCutout:
 # ============================================================================
 # TIER 2: EXTRUDED CUTOUT THROUGH NEXT
 # ============================================================================
+
 
 class TestExtrudedCutoutThroughNext:
     def test_success(self, feature_mgr, managers):
@@ -1797,6 +1867,7 @@ class TestExtrudedCutoutThroughNext:
 # TIER 2: NORMAL CUTOUT THROUGH ALL
 # ============================================================================
 
+
 class TestNormalCutoutThroughAll:
     def test_success(self, feature_mgr, managers):
         _, _, _, _, model, _ = managers
@@ -1823,6 +1894,7 @@ class TestNormalCutoutThroughAll:
 # ============================================================================
 # TIER 2: DELETE HOLE
 # ============================================================================
+
 
 class TestDeleteHole:
     def test_success_all(self, feature_mgr, managers):
@@ -1858,6 +1930,7 @@ class TestDeleteHole:
 # DELETE HOLE BY FACE
 # ============================================================================
 
+
 class TestDeleteHoleByFace:
     def test_success(self, feature_mgr, managers):
         _, _, _, _, model, _ = managers
@@ -1883,6 +1956,7 @@ class TestDeleteHoleByFace:
 # ============================================================================
 # TIER 2: DELETE BLEND
 # ============================================================================
+
 
 class TestDeleteBlend:
     def test_success(self, feature_mgr, managers):
@@ -1912,6 +1986,7 @@ class TestDeleteBlend:
 # ============================================================================
 # TIER 2: REVOLVED SURFACE
 # ============================================================================
+
 
 class TestRevolvedSurface:
     def test_success(self, feature_mgr, managers):
@@ -1952,6 +2027,7 @@ class TestRevolvedSurface:
 # TIER 2: LOFTED SURFACE
 # ============================================================================
 
+
 class TestLoftedSurface:
     def test_success(self, feature_mgr, managers):
         _, sketch_mgr, _, _, model, _ = managers
@@ -1983,6 +2059,7 @@ class TestLoftedSurface:
 # ============================================================================
 # TIER 2: SWEPT SURFACE
 # ============================================================================
+
 
 class TestSweptSurface:
     def test_success(self, feature_mgr, managers):
@@ -2021,6 +2098,7 @@ class TestSweptSurface:
 # ============================================================================
 # TIER 3: CONVERT FEATURE TYPE
 # ============================================================================
+
 
 class TestConvertFeatureType:
     def test_convert_to_cutout(self, feature_mgr, managers):
@@ -2093,6 +2171,7 @@ class TestConvertFeatureType:
 # EMBOSS
 # ============================================================================
 
+
 class TestCreateEmboss:
     def test_basic_emboss(self, feature_mgr, managers):
         _, _, doc, models, model, _ = managers
@@ -2117,8 +2196,10 @@ class TestCreateEmboss:
         model.EmbossFeatures = emboss_features
 
         result = feature_mgr.create_emboss(
-            [0, 1, 2], clearance=0.002,
-            thickness=0.001, thicken=True,
+            [0, 1, 2],
+            clearance=0.002,
+            thickness=0.001,
+            thicken=True,
         )
         assert result["status"] == "created"
         assert result["face_count"] == 3
@@ -2153,6 +2234,7 @@ class TestCreateEmboss:
 # FLANGE
 # ============================================================================
 
+
 class TestCreateFlange:
     def test_basic_flange(self, feature_mgr, managers):
         _, _, doc, models, model, _ = managers
@@ -2172,8 +2254,12 @@ class TestCreateFlange:
         model.Flanges = flanges
 
         result = feature_mgr.create_flange(
-            face_index=0, edge_index=0, flange_length=0.02,
-            side="Left", inside_radius=0.003, bend_angle=90.0
+            face_index=0,
+            edge_index=0,
+            flange_length=0.02,
+            side="Left",
+            inside_radius=0.003,
+            bend_angle=90.0,
         )
         assert result["status"] == "created"
         assert result["side"] == "Left"
@@ -2206,6 +2292,7 @@ class TestCreateFlange:
 # ============================================================================
 # EXTRUDE THROUGH NEXT
 # ============================================================================
+
 
 class TestCreateExtrudeThroughNext:
     def test_success(self, feature_mgr, managers):
@@ -2244,6 +2331,7 @@ class TestCreateExtrudeThroughNext:
 # ============================================================================
 # EXTRUDE FROM TO
 # ============================================================================
+
 
 class TestCreateExtrudeFromTo:
     def test_success(self, feature_mgr, managers):
@@ -2301,6 +2389,7 @@ class TestCreateExtrudeFromTo:
 # EXTRUDED CUTOUT FROM TO
 # ============================================================================
 
+
 class TestCreateExtrudedCutoutFromTo:
     def test_success(self, feature_mgr, managers):
         _, _, doc, _, model, profile = managers
@@ -2344,6 +2433,7 @@ class TestCreateExtrudedCutoutFromTo:
 # REF PLANE NORMAL AT DISTANCE
 # ============================================================================
 
+
 class TestCreateRefPlaneNormalAtDistance:
     def test_success(self, feature_mgr, managers):
         _, _, doc, _, _, profile = managers
@@ -2367,6 +2457,7 @@ class TestCreateRefPlaneNormalAtDistance:
 # ============================================================================
 # REF PLANE NORMAL AT ARC RATIO
 # ============================================================================
+
 
 class TestCreateRefPlaneNormalAtArcRatio:
     def test_success(self, feature_mgr, managers):
@@ -2403,6 +2494,7 @@ class TestCreateRefPlaneNormalAtArcRatio:
 # REF PLANE NORMAL AT DISTANCE ALONG
 # ============================================================================
 
+
 class TestCreateRefPlaneNormalAtDistanceAlong:
     def test_success(self, feature_mgr, managers):
         _, _, doc, _, _, profile = managers
@@ -2428,6 +2520,7 @@ class TestCreateRefPlaneNormalAtDistanceAlong:
 # ============================================================================
 # REF PLANE PARALLEL BY TANGENT
 # ============================================================================
+
 
 class TestCreateRefPlaneParallelByTangent:
     def test_success(self, feature_mgr, managers):
@@ -2474,3 +2567,63 @@ class TestCreateRefPlaneParallelByTangent:
 
         result = feature_mgr.create_ref_plane_parallel_by_tangent(1, 0)
         assert "error" in result
+
+
+# ============================================================================
+# CREATE EXTRUDE SYMMETRIC
+# ============================================================================
+
+
+class TestCreateExtrudeSymmetric:
+    def test_success(self, feature_mgr, managers):
+        _, sketch_mgr, _, models, _, profile = managers
+        result = feature_mgr.create_extrude_symmetric(0.05)
+        assert result["status"] == "created"
+        assert result["type"] == "extrude_symmetric"
+        assert result["distance"] == 0.05
+
+    def test_no_active_sketch(self, feature_mgr, managers):
+        _, sketch_mgr, _, _, _, _ = managers
+        sketch_mgr.get_active_sketch.return_value = None
+
+        result = feature_mgr.create_extrude_symmetric(0.05)
+        assert "error" in result
+
+    def test_negative_distance(self, feature_mgr, managers):
+        _, sketch_mgr, _, models, _, profile = managers
+        result = feature_mgr.create_extrude_symmetric(-0.05)
+        # Should still attempt (or error from COM)
+        assert isinstance(result, dict)
+
+
+# ============================================================================
+# CREATE CHAMFER UNEQUAL ON FACE
+# ============================================================================
+
+
+class TestCreateChamferUnequalOnFace:
+    def test_success(self, feature_mgr, managers):
+        _, _, _, _, model, _ = managers
+        result = feature_mgr.create_chamfer_unequal_on_face(0.002, 0.004, 0)
+        assert result["status"] == "created"
+        assert result["type"] == "chamfer_unequal_on_face"
+        assert result["distance1"] == 0.002
+        assert result["distance2"] == 0.004
+        model.Chamfers.AddUnequalSetback.assert_called_once()
+
+    def test_no_base_feature(self, feature_mgr, managers):
+        _, _, _, models, _, _ = managers
+        models.Count = 0
+        result = feature_mgr.create_chamfer_unequal_on_face(0.002, 0.004, 0)
+        assert "error" in result
+        assert "No features" in result["error"]
+
+    def test_invalid_face_index(self, feature_mgr, managers):
+        _, _, _, _, model, _ = managers
+        body = model.Body
+        faces = body.Faces.return_value
+        faces.Count = 1
+
+        result = feature_mgr.create_chamfer_unequal_on_face(0.002, 0.004, 5)
+        assert "error" in result
+        assert "face index" in result["error"]

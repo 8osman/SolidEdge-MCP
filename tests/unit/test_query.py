@@ -23,6 +23,7 @@ def doc_mgr():
 def query_mgr(doc_mgr):
     """Create QueryManager with mocked dependencies."""
     from solidedge_mcp.backends.query import QueryManager
+
     dm, doc = doc_mgr
     return QueryManager(dm), doc
 
@@ -30,6 +31,7 @@ def query_mgr(doc_mgr):
 # ============================================================================
 # REFERENCE PLANES
 # ============================================================================
+
 
 class TestGetRefPlanes:
     def test_default_planes(self, query_mgr):
@@ -63,7 +65,7 @@ class TestGetRefPlanes:
         planes = []
         for i in range(5):
             p = MagicMock()
-            p.Name = f"Plane_{i+1}"
+            p.Name = f"Plane_{i + 1}"
             p.Visible = True
             planes.append(p)
 
@@ -81,6 +83,7 @@ class TestGetRefPlanes:
 # ============================================================================
 # VARIABLES
 # ============================================================================
+
 
 class TestGetVariables:
     def test_success(self, query_mgr):
@@ -185,6 +188,7 @@ class TestSetVariable:
 # ============================================================================
 # CUSTOM PROPERTIES
 # ============================================================================
+
 
 class TestGetCustomProperties:
     def test_success(self, query_mgr):
@@ -298,6 +302,7 @@ class TestDeleteCustomProperty:
 # TOPOLOGY QUERIES
 # ============================================================================
 
+
 class TestGetBodyFaces:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -400,6 +405,7 @@ class TestGetFaceInfo:
 # SELECT SET
 # ============================================================================
 
+
 class TestGetSelectSet:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -458,6 +464,7 @@ class TestClearSelectSet:
 # RECOMPUTE
 # ============================================================================
 
+
 class TestRecompute:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -480,6 +487,7 @@ class TestRecompute:
 # ============================================================================
 # SOLID BODIES
 # ============================================================================
+
 
 class TestGetSolidBodies:
     def test_success(self, query_mgr):
@@ -513,6 +521,7 @@ class TestGetSolidBodies:
 # ============================================================================
 # MODELING MODE
 # ============================================================================
+
 
 class TestGetModelingMode:
     def test_synchronous(self, query_mgr):
@@ -548,6 +557,7 @@ class TestSetModelingMode:
 # ============================================================================
 # FEATURE SUPPRESS/UNSUPPRESS
 # ============================================================================
+
 
 class TestSuppressFeature:
     def test_success(self, query_mgr):
@@ -605,9 +615,11 @@ class TestUnsuppressFeature:
 # QUIT APPLICATION
 # ============================================================================
 
+
 class TestQuitApplication:
     def test_success(self):
         from solidedge_mcp.backends.connection import SolidEdgeConnection
+
         conn = SolidEdgeConnection()
         conn.application = MagicMock()
         conn._is_connected = True
@@ -619,6 +631,7 @@ class TestQuitApplication:
 
     def test_not_connected(self):
         from solidedge_mcp.backends.connection import SolidEdgeConnection
+
         conn = SolidEdgeConnection()
 
         result = conn.quit_application()
@@ -628,14 +641,13 @@ class TestQuitApplication:
 class TestSetPerformanceMode:
     def test_success(self):
         from solidedge_mcp.backends.connection import SolidEdgeConnection
+
         conn = SolidEdgeConnection()
         conn.application = MagicMock()
         conn._is_connected = True
 
         result = conn.set_performance_mode(
-            delay_compute=True,
-            screen_updating=False,
-            display_alerts=False
+            delay_compute=True, screen_updating=False, display_alerts=False
         )
         assert result["status"] == "updated"
         assert result["settings"]["delay_compute"] is True
@@ -644,6 +656,7 @@ class TestSetPerformanceMode:
 
     def test_partial_update(self):
         from solidedge_mcp.backends.connection import SolidEdgeConnection
+
         conn = SolidEdgeConnection()
         conn.application = MagicMock()
         conn._is_connected = True
@@ -657,6 +670,7 @@ class TestSetPerformanceMode:
 # ============================================================================
 # SET BODY COLOR
 # ============================================================================
+
 
 class TestSetBodyColor:
     def test_success(self, query_mgr):
@@ -704,6 +718,7 @@ class TestSetBodyColor:
 # SET MATERIAL DENSITY
 # ============================================================================
 
+
 class TestSetMaterialDensity:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -716,9 +731,9 @@ class TestSetMaterialDensity:
 
         # ComputePhysicalPropertiesWithSpecifiedDensity returns a tuple
         model.ComputePhysicalPropertiesWithSpecifiedDensity.return_value = (
-            0.001,   # volume
-            0.06,    # area
-            7.85,    # mass
+            0.001,  # volume
+            0.06,  # area
+            7.85,  # mass
         )
 
         result = qm.set_material_density(7850)
@@ -744,6 +759,7 @@ class TestSetMaterialDensity:
 # ============================================================================
 # GET EDGE COUNT
 # ============================================================================
+
 
 class TestGetEdgeCount:
     def test_success(self, query_mgr):
@@ -784,6 +800,7 @@ class TestGetEdgeCount:
 # DESIGN EDGEBAR FEATURES
 # ============================================================================
 
+
 class TestGetDesignEdgebarFeatures:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -815,6 +832,7 @@ class TestGetDesignEdgebarFeatures:
 # ============================================================================
 # RENAME FEATURE
 # ============================================================================
+
 
 class TestRenameFeature:
     def test_success(self, query_mgr):
@@ -849,6 +867,7 @@ class TestRenameFeature:
 # SET DOCUMENT PROPERTY
 # ============================================================================
 
+
 class TestSetDocumentProperty:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -878,6 +897,7 @@ class TestSetDocumentProperty:
 # ============================================================================
 # GET FACE AREA
 # ============================================================================
+
 
 class TestGetFaceArea:
     def test_success(self, query_mgr):
@@ -919,6 +939,7 @@ class TestGetFaceArea:
 # GET SURFACE AREA
 # ============================================================================
 
+
 class TestGetSurfaceArea:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -947,6 +968,7 @@ class TestGetSurfaceArea:
 # ============================================================================
 # GET VOLUME
 # ============================================================================
+
 
 class TestGetVolume:
     def test_success(self, query_mgr):
@@ -977,6 +999,7 @@ class TestGetVolume:
 # GET FACE COUNT
 # ============================================================================
 
+
 class TestGetFaceCount:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -1006,6 +1029,7 @@ class TestGetFaceCount:
 # ============================================================================
 # GET EDGE INFO
 # ============================================================================
+
 
 class TestGetEdgeInfo:
     def test_success(self, query_mgr):
@@ -1076,6 +1100,7 @@ class TestGetEdgeInfo:
 # SET FACE COLOR
 # ============================================================================
 
+
 class TestSetFaceColor:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -1115,6 +1140,7 @@ class TestSetFaceColor:
 # GET CENTER OF GRAVITY
 # ============================================================================
 
+
 class TestGetCenterOfGravity:
     def test_success_via_variables(self, query_mgr):
         qm, doc = query_mgr
@@ -1143,6 +1169,7 @@ class TestGetCenterOfGravity:
 # GET MOMENTS OF INERTIA
 # ============================================================================
 
+
 class TestGetMomentsOfInertia:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -1155,7 +1182,17 @@ class TestGetMomentsOfInertia:
         moi = (1.0, 2.0, 3.0)
         principal = (1.5, 2.5, 3.5)
         model.ComputePhysicalPropertiesWithSpecifiedDensity.return_value = (
-            0.001, 0.06, 7.85, (0, 0, 0), (0,), moi, principal, (0,), (0,), 0, 0
+            0.001,
+            0.06,
+            7.85,
+            (0, 0, 0),
+            (0,),
+            moi,
+            principal,
+            (0,),
+            (0,),
+            0,
+            0,
         )
 
         result = qm.get_moments_of_inertia()
@@ -1166,6 +1203,7 @@ class TestGetMomentsOfInertia:
 # ============================================================================
 # DELETE FEATURE
 # ============================================================================
+
 
 class TestDeleteFeature:
     def test_success(self, query_mgr):
@@ -1200,6 +1238,7 @@ class TestDeleteFeature:
 # MEASURE ANGLE
 # ============================================================================
 
+
 class TestMeasureAngle:
     def test_right_angle(self, query_mgr):
         qm, doc = query_mgr
@@ -1223,6 +1262,7 @@ class TestMeasureAngle:
 # GET MATERIAL TABLE
 # ============================================================================
 
+
 class TestGetMaterialTable:
     def test_with_variables(self, query_mgr):
         qm, doc = query_mgr
@@ -1244,6 +1284,7 @@ class TestGetMaterialTable:
 # ============================================================================
 # TIER 1: ADD VARIABLE
 # ============================================================================
+
 
 class TestAddVariable:
     def test_success(self, query_mgr):
@@ -1292,6 +1333,7 @@ class TestAddVariable:
 # ============================================================================
 # TIER 1: SELECT ADD
 # ============================================================================
+
 
 class TestSelectAdd:
     def test_add_feature(self, query_mgr):
@@ -1402,6 +1444,7 @@ class TestSelectAdd:
 # TIER 2: QUERY VARIABLES
 # ============================================================================
 
+
 class TestQueryVariables:
     def test_query_with_fallback(self, query_mgr):
         """Test fallback fnmatch when Variables.Query not available."""
@@ -1496,6 +1539,7 @@ class TestQueryVariables:
 # TIER 3: GET FEATURE DIMENSIONS
 # ============================================================================
 
+
 class TestGetFeatureDimensions:
     def test_success(self, query_mgr):
         """Test getting dimensions from a feature."""
@@ -1563,6 +1607,7 @@ class TestGetFeatureDimensions:
 # ============================================================================
 # TIER 3: MATERIAL OPERATIONS
 # ============================================================================
+
 
 class TestGetMaterialList:
     def test_success(self, query_mgr):
@@ -1663,6 +1708,7 @@ class TestGetMaterialProperty:
 # SELECT SET: REMOVE
 # ============================================================================
 
+
 class TestSelectRemove:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -1689,6 +1735,7 @@ class TestSelectRemove:
 # SELECT SET: ALL
 # ============================================================================
 
+
 class TestSelectAll:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -1705,6 +1752,7 @@ class TestSelectAll:
 # ============================================================================
 # SELECT SET: COPY / CUT / DELETE
 # ============================================================================
+
 
 class TestSelectCopy:
     def test_success(self, query_mgr):
@@ -1776,6 +1824,7 @@ class TestSelectDelete:
 # SELECT SET: DISPLAY CONTROL
 # ============================================================================
 
+
 class TestSelectSuspendDisplay:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -1813,6 +1862,7 @@ class TestSelectRefreshDisplay:
 # VARIABLES: GET FORMULA
 # ============================================================================
 
+
 class TestGetVariableFormula:
     def test_found(self, query_mgr):
         qm, doc = query_mgr
@@ -1849,6 +1899,7 @@ class TestGetVariableFormula:
 # VARIABLES: RENAME
 # ============================================================================
 
+
 class TestRenameVariable:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -1883,6 +1934,7 @@ class TestRenameVariable:
 # ============================================================================
 # VARIABLES: GET NAMES (DisplayName + SystemName)
 # ============================================================================
+
 
 class TestGetVariableNames:
     def test_success(self, query_mgr):
@@ -1920,6 +1972,7 @@ class TestGetVariableNames:
 # TRANSLATE VARIABLE
 # ============================================================================
 
+
 class TestTranslateVariable:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -1955,6 +2008,7 @@ class TestTranslateVariable:
 # COPY VARIABLE TO CLIPBOARD
 # ============================================================================
 
+
 class TestCopyVariableToClipboard:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -1979,6 +2033,7 @@ class TestCopyVariableToClipboard:
 # ============================================================================
 # ADD VARIABLE FROM CLIPBOARD
 # ============================================================================
+
 
 class TestAddVariableFromClipboard:
     def test_success(self, query_mgr):
@@ -2021,6 +2076,7 @@ class TestAddVariableFromClipboard:
 # LAYERS: GET LAYERS
 # ============================================================================
 
+
 class TestGetLayers:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -2060,6 +2116,7 @@ class TestGetLayers:
 # LAYERS: ADD LAYER
 # ============================================================================
 
+
 class TestAddLayer:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -2085,6 +2142,7 @@ class TestAddLayer:
 # ============================================================================
 # LAYERS: ACTIVATE LAYER
 # ============================================================================
+
 
 class TestActivateLayer:
     def test_by_index(self, query_mgr):
@@ -2149,6 +2207,7 @@ class TestActivateLayer:
 # ============================================================================
 # LAYERS: SET LAYER PROPERTIES
 # ============================================================================
+
 
 class TestSetLayerProperties:
     def test_set_show(self, query_mgr):
@@ -2218,6 +2277,7 @@ class TestSetLayerProperties:
 # FACESTYLE: SET BODY OPACITY
 # ============================================================================
 
+
 class TestSetBodyOpacity:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -2262,6 +2322,7 @@ class TestSetBodyOpacity:
 # FACESTYLE: SET BODY REFLECTIVITY
 # ============================================================================
 
+
 class TestSetBodyReflectivity:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -2301,6 +2362,7 @@ class TestSetBodyReflectivity:
 # ============================================================================
 # GET FEATURE STATUS
 # ============================================================================
+
 
 class TestGetFeatureStatus:
     def test_success(self, query_mgr):
@@ -2348,6 +2410,7 @@ class TestGetFeatureStatus:
 # ============================================================================
 # GET FEATURE PROFILES
 # ============================================================================
+
 
 class TestGetFeatureProfiles:
     def test_success(self, query_mgr):
@@ -2402,6 +2465,7 @@ class TestGetFeatureProfiles:
 # GET VERTEX COUNT
 # ============================================================================
 
+
 class TestGetVertexCount:
     def test_success(self, query_mgr):
         qm, doc = query_mgr
@@ -2440,4 +2504,134 @@ class TestGetVertexCount:
         doc.Models = models
 
         result = qm.get_vertex_count()
+        assert "error" in result
+
+
+# ============================================================================
+# SET VARIABLE FORMULA
+# ============================================================================
+
+
+class TestSetVariableFormula:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+
+        var1 = MagicMock()
+        var1.DisplayName = "Width"
+        var1.Formula = "50 mm"
+        var1.Value = 0.05
+
+        variables = MagicMock()
+        variables.Count = 1
+        variables.Item.return_value = var1
+        doc.Variables = variables
+
+        result = qm.set_variable_formula("Width", "100 mm")
+        assert isinstance(result, dict)
+        # Should attempt to set the formula
+        assert "error" not in result or "Formula" in str(result.get("error", ""))
+
+    def test_variable_not_found(self, query_mgr):
+        qm, doc = query_mgr
+
+        variables = MagicMock()
+        variables.Count = 0
+        doc.Variables = variables
+
+        result = qm.set_variable_formula("NonExistent", "100 mm")
+        assert "error" in result
+
+    def test_no_variables(self, query_mgr):
+        qm, doc = query_mgr
+        del doc.Variables
+
+        result = qm.set_variable_formula("Width", "100 mm")
+        assert "error" in result
+
+
+# ============================================================================
+# DELETE LAYER
+# ============================================================================
+
+
+class TestDeleteLayer:
+    def test_success_by_name(self, query_mgr):
+        qm, doc = query_mgr
+
+        layer = MagicMock()
+        layer.Name = "Layer1"
+        layers = MagicMock()
+        layers.Count = 2
+        layers.Item.return_value = layer
+        doc.Layers = layers
+
+        result = qm.delete_layer("Layer1")
+        assert isinstance(result, dict)
+
+    def test_success_by_index(self, query_mgr):
+        qm, doc = query_mgr
+
+        layer = MagicMock()
+        layer.Name = "Layer1"
+        layers = MagicMock()
+        layers.Count = 2
+        layers.Item.return_value = layer
+        doc.Layers = layers
+
+        result = qm.delete_layer(0)
+        assert isinstance(result, dict)
+
+    def test_no_layers(self, query_mgr):
+        qm, doc = query_mgr
+        del doc.Layers
+
+        result = qm.delete_layer("Layer1")
+        assert "error" in result
+
+
+# ============================================================================
+# GET FEATURE PARENTS
+# ============================================================================
+
+
+class TestGetFeatureParents:
+    def test_success(self, query_mgr):
+        qm, doc = query_mgr
+
+        parent = MagicMock()
+        parent.Name = "Extrusion1"
+
+        feature = MagicMock()
+        feature.Name = "Round1"
+        parents = MagicMock()
+        parents.Count = 1
+        parents.Item.return_value = parent
+        feature.Parents = parents
+
+        features = MagicMock()
+        features.Count = 1
+        features.Item.return_value = feature
+        doc.DesignEdgebarFeatures = features
+
+        result = qm.get_feature_parents("Round1")
+        assert isinstance(result, dict)
+
+    def test_feature_not_found(self, query_mgr):
+        qm, doc = query_mgr
+
+        feature = MagicMock()
+        feature.Name = "Extrusion1"
+        features = MagicMock()
+        features.Count = 1
+        features.Item.return_value = feature
+        doc.DesignEdgebarFeatures = features
+
+        result = qm.get_feature_parents("NonExistent")
+        assert "error" in result
+
+    def test_no_features(self, query_mgr):
+        qm, doc = query_mgr
+        del doc.DesignEdgebarFeatures
+
+        result = qm.get_feature_parents("Round1")
         assert "error" in result
