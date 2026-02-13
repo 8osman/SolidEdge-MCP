@@ -1,53 +1,39 @@
 """
 Solid Edge COM API Constants
 
-These constants are defined by the Solid Edge API.
-References: Solid Edge API documentation
+All values verified against the Solid Edge type library
+(gencache.EnsureModule) unless otherwise noted.
 """
 
 
 class RefPlaneConstants:
-    """Reference plane type constants"""
-    seRefPlaneTop = 1
-    seRefPlaneFront = 2
-    seRefPlaneRight = 3
+    """Reference plane index constants (1-based collection indices)"""
+    seRefPlaneTop = 1     # Top/XZ plane
+    seRefPlaneFront = 2   # Front/XY plane
+    seRefPlaneRight = 3   # Right/YZ plane
 
 
 class DocumentTypeConstants:
-    """Document type constants"""
-    igUnknownDocument = 0
+    """Document type constants (from type library)"""
     igPartDocument = 1
-    igSheetMetalDocument = 2
+    igDraftDocument = 2
     igAssemblyDocument = 3
-    igDraftDocument = 4
-    igWeldmentDocument = 5
-    igWeldmentAssemblyDocument = 6
+    igSheetMetalDocument = 4
+    igUnknownDocument = 5
+    igWeldmentDocument = 6
+    igWeldmentAssemblyDocument = 7
 
 
-class FeaturePropertyConstants:
-    """Feature property constants"""
-    igStatusNormal = 0
-    igStatusSuppressed = 1
-    igStatusRollback = 2
-
-
-class FeatureOperationConstants:
-    """Feature operation type constants"""
-    igFeatureAdd = 0
-    igFeatureCut = 1
-    igFeatureIntersect = 2
-    igFeatureJoin = 3
-
-
-class ExtrudedProtrusion:
-    """Extrusion/Revolve direction constants (from Solid Edge type library)"""
+class DirectionConstants:
+    """Extrusion/Revolve direction constants (from type library)"""
     igLeft = 1       # Left/Reverse direction
-    igRight = 2      # Right/Normal direction
+    igRight = 2      # Right/Normal direction (also igNormalSide)
     igSymmetric = 3  # Symmetric (both directions)
+    igBoth = 6       # Both directions
 
 
 class ProfileValidationConstants:
-    """Profile.End() validation flag constants (bitfield)"""
+    """Profile.End() validation flag constants (bitfield, from type library)"""
     igProfileClosed = 1              # Profile must be closed
     igProfileSingle = 4             # Single profile only
     igProfileNoSelfIntersect = 8    # No self-intersection
@@ -56,48 +42,25 @@ class ProfileValidationConstants:
     igProfileAllowNested = 8192     # Allow nested profiles
 
     # Common combinations
-    igProfileDefault = 0                                  # Default (extrude)
-    igProfileForRevolve = 1 | 16   # igProfileClosed | igProfileRefAxisRequired = 17
+    igProfileDefault = 0            # Default (extrude)
+    igProfileForRevolve = 17        # igProfileClosed | igProfileRefAxisRequired
 
 
 class ExtentTypeConstants:
-    """Extent type constants"""
+    """Extent type constants (from type library)"""
     igFinite = 13
+    igThroughAll = 16
     igNone = 44
 
 
 class HoleTypeConstants:
-    """Hole type constants"""
-    igRegularHole = 0
-    igCounterboreHole = 1
-    igCountersinkHole = 2
-    igVHole = 3
-
-
-class MateTypeConstants:
-    """Assembly mate type constants"""
-    igMate = 0
-    igPlanarAlign = 1
-    igAxialAlign = 2
-    igInsert = 3
-    igAngle = 4
-    igTangent = 5
-    igCam = 6
-    igGear = 7
-    igParallel = 8
-    igConnect = 9
-    igMatchCoordSys = 10
-
-
-class ViewOrientationConstants:
-    """View orientation constants"""
-    seIsoView = 1
-    seTopView = 2
-    seFrontView = 3
-    seRightView = 4
-    seLeftView = 5
-    seBackView = 6
-    seBottomView = 7
+    """Hole type constants (from type library)"""
+    igRegularHole = 33
+    igCounterboreHole = 34
+    igCountersinkHole = 35
+    igCounterdrillHole = 36
+    igTappedHole = 37
+    igTaperedHole = 38
 
 
 class FaceQueryConstants:
@@ -114,7 +77,112 @@ class FaceQueryConstants:
     igQueryCylinder = 10
 
 
+class ViewOrientationConstants:
+    """3D window view orientation constants (from type library)"""
+    igTopView = 1
+    igRightView = 2
+    igIsometricView = 2  # Same numeric value as igRightView (different enum context)
+    igLeftView = 3
+    igFrontView = 4
+    igBottomView = 5
+    igBackView = 6
+
+
+class DrawingViewOrientationConstants:
+    """Drawing view orientation constants for AddPartView (empirically verified)"""
+    Front = 5
+    Top = 6
+    Right = 7
+    Back = 8
+    Bottom = 9
+    Left = 10
+    Isometric = 12
+
+
+class RenderModeConstants:
+    """View render mode constants (from type library: seRenderMode*)"""
+    seRenderModeUndefined = 0
+    seRenderModeWireframe = 1
+    seRenderModeWiremesh = 2
+    seRenderModeOutline = 3
+    seRenderModeBoundary = 4
+    seRenderModeVHL = 6              # Hidden edges visible
+    seRenderModeSmooth = 8           # Shaded
+    seRenderModeSmoothMesh = 9
+    seRenderModeSmoothVHL = 10
+    seRenderModeSmoothBoundary = 11  # Shaded with edges
+
+
+class AssemblyRelationConstants:
+    """Assembly 3D relation type constants (from type library)
+
+    Note: These are large integers used as COM type identifiers,
+    not small sequential enum values.
+    """
+    igGroundRelation3d = 1959028688
+    igPlanarRelation3d = -2058948880
+    igAxialRelation3d = 1472929712
+    igAngularRelation3d = 1290792304
+    igTangentRelation3d = 918452310
+
+    # Relation orientation
+    igRelation3dOrientationAlign = 1
+    igRelation3dOrientationAntialign = 2
+    igRelation3dOrientationNotspecified = 0
+
+
+class ModelingModeConstants:
+    """Modeling mode constants (from type library)"""
+    seModelingModeSynchronous = 1
+    seModelingModeOrdered = 2
+
+
+class LoftSweepConstants:
+    """Loft and sweep profile type constants (from type library)"""
+    igProfileBasedCrossSection = 48
+
+
+# === Legacy aliases for backward compatibility with existing imports ===
+# These preserve the old class names used in backend code.
+
+# ExtrudedProtrusion was renamed to DirectionConstants
+ExtrudedProtrusion = DirectionConstants
+
+# FeatureOperationConstants - names not in type library, values unverified.
+# Kept as alias since features.py imports it (though the values are never
+# passed to any API call).
+class FeatureOperationConstants:
+    """Feature operation type constants (NOT in type library - unverified)"""
+    igFeatureAdd = 0
+    igFeatureCut = 1
+    igFeatureIntersect = 2
+    igFeatureJoin = 3
+
+
+# MateTypeConstants - names not in type library.
+# Assembly relations use AssemblyRelationConstants instead.
+# Kept as alias since it may be imported elsewhere.
+class MateTypeConstants:
+    """Assembly mate type constants (NOT in type library - unverified)
+
+    For verified constants, use AssemblyRelationConstants instead.
+    """
+    igMate = 0
+    igPlanarAlign = 1
+    igAxialAlign = 2
+    igInsert = 3
+    igAngle = 4
+    igTangent = 5
+    igCam = 6
+    igGear = 7
+    igParallel = 8
+    igConnect = 9
+    igMatchCoordSys = 10
+
+
+# SaveAsConstants - names not in type library, but values match
+# (SaveAs=0, SaveCopyAs=1)
 class SaveAsConstants:
-    """File save format constants"""
-    igNormalSave = 0
-    igSaveAsCopy = 1
+    """File save format constants (values verified, names approximate)"""
+    SaveAs = 0
+    SaveCopyAs = 1
