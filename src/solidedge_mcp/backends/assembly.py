@@ -1104,6 +1104,96 @@ class AssemblyManager:
                 "traceback": traceback.format_exc()
             }
 
+    def occurrence_move(self, component_index: int, dx: float, dy: float, dz: float) -> Dict[str, Any]:
+        """
+        Move a component by a relative delta.
+
+        Uses Occurrence.Move(DeltaX, DeltaY, DeltaZ) for relative translation.
+
+        Args:
+            component_index: 0-based index of the component
+            dx: X translation in meters
+            dy: Y translation in meters
+            dz: Z translation in meters
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Occurrences'):
+                return {"error": "Active document is not an assembly"}
+
+            occurrences = doc.Occurrences
+
+            if component_index < 0 or component_index >= occurrences.Count:
+                return {"error": f"Invalid component index: {component_index}. Count: {occurrences.Count}"}
+
+            occurrence = occurrences.Item(component_index + 1)
+            occurrence.Move(dx, dy, dz)
+
+            return {
+                "status": "moved",
+                "component_index": component_index,
+                "delta": [dx, dy, dz]
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def occurrence_rotate(self, component_index: int,
+                          axis_x1: float, axis_y1: float, axis_z1: float,
+                          axis_x2: float, axis_y2: float, axis_z2: float,
+                          angle: float) -> Dict[str, Any]:
+        """
+        Rotate a component around an axis.
+
+        Uses Occurrence.Rotate(AxisX1, AxisY1, AxisZ1, AxisX2, AxisY2, AxisZ2, Angle).
+        The axis is defined by two 3D points. Angle is in degrees (converted to radians internally).
+
+        Args:
+            component_index: 0-based index of the component
+            axis_x1, axis_y1, axis_z1: First point of rotation axis (meters)
+            axis_x2, axis_y2, axis_z2: Second point of rotation axis (meters)
+            angle: Rotation angle in degrees
+
+        Returns:
+            Dict with status
+        """
+        try:
+            import math
+
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Occurrences'):
+                return {"error": "Active document is not an assembly"}
+
+            occurrences = doc.Occurrences
+
+            if component_index < 0 or component_index >= occurrences.Count:
+                return {"error": f"Invalid component index: {component_index}. Count: {occurrences.Count}"}
+
+            occurrence = occurrences.Item(component_index + 1)
+            angle_rad = math.radians(angle)
+            occurrence.Rotate(axis_x1, axis_y1, axis_z1,
+                              axis_x2, axis_y2, axis_z2,
+                              angle_rad)
+
+            return {
+                "status": "rotated",
+                "component_index": component_index,
+                "axis": [[axis_x1, axis_y1, axis_z1], [axis_x2, axis_y2, axis_z2]],
+                "angle_degrees": angle
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     def get_occurrence_count(self) -> Dict[str, Any]:
         """
         Get the count of top-level occurrences in the assembly.

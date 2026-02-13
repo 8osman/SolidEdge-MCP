@@ -1906,3 +1906,74 @@ class TestSweptSurface:
         result = feature_mgr.create_swept_surface(want_end_caps=True)
         assert result["status"] == "created"
         assert result["want_end_caps"] is True
+
+
+# ============================================================================
+# TIER 3: CONVERT FEATURE TYPE
+# ============================================================================
+
+class TestConvertFeatureType:
+    def test_convert_to_cutout(self, feature_mgr, managers):
+        _, _, doc, _, _, _ = managers
+        feat = MagicMock()
+        feat.Name = "Protrusion_1"
+        cutout = MagicMock()
+        cutout.Name = "Cutout_1"
+        feat.ConvertToCutout.return_value = cutout
+
+        features = MagicMock()
+        features.Count = 1
+        features.Item.return_value = feat
+        doc.DesignEdgebarFeatures = features
+
+        result = feature_mgr.convert_feature_type("Protrusion_1", "cutout")
+        assert result["status"] == "converted"
+        assert result["target_type"] == "cutout"
+        assert result["new_name"] == "Cutout_1"
+        feat.ConvertToCutout.assert_called_once()
+
+    def test_convert_to_protrusion(self, feature_mgr, managers):
+        _, _, doc, _, _, _ = managers
+        feat = MagicMock()
+        feat.Name = "Cutout_1"
+        protrusion = MagicMock()
+        protrusion.Name = "Protrusion_1"
+        feat.ConvertToProtrusion.return_value = protrusion
+
+        features = MagicMock()
+        features.Count = 1
+        features.Item.return_value = feat
+        doc.DesignEdgebarFeatures = features
+
+        result = feature_mgr.convert_feature_type("Cutout_1", "protrusion")
+        assert result["status"] == "converted"
+        assert result["target_type"] == "protrusion"
+        assert result["new_name"] == "Protrusion_1"
+
+    def test_feature_not_found(self, feature_mgr, managers):
+        _, _, doc, _, _, _ = managers
+        feat = MagicMock()
+        feat.Name = "Other_1"
+
+        features = MagicMock()
+        features.Count = 1
+        features.Item.return_value = feat
+        doc.DesignEdgebarFeatures = features
+
+        result = feature_mgr.convert_feature_type("NonExistent", "cutout")
+        assert "error" in result
+        assert "not found" in result["error"]
+
+    def test_invalid_target_type(self, feature_mgr, managers):
+        _, _, doc, _, _, _ = managers
+        feat = MagicMock()
+        feat.Name = "Protrusion_1"
+
+        features = MagicMock()
+        features.Count = 1
+        features.Item.return_value = feat
+        doc.DesignEdgebarFeatures = features
+
+        result = feature_mgr.convert_feature_type("Protrusion_1", "invalid")
+        assert "error" in result
+        assert "Invalid target_type" in result["error"]

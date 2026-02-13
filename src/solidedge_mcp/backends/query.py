@@ -2054,6 +2054,198 @@ class QueryManager:
                 "traceback": traceback.format_exc()
             }
 
+    def get_feature_dimensions(self, feature_name: str) -> Dict[str, Any]:
+        """
+        Get the dimensions/parameters of a specific feature.
+
+        Uses Feature.GetDimensions() to retrieve all dimension objects
+        associated with a feature, then reads their names and values.
+
+        Args:
+            feature_name: Name of the feature (from list_features)
+
+        Returns:
+            Dict with feature dimensions (name, value, units)
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            # Find the feature by name
+            features = doc.DesignEdgebarFeatures
+            target_feature = None
+            for i in range(1, features.Count + 1):
+                feat = features.Item(i)
+                try:
+                    if feat.Name == feature_name:
+                        target_feature = feat
+                        break
+                except Exception:
+                    continue
+
+            if target_feature is None:
+                return {"error": f"Feature '{feature_name}' not found"}
+
+            dimensions = []
+            try:
+                # GetDimensions returns (count, dim_array) as out-params
+                result = target_feature.GetDimensions()
+                if result is not None:
+                    # result may be a tuple (count, array) or just an array
+                    if isinstance(result, tuple) and len(result) >= 2:
+                        num_dims = result[0]
+                        dim_array = result[1]
+                    else:
+                        dim_array = result
+                        num_dims = None
+
+                    # Process dimension objects
+                    if dim_array is not None:
+                        try:
+                            # Try iterating as a collection
+                            if hasattr(dim_array, '__iter__'):
+                                for dim in dim_array:
+                                    dim_info = {}
+                                    try:
+                                        dim_info["name"] = dim.Name
+                                    except Exception:
+                                        pass
+                                    try:
+                                        dim_info["value"] = dim.Value
+                                    except Exception:
+                                        pass
+                                    try:
+                                        dim_info["formula"] = dim.Formula
+                                    except Exception:
+                                        pass
+                                    dimensions.append(dim_info)
+                        except Exception:
+                            dimensions.append({"raw": str(dim_array)})
+            except Exception as e:
+                # Some features may not support GetDimensions
+                return {
+                    "feature_name": feature_name,
+                    "dimensions": [],
+                    "note": f"GetDimensions not supported: {str(e)}"
+                }
+
+            return {
+                "feature_name": feature_name,
+                "dimensions": dimensions,
+                "count": len(dimensions)
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def get_material_list(self) -> Dict[str, Any]:
+        """
+        Get the list of available materials from the material table.
+
+        Uses MatTable.GetMaterialList() via the Solid Edge application object.
+
+        Returns:
+            Dict with list of material names
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            import win32com.client
+
+            # Get MatTable from the application
+            app = self.doc_manager.connection.get_application()
+            mat_table = app.GetMaterialTable()
+
+            result = mat_table.GetMaterialList()
+            # Returns (count, list_of_materials) as out-params
+            if isinstance(result, tuple) and len(result) >= 2:
+                num_materials = result[0]
+                material_list = result[1]
+            else:
+                material_list = result
+                num_materials = None
+
+            materials = []
+            if material_list is not None:
+                if isinstance(material_list, (list, tuple)):
+                    materials = list(material_list)
+                elif hasattr(material_list, '__iter__'):
+                    materials = [str(m) for m in material_list]
+
+            return {
+                "materials": materials,
+                "count": len(materials)
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def set_material(self, material_name: str) -> Dict[str, Any]:
+        """
+        Apply a named material to the active document.
+
+        Uses MatTable.ApplyMaterial(pDocument, bstrMatName).
+
+        Args:
+            material_name: Name of the material (from get_material_list)
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            app = self.doc_manager.connection.get_application()
+            mat_table = app.GetMaterialTable()
+
+            mat_table.ApplyMaterial(doc, material_name)
+
+            return {
+                "status": "applied",
+                "material": material_name
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def get_material_property(self, material_name: str, property_index: int) -> Dict[str, Any]:
+        """
+        Get a specific property value for a material.
+
+        Uses MatTable.GetMatPropValue(bstrMatName, lPropIndex, varPropValue).
+
+        Common property indices:
+            0 = Density, 1 = Thermal Conductivity, 2 = Thermal Expansion,
+            3 = Specific Heat, 4 = Young's Modulus, 5 = Poisson's Ratio,
+            6 = Yield Stress, 7 = Ultimate Stress, 8 = Elongation
+
+        Args:
+            material_name: Name of the material
+            property_index: Property index (see above)
+
+        Returns:
+            Dict with property value
+        """
+        try:
+            app = self.doc_manager.connection.get_application()
+            mat_table = app.GetMaterialTable()
+
+            value = mat_table.GetMatPropValue(material_name, property_index)
+
+            return {
+                "material": material_name,
+                "property_index": property_index,
+                "value": value
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     def query_variables(self, pattern: str = "*",
                         case_insensitive: bool = True) -> Dict[str, Any]:
         """

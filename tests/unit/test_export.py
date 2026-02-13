@@ -1597,3 +1597,226 @@ class TestSetCamera:
         vm = ViewModel(dm)
         result = vm.set_camera(0, 0, 1, 0, 0, 0)
         assert "error" in result
+
+
+# ============================================================================
+# TIER 3: CREATE PARTS LIST
+# ============================================================================
+
+class TestCreatePartsList:
+    def test_success(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        dv = MagicMock()
+        dvs = MagicMock()
+        dvs.Count = 1
+        dvs.Item.return_value = dv
+        sheet.DrawingViews = dvs
+
+        parts_lists = MagicMock()
+        parts_lists.Count = 1
+        parts_lists.Add.return_value = MagicMock()
+        sheet.PartsLists = parts_lists
+        doc.ActiveSheet = sheet
+        doc.Sheets = MagicMock()
+
+        result = em.create_parts_list(auto_balloon=True)
+        assert result["status"] == "created"
+        assert result["auto_balloon"] is True
+        parts_lists.Add.assert_called_once_with(dv, "", 1, 1)
+
+    def test_no_drawing_views(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        dvs = MagicMock()
+        dvs.Count = 0
+        sheet.DrawingViews = dvs
+        doc.ActiveSheet = sheet
+        doc.Sheets = MagicMock()
+
+        result = em.create_parts_list()
+        assert "error" in result
+        assert "No drawing views" in result["error"]
+
+    def test_not_draft(self, export_mgr):
+        em, doc = export_mgr
+        del doc.Sheets
+
+        result = em.create_parts_list()
+        assert "error" in result
+
+    def test_no_auto_balloon(self, export_mgr):
+        em, doc = export_mgr
+        sheet = MagicMock()
+        dv = MagicMock()
+        dvs = MagicMock()
+        dvs.Count = 1
+        dvs.Item.return_value = dv
+        sheet.DrawingViews = dvs
+
+        parts_lists = MagicMock()
+        parts_lists.Count = 1
+        parts_lists.Add.return_value = MagicMock()
+        sheet.PartsLists = parts_lists
+        doc.ActiveSheet = sheet
+        doc.Sheets = MagicMock()
+
+        result = em.create_parts_list(auto_balloon=False)
+        assert result["status"] == "created"
+        assert result["auto_balloon"] is False
+        parts_lists.Add.assert_called_once_with(dv, "", 0, 1)
+
+
+# ============================================================================
+# TIER 3: PROJECT EDGE
+# ============================================================================
+
+class TestProjectEdge:
+    @pytest.fixture
+    def sketch_mgr(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        dm = MagicMock()
+        doc = MagicMock()
+        dm.get_active_document.return_value = doc
+
+        model = MagicMock()
+        body = MagicMock()
+        face = MagicMock()
+        edge = MagicMock()
+        edges = MagicMock()
+        edges.Count = 2
+        edges.Item.side_effect = lambda i: edge if i == 1 else MagicMock()
+        face.Edges = edges
+        faces = MagicMock()
+        faces.Count = 1
+        faces.Item.return_value = face
+        body.Faces.return_value = faces
+        model.Body = body
+        models = MagicMock()
+        models.Count = 1
+        models.Item.return_value = model
+        doc.Models = models
+
+        sm = SketchManager(dm)
+        sm.active_profile = MagicMock()
+        return sm, edge
+
+    def test_success(self, sketch_mgr):
+        sm, edge = sketch_mgr
+        sm.active_profile.ProjectEdge.return_value = MagicMock()
+        result = sm.project_edge(0, 0)
+        assert result["status"] == "projected"
+        sm.active_profile.ProjectEdge.assert_called_once_with(edge)
+
+    def test_no_sketch(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        sm = SketchManager(MagicMock())
+        result = sm.project_edge(0, 0)
+        assert "error" in result
+
+    def test_invalid_face_index(self, sketch_mgr):
+        sm, _ = sketch_mgr
+        result = sm.project_edge(5, 0)
+        assert "error" in result
+        assert "Invalid face" in result["error"]
+
+    def test_invalid_edge_index(self, sketch_mgr):
+        sm, _ = sketch_mgr
+        result = sm.project_edge(0, 5)
+        assert "error" in result
+        assert "Invalid edge" in result["error"]
+
+
+# ============================================================================
+# TIER 3: INCLUDE EDGE
+# ============================================================================
+
+class TestIncludeEdge:
+    @pytest.fixture
+    def sketch_mgr(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        dm = MagicMock()
+        doc = MagicMock()
+        dm.get_active_document.return_value = doc
+
+        model = MagicMock()
+        body = MagicMock()
+        face = MagicMock()
+        edge = MagicMock()
+        edges = MagicMock()
+        edges.Count = 2
+        edges.Item.side_effect = lambda i: edge if i == 1 else MagicMock()
+        face.Edges = edges
+        faces = MagicMock()
+        faces.Count = 1
+        faces.Item.return_value = face
+        body.Faces.return_value = faces
+        model.Body = body
+        models = MagicMock()
+        models.Count = 1
+        models.Item.return_value = model
+        doc.Models = models
+
+        sm = SketchManager(dm)
+        sm.active_profile = MagicMock()
+        return sm, edge
+
+    def test_success(self, sketch_mgr):
+        sm, edge = sketch_mgr
+        sm.active_profile.IncludeEdge.return_value = MagicMock()
+        result = sm.include_edge(0, 0)
+        assert result["status"] == "included"
+        sm.active_profile.IncludeEdge.assert_called_once_with(edge)
+
+    def test_no_sketch(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        sm = SketchManager(MagicMock())
+        result = sm.include_edge(0, 0)
+        assert "error" in result
+
+    def test_no_model(self):
+        from solidedge_mcp.backends.sketching import SketchManager
+        dm = MagicMock()
+        doc = MagicMock()
+        models = MagicMock()
+        models.Count = 0
+        doc.Models = models
+        dm.get_active_document.return_value = doc
+        sm = SketchManager(dm)
+        sm.active_profile = MagicMock()
+        result = sm.include_edge(0, 0)
+        assert "error" in result
+
+
+# ============================================================================
+# TIER 3: START COMMAND
+# ============================================================================
+
+class TestStartCommand:
+    def test_success(self):
+        from solidedge_mcp.backends.connection import SolidEdgeConnection
+        conn = SolidEdgeConnection()
+        conn.application = MagicMock()
+        conn._is_connected = True
+
+        result = conn.start_command(12345)
+        assert result["status"] == "success"
+        assert result["command_id"] == 12345
+        conn.application.StartCommand.assert_called_once_with(12345)
+
+    def test_not_connected(self):
+        from solidedge_mcp.backends.connection import SolidEdgeConnection
+        conn = SolidEdgeConnection()
+
+        result = conn.start_command(12345)
+        assert "error" in result
+
+    def test_invalid_command(self):
+        from solidedge_mcp.backends.connection import SolidEdgeConnection
+        conn = SolidEdgeConnection()
+        conn.application = MagicMock()
+        conn._is_connected = True
+        conn.application.StartCommand.side_effect = Exception("Invalid command ID")
+
+        result = conn.start_command(99999)
+        assert "error" in result

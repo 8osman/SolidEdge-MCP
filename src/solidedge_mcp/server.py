@@ -119,6 +119,27 @@ def get_install_info() -> dict:
     return connection.get_install_info()
 
 
+@mcp.tool()
+def start_command(command_id: int) -> dict:
+    """
+    Execute a Solid Edge command by its command ID.
+
+    Programmatically triggers any Solid Edge menu/ribbon command.
+    Command IDs are integers from the SolidEdgeCommandConstants enum.
+
+    Common command IDs:
+        - File > New Part: varies by version
+        - Use the type library reference to look up specific command IDs
+
+    Args:
+        command_id: Integer command ID (from SolidEdgeCommandConstants)
+
+    Returns:
+        Command execution status
+    """
+    return connection.start_command(command_id)
+
+
 # ============================================================================
 # DOCUMENT MANAGEMENT TOOLS
 # ============================================================================
@@ -833,6 +854,42 @@ def get_sketch_constraints() -> dict:
         List of constraints with types and count
     """
     return sketch_manager.get_sketch_constraints()
+
+
+@mcp.tool()
+def project_edge(face_index: int, edge_index: int) -> dict:
+    """
+    Project a 3D body edge into the active sketch.
+
+    Creates a reference curve on the sketch plane by projecting a body edge.
+    Use get_body_faces() and get_face_info() to find face/edge indices.
+
+    Args:
+        face_index: 0-based face index (from get_body_faces)
+        edge_index: 0-based edge index on that face
+
+    Returns:
+        Projection status
+    """
+    return sketch_manager.project_edge(face_index, edge_index)
+
+
+@mcp.tool()
+def include_edge(face_index: int, edge_index: int) -> dict:
+    """
+    Include a 3D body edge in the active sketch.
+
+    Unlike project_edge, include_edge maintains an associative link
+    to the original edge - if the edge changes, the sketch updates.
+
+    Args:
+        face_index: 0-based face index (from get_body_faces)
+        edge_index: 0-based edge index on that face
+
+    Returns:
+        Include status
+    """
+    return sketch_manager.include_edge(face_index, edge_index)
 
 
 # ============================================================================
@@ -2895,6 +2952,75 @@ def query_variables(pattern: str = "*", case_insensitive: bool = True) -> dict:
     return query_manager.query_variables(pattern, case_insensitive)
 
 
+@mcp.tool()
+def get_feature_dimensions(feature_name: str) -> dict:
+    """
+    Get the dimensions/parameters of a specific feature.
+
+    Reads all dimension objects associated with a feature - their names,
+    values, and formulas. Use list_features() to get feature names.
+
+    Args:
+        feature_name: Name of the feature (from list_features)
+
+    Returns:
+        Feature dimensions with names, values, and formulas
+    """
+    return query_manager.get_feature_dimensions(feature_name)
+
+
+@mcp.tool()
+def get_material_list() -> dict:
+    """
+    Get the list of available materials from the material table.
+
+    Returns all material names that can be applied to documents
+    via set_material().
+
+    Returns:
+        List of material names and count
+    """
+    return query_manager.get_material_list()
+
+
+@mcp.tool()
+def set_material(material_name: str) -> dict:
+    """
+    Apply a named material to the active document.
+
+    Use get_material_list() to see available material names.
+    This sets the document's material for mass property calculations
+    and rendering.
+
+    Args:
+        material_name: Name of the material (from get_material_list)
+
+    Returns:
+        Material application status
+    """
+    return query_manager.set_material(material_name)
+
+
+@mcp.tool()
+def get_material_property(material_name: str, property_index: int) -> dict:
+    """
+    Get a specific property value for a material.
+
+    Common property indices:
+        0=Density, 1=Thermal Conductivity, 2=Thermal Expansion,
+        3=Specific Heat, 4=Young's Modulus, 5=Poisson's Ratio,
+        6=Yield Stress, 7=Ultimate Stress, 8=Elongation
+
+    Args:
+        material_name: Name of the material
+        property_index: Property index (0-8, see above)
+
+    Returns:
+        Material property value
+    """
+    return query_manager.get_material_property(material_name, property_index)
+
+
 # ============================================================================
 # CUSTOM PROPERTIES
 # ============================================================================
@@ -3124,6 +3250,24 @@ def unsuppress_feature(feature_name: str) -> dict:
 
 
 @mcp.tool()
+def convert_feature_type(feature_name: str, target_type: str) -> dict:
+    """
+    Convert a feature between cutout and protrusion.
+
+    Toggles a feature between adding material (protrusion) and
+    removing material (cutout). Use list_features() to get feature names.
+
+    Args:
+        feature_name: Name of the feature (from list_features)
+        target_type: 'cutout' or 'protrusion'
+
+    Returns:
+        Conversion status with new feature name
+    """
+    return feature_manager.convert_feature_type(feature_name, target_type)
+
+
+@mcp.tool()
 def recompute() -> dict:
     """
     Recompute the active document and model.
@@ -3302,6 +3446,27 @@ def add_assembly_drawing_view(
         View creation status
     """
     return export_manager.add_assembly_drawing_view(x, y, orientation, scale)
+
+
+@mcp.tool()
+def create_parts_list(auto_balloon: bool = True,
+                      x: float = 0.15, y: float = 0.25) -> dict:
+    """
+    Create a parts list (BOM table) on the active draft sheet.
+
+    Requires a Draft document with at least one drawing view.
+    Generates a parts list table and optionally auto-generates
+    balloon callouts on the drawing view.
+
+    Args:
+        auto_balloon: Whether to auto-generate balloon callouts (default True)
+        x: Table X position on sheet in meters (default 0.15)
+        y: Table Y position on sheet in meters (default 0.25)
+
+    Returns:
+        Parts list creation status
+    """
+    return export_manager.create_parts_list(auto_balloon, x, y)
 
 
 @mcp.tool()
@@ -3957,6 +4122,53 @@ def get_occurrence_count() -> dict:
         Component count
     """
     return assembly_manager.get_occurrence_count()
+
+
+@mcp.tool()
+def occurrence_move(component_index: int, dx: float, dy: float, dz: float) -> dict:
+    """
+    Move a component by a relative delta in the assembly.
+
+    Translates the component by the specified offset in meters.
+
+    Args:
+        component_index: 0-based index of the component
+        dx: X translation in meters
+        dy: Y translation in meters
+        dz: Z translation in meters
+
+    Returns:
+        Move status with delta applied
+    """
+    return assembly_manager.occurrence_move(component_index, dx, dy, dz)
+
+
+@mcp.tool()
+def occurrence_rotate(component_index: int,
+                      axis_x1: float, axis_y1: float, axis_z1: float,
+                      axis_x2: float, axis_y2: float, axis_z2: float,
+                      angle: float) -> dict:
+    """
+    Rotate a component around an axis in the assembly.
+
+    The rotation axis is defined by two 3D points. The component
+    rotates by the specified angle around this axis.
+
+    Args:
+        component_index: 0-based index of the component
+        axis_x1, axis_y1, axis_z1: First point of rotation axis (meters)
+        axis_x2, axis_y2, axis_z2: Second point of rotation axis (meters)
+        angle: Rotation angle in degrees
+
+    Returns:
+        Rotation status
+    """
+    return assembly_manager.occurrence_rotate(
+        component_index,
+        axis_x1, axis_y1, axis_z1,
+        axis_x2, axis_y2, axis_z2,
+        angle
+    )
 
 
 # ============================================================================

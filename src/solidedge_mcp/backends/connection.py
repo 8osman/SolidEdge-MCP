@@ -277,6 +277,30 @@ class SolidEdgeConnection:
                 "traceback": traceback.format_exc()
             }
 
+    def start_command(self, command_id: int) -> Dict[str, Any]:
+        """
+        Execute a Solid Edge command by its command ID.
+
+        Invokes Application.StartCommand(CommandID) to programmatically trigger
+        any Solid Edge menu/ribbon command. Command IDs are from the
+        SolidEdgeCommandConstants enum in the type library.
+
+        Args:
+            command_id: Integer command ID (from SolidEdgeCommandConstants)
+
+        Returns:
+            Dict with status
+        """
+        try:
+            self.ensure_connected()
+            self.application.StartCommand(command_id)
+            return {"status": "success", "command_id": command_id}
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     def do_idle(self) -> Dict[str, Any]:
         """
         Allow Solid Edge to process pending operations.

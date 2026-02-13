@@ -4635,3 +4635,70 @@ class FeatureManager:
                 "error": str(e),
                 "traceback": traceback.format_exc()
             }
+
+    def convert_feature_type(self, feature_name: str, target_type: str) -> Dict[str, Any]:
+        """
+        Convert a feature between cutout and protrusion.
+
+        Uses Feature.ConvertToCutout() or Feature.ConvertToProtrusion()
+        to toggle a feature between adding and removing material.
+
+        Args:
+            feature_name: Name of the feature (from list_features)
+            target_type: 'cutout' or 'protrusion'
+
+        Returns:
+            Dict with conversion status and new feature reference
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            # Find the feature by name
+            features = doc.DesignEdgebarFeatures
+            target_feature = None
+            for i in range(1, features.Count + 1):
+                feat = features.Item(i)
+                try:
+                    if feat.Name == feature_name:
+                        target_feature = feat
+                        break
+                except Exception:
+                    continue
+
+            if target_feature is None:
+                return {"error": f"Feature '{feature_name}' not found"}
+
+            target_type_lower = target_type.lower()
+            if target_type_lower == "cutout":
+                result = target_feature.ConvertToCutout()
+                new_name = None
+                try:
+                    new_name = result.Name
+                except Exception:
+                    pass
+                return {
+                    "status": "converted",
+                    "original_name": feature_name,
+                    "target_type": "cutout",
+                    "new_name": new_name
+                }
+            elif target_type_lower == "protrusion":
+                result = target_feature.ConvertToProtrusion()
+                new_name = None
+                try:
+                    new_name = result.Name
+                except Exception:
+                    pass
+                return {
+                    "status": "converted",
+                    "original_name": feature_name,
+                    "target_type": "protrusion",
+                    "new_name": new_name
+                }
+            else:
+                return {"error": f"Invalid target_type: {target_type}. Use 'cutout' or 'protrusion'"}
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }

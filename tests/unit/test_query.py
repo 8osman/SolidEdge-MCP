@@ -1490,3 +1490,170 @@ class TestQueryVariables:
         result = qm.query_variables("*Xyz*")
         assert result["count"] == 0
         assert result["matches"] == []
+
+
+# ============================================================================
+# TIER 3: GET FEATURE DIMENSIONS
+# ============================================================================
+
+class TestGetFeatureDimensions:
+    def test_success(self, query_mgr):
+        """Test getting dimensions from a feature."""
+        qm, doc = query_mgr
+
+        dim1 = MagicMock()
+        dim1.Name = "Depth"
+        dim1.Value = 0.05
+        dim1.Formula = "0.05"
+
+        dim2 = MagicMock()
+        dim2.Name = "Width"
+        dim2.Value = 0.1
+        dim2.Formula = "0.1"
+
+        feat = MagicMock()
+        feat.Name = "ExtrudedProtrusion_1"
+        feat.GetDimensions.return_value = (2, [dim1, dim2])
+
+        features = MagicMock()
+        features.Count = 1
+        features.Item.return_value = feat
+        doc.DesignEdgebarFeatures = features
+
+        result = qm.get_feature_dimensions("ExtrudedProtrusion_1")
+        assert result["feature_name"] == "ExtrudedProtrusion_1"
+        assert result["count"] == 2
+        assert result["dimensions"][0]["name"] == "Depth"
+        assert result["dimensions"][1]["value"] == 0.1
+
+    def test_feature_not_found(self, query_mgr):
+        """Test when feature doesn't exist."""
+        qm, doc = query_mgr
+
+        feat = MagicMock()
+        feat.Name = "Other_1"
+
+        features = MagicMock()
+        features.Count = 1
+        features.Item.return_value = feat
+        doc.DesignEdgebarFeatures = features
+
+        result = qm.get_feature_dimensions("NonExistent")
+        assert "error" in result
+        assert "not found" in result["error"]
+
+    def test_no_dimensions(self, query_mgr):
+        """Test feature that doesn't support GetDimensions."""
+        qm, doc = query_mgr
+
+        feat = MagicMock()
+        feat.Name = "Round_1"
+        feat.GetDimensions.side_effect = Exception("Not supported")
+
+        features = MagicMock()
+        features.Count = 1
+        features.Item.return_value = feat
+        doc.DesignEdgebarFeatures = features
+
+        result = qm.get_feature_dimensions("Round_1")
+        assert result["feature_name"] == "Round_1"
+        assert "not supported" in result.get("note", "").lower() or result.get("dimensions") == []
+
+
+# ============================================================================
+# TIER 3: MATERIAL OPERATIONS
+# ============================================================================
+
+class TestGetMaterialList:
+    def test_success(self, query_mgr):
+        """Test getting material list."""
+        qm, doc = query_mgr
+
+        mat_table = MagicMock()
+        mat_table.GetMaterialList.return_value = (3, ["Steel", "Aluminum", "Copper"])
+
+        app = MagicMock()
+        app.GetMaterialTable.return_value = mat_table
+        qm.doc_manager.connection = MagicMock()
+        qm.doc_manager.connection.get_application.return_value = app
+
+        result = qm.get_material_list()
+        assert result["count"] == 3
+        assert "Steel" in result["materials"]
+        assert "Aluminum" in result["materials"]
+
+    def test_com_error(self, query_mgr):
+        """Test handling COM errors."""
+        qm, doc = query_mgr
+
+        app = MagicMock()
+        app.GetMaterialTable.side_effect = Exception("COM error")
+        qm.doc_manager.connection = MagicMock()
+        qm.doc_manager.connection.get_application.return_value = app
+
+        result = qm.get_material_list()
+        assert "error" in result
+
+
+class TestSetMaterial:
+    def test_success(self, query_mgr):
+        """Test applying a material."""
+        qm, doc = query_mgr
+
+        mat_table = MagicMock()
+        app = MagicMock()
+        app.GetMaterialTable.return_value = mat_table
+        qm.doc_manager.connection = MagicMock()
+        qm.doc_manager.connection.get_application.return_value = app
+
+        result = qm.set_material("Steel")
+        assert result["status"] == "applied"
+        assert result["material"] == "Steel"
+        mat_table.ApplyMaterial.assert_called_once_with(doc, "Steel")
+
+    def test_invalid_material(self, query_mgr):
+        """Test applying non-existent material."""
+        qm, doc = query_mgr
+
+        mat_table = MagicMock()
+        mat_table.ApplyMaterial.side_effect = Exception("Material not found")
+        app = MagicMock()
+        app.GetMaterialTable.return_value = mat_table
+        qm.doc_manager.connection = MagicMock()
+        qm.doc_manager.connection.get_application.return_value = app
+
+        result = qm.set_material("InvalidMaterial")
+        assert "error" in result
+
+
+class TestGetMaterialProperty:
+    def test_success(self, query_mgr):
+        """Test getting a material property."""
+        qm, doc = query_mgr
+
+        mat_table = MagicMock()
+        mat_table.GetMatPropValue.return_value = 7850.0
+        app = MagicMock()
+        app.GetMaterialTable.return_value = mat_table
+        qm.doc_manager.connection = MagicMock()
+        qm.doc_manager.connection.get_application.return_value = app
+
+        result = qm.get_material_property("Steel", 0)
+        assert result["material"] == "Steel"
+        assert result["property_index"] == 0
+        assert result["value"] == 7850.0
+        mat_table.GetMatPropValue.assert_called_once_with("Steel", 0)
+
+    def test_com_error(self, query_mgr):
+        """Test handling COM error for invalid property."""
+        qm, doc = query_mgr
+
+        mat_table = MagicMock()
+        mat_table.GetMatPropValue.side_effect = Exception("Invalid index")
+        app = MagicMock()
+        app.GetMaterialTable.return_value = mat_table
+        qm.doc_manager.connection = MagicMock()
+        qm.doc_manager.connection.get_application.return_value = app
+
+        result = qm.get_material_property("Steel", 99)
+        assert "error" in result

@@ -358,6 +358,62 @@ class ExportManager:
                 "traceback": traceback.format_exc()
             }
 
+    def create_parts_list(self, auto_balloon: bool = True,
+                          x: float = 0.15, y: float = 0.25) -> Dict[str, Any]:
+        """
+        Create a parts list (BOM table) on the active draft sheet.
+
+        Requires the active document to be a Draft with at least one drawing view.
+        Uses PartsLists.Add(DrawingView, SavedSettings, AutoBalloon, CreatePartsList).
+
+        Args:
+            auto_balloon: Whether to auto-generate balloon callouts
+            x: Table X position on sheet (meters, default 0.15)
+            y: Table Y position on sheet (meters, default 0.25)
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            if not hasattr(doc, 'Sheets'):
+                return {"error": "Active document is not a draft document"}
+
+            sheet = doc.ActiveSheet
+
+            # Get the first drawing view on the sheet
+            dvs = sheet.DrawingViews
+            if dvs.Count == 0:
+                return {"error": "No drawing views on active sheet. Add a view first."}
+
+            dv = dvs.Item(1)
+
+            # Get PartsLists collection
+            parts_lists = sheet.PartsLists if hasattr(sheet, 'PartsLists') else None
+            if parts_lists is None:
+                # Try from document level
+                parts_lists = doc.PartsLists if hasattr(doc, 'PartsLists') else None
+
+            if parts_lists is None:
+                return {"error": "PartsLists collection not available"}
+
+            # Add parts list
+            # Parameters: DrawingView, SavedSettings, AutoBalloon, CreatePartsList
+            # AutoBalloon: 0=No, 1=Yes; CreatePartsList: 0=No, 1=Yes
+            parts_list = parts_lists.Add(dv, "", 1 if auto_balloon else 0, 1)
+
+            return {
+                "status": "created",
+                "auto_balloon": auto_balloon,
+                "total_parts_lists": parts_lists.Count
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     def capture_screenshot(self, file_path: str, width: int = 1920, height: int = 1080) -> Dict[str, Any]:
         """
         Capture a screenshot of the current view.

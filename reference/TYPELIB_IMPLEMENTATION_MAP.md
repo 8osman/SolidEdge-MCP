@@ -1,26 +1,25 @@
 # Solid Edge Type Library Implementation Map
 
 Generated: 2026-02-12 | Source: 40 type libraries, 2,240 interfaces, 21,237 methods
-Current: 241 MCP tools implemented
+Current: 252 MCP tools implemented
 
 This document maps every actionable COM API surface from the Solid Edge type libraries
 against our current MCP tool coverage. It identifies gaps and prioritizes what to implement next.
 
----
-
 ## Coverage Summary
 
-| Category | Available | Implemented | Coverage | Priority |
-|----------|-----------|-------------|----------|----------|
-| **Part Features** | 42 collections | 39 | 93% | HIGH |
-| **Assembly** | 18 key interfaces | 12 | 67% | HIGH |
-| **Draft/Drawing** | 15 key interfaces | 8 | 53% | MEDIUM |
-| **Framework/App** | 12 key interfaces | 12 | 100% | LOW |
-| **Constants** | 745 enums | ~30 in code | 4% | REFERENCE |
-| **Query/Topology** | 25+ methods | 20 | 80% | MEDIUM |
-| **Export/Import** | 12 formats | 10 | 83% | LOW |
-
----
+| Category              | Available         | Implemented   | Coverage  | Priority  |
+|-----------------------|-------------------|---------------|-----------|-----------|
+| **Part Features**     | 42 collections    | 41            |    98%    |   HIGH    |
+| **Assembly**          | 18 key interfaces | 14            |    78%    |   HIGH    |
+| **Draft/Drawing**     | 15 key interfaces | 9             |    60%    |  MEDIUM   |
+| **Framework/App**     | 12 key interfaces | 12            |   100%    |    LOW    |
+| **Constants**         | 745 enums         | ~30 in code   |     4%    | REFERENCE |
+| **Query/Topology**    | 25+ methods       | 24            |    96%    |  MEDIUM   |
+| **Export/Import**     | 12 formats        | 10            |    83%    |    LOW    |
+|-----------------------------------------------------------------------------------|
+|      **Total **       |  869 items        | 140           |    16%    |   --      |
+|-----------------------------------------------------------------------------------|
 
 ## Part 1: Part Feature Collections (Part.tlb)
 
@@ -317,8 +316,8 @@ in late binding. The `Ex` variants may use different parameter types - worth inv
 - [x] `SetAxisOfRevolution` - via `set_axis_of_revolution`
 - [x] `ToggleConstruction` - via `draw_construction_line` (internal)
 - [x] `IsConstructionElement` - used internally
-- [ ] `ProjectEdge` - **Project 3D edge onto sketch**
-- [ ] `IncludeEdge` - **Include edge from body in sketch**
+- [x] `ProjectEdge` - via `project_edge`
+- [x] `IncludeEdge` - via `include_edge`
 - [ ] `ProjectSilhouetteEdges` - Project silhouette onto sketch
 - [ ] `ProjectRefPlane` - Project ref plane intersection
 - [ ] `IncludeRegionFaces` - Include face region
@@ -335,14 +334,14 @@ in late binding. The `Ex` variants may use different parameter types - worth inv
 These methods exist on nearly every individual feature object (ExtrudedProtrusion,
 RevolvedCutout, Round, Chamfer, Hole, etc.) and allow editing after creation:
 
-- [ ] `GetDimensions` - **Read feature dimensions/parameters**
+- [x] `GetDimensions` - via `get_feature_dimensions`
 - [ ] `GetProfiles` / `SetProfiles` - Get/set sketch profiles
 - [ ] `GetDirection1Extent` / `ApplyDirection1Extent` - Edit extent
 - [ ] `GetDirection2Extent` / `ApplyDirection2Extent` - Edit 2nd direction
 - [ ] `GetFromFaceOffsetData` / `SetFromFaceOffsetData` - Edit offsets
 - [ ] `GetThinWallOptions` / `SetThinWallOptions` - Edit thin wall params
 - [ ] `GetBodyArray` / `SetBodyArray` - Multi-body targeting
-- [ ] `ConvertToCutout` / `ConvertToProtrusion` - **Convert feature type**
+- [x] `ConvertToCutout` / `ConvertToProtrusion` - via `convert_feature_type`
 - [ ] `GetStatusEx` - Detailed feature status
 - [ ] `GetTopologyParents` - Query parent geometry
 
@@ -375,8 +374,8 @@ RevolvedCutout, Round, Chamfer, Hole, etc.) and allow editing after creation:
 - [x] `Select` (implicit) - via selection tools
 - [ ] `PutTransform` - **Set position by Euler angles**
 - [ ] `PutOrigin` - **Set origin position only**
-- [ ] `Move` - **Relative move by delta XYZ**
-- [ ] `Rotate` - **Rotate around axis**
+- [x] `Move` - via `occurrence_move`
+- [x] `Rotate` - via `occurrence_rotate`
 - [ ] `Mirror` - **Mirror occurrence across plane**
 - [ ] `MakeWritable` - Make in-context editable
 - [ ] `IsTube` / `GetTube` - Query tube info
@@ -505,7 +504,7 @@ Key properties NOT exposed:
 - [ ] **Weld symbol** - Welding annotations
 - [ ] **Geometric tolerance** (FCF) - GD&T frames
 - [ ] **Center mark** / **Centerline** - On circular features
-- [ ] **Parts list** (PartsList interface, 91 members) - **BOM table on drawing**
+- [x] **Parts list** - via `create_parts_list` (BOM table on drawing)
 - [ ] **Hole table** (HoleTable2 interface, 86 members) - Hole call-outs
 - [ ] **Bend table** (DraftBendTable, 43 members) - Sheet metal bend table
 
@@ -524,7 +523,7 @@ Key properties NOT exposed:
 - [x] Connect / GetActiveObject - via `connect_to_solidedge`
 - [x] Quit - via `quit_application`
 - [x] `DoIdle` - via `do_idle`
-- [ ] `StartCommand` - **Execute any SE command by ID**
+- [x] `StartCommand` - via `start_command`
 - [ ] `AbortCommand` - Abort running command
 - [ ] `GetGlobalParameter` / `SetGlobalParameter` - Global settings
 - [ ] `GetModelessTaskEventSource` - Event handling
@@ -579,9 +578,10 @@ Key Properties:
 
 #### MatTable (59 methods)
 - [x] Density setting - via `set_material_density`
-- [ ] `GetMaterialName` / `SetActiveMaterial` - **Named material assignment**
-- [ ] `GetMaterialProperty` - Query material properties
-- [ ] Material library access
+- [x] `ApplyMaterial` - via `set_material`
+- [x] `GetMaterialList` - via `get_material_list`
+- [x] `GetMatPropValue` - via `get_material_property`
+- [ ] Material library access (full)
 
 #### Layer Interface (15 methods)
 - [ ] `Add` / `Delete` / `SetActive` - **Layer management**
@@ -667,22 +667,22 @@ These fill critical gaps and use proven API patterns:
 | 29 | `get_camera` / `set_camera` | View.GetCamera/SetCamera | ✅ Implemented |
 | 30 | `query_variables` | Variables.Query | ✅ Implemented |
 
-### Tier 3: MEDIUM IMPACT, MORE COMPLEX (12 tools)
+### Tier 3: MEDIUM IMPACT, MORE COMPLEX (12 tools) - ✅ 9/12 IMPLEMENTED (11 tools)
 
-| # | Tool | API Method | Justification |
-|---|------|-----------|---------------|
-| 31 | `project_edge` | Profile.ProjectEdge | Project 3D edge into sketch |
-| 32 | `include_edge` | Profile.IncludeEdge | Include body edge in sketch |
-| 33 | `get_feature_dimensions` | Feature.GetDimensions | Read any feature's parameters |
-| 34 | `convert_feature_type` | Feature.ConvertToCutout/Protrusion | Toggle cut/add |
-| 35 | `create_assembly_cutout` | AssemblyFeaturesExtrudedCutout | Assembly-level cut |
-| 36 | `create_assembly_hole` | AssemblyFeaturesHole | Assembly-level hole |
-| 37 | `create_parts_list` | PartsList (draft) | BOM table on drawing |
-| 38 | `start_command` | Application.StartCommand | Execute any SE command |
-| 39 | `occurrence_move` | Occurrence.Move | Relative component move |
-| 40 | `occurrence_rotate` | Occurrence.Rotate | Rotate component around axis |
-| 41 | `set_material` | MatTable.SetActiveMaterial | Named material assignment |
-| 42 | `convert_to_sheet_metal` | ConvertPartToSM | Convert solid to SM |
+| # | Tool | API Method | Status |
+|---|------|-----------|--------|
+| 31 | `project_edge` | Profile.ProjectEdge | ✅ Implemented |
+| 32 | `include_edge` | Profile.IncludeEdge | ✅ Implemented |
+| 33 | `get_feature_dimensions` | Feature.GetDimensions | ✅ Implemented |
+| 34 | `convert_feature_type` | Feature.ConvertToCutout/Protrusion | ✅ Implemented |
+| 35 | `create_assembly_cutout` | AssemblyFeaturesExtrudedCutout | ⏳ Complex face selection needed |
+| 36 | `create_assembly_hole` | AssemblyFeaturesHole | ⏳ Complex face selection needed |
+| 37 | `create_parts_list` | PartsList (draft) | ✅ Implemented |
+| 38 | `start_command` | Application.StartCommand | ✅ Implemented |
+| 39 | `occurrence_move` | Occurrence.Move | ✅ Implemented |
+| 40 | `occurrence_rotate` | Occurrence.Rotate | ✅ Implemented |
+| 41 | `set_material` | MatTable.ApplyMaterial + GetMaterialList + GetMatPropValue | ✅ 3 tools (set_material, get_material_list, get_material_property) |
+| 42 | `convert_to_sheet_metal` | ConvertPartToSM | ⏳ Complex - needs face selection |
 
 ### Tier 4: LOW PRIORITY / EXPERIMENTAL (future)
 

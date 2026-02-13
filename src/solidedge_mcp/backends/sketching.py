@@ -1173,6 +1173,113 @@ class SketchManager:
                 "traceback": traceback.format_exc()
             }
 
+    def project_edge(self, face_index: int, edge_index: int) -> Dict[str, Any]:
+        """
+        Project a 3D body edge into the active sketch.
+
+        Uses Profile.ProjectEdge(EdgeToProject) to project a body edge
+        onto the sketch plane as a reference curve.
+
+        Args:
+            face_index: 0-based face index (from get_body_faces)
+            edge_index: 0-based edge index on that face
+
+        Returns:
+            Dict with projection status
+        """
+        try:
+            if not self.active_profile:
+                return {"error": "No active sketch. Call create_sketch() first"}
+
+            profile = self.active_profile
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+            if models.Count == 0:
+                return {"error": "No model exists"}
+
+            model = models.Item(1)
+            body = model.Body
+
+            # Get the edge from face
+            faces = body.Faces(1)  # igQueryAll = 1
+            if face_index < 0 or face_index >= faces.Count:
+                return {"error": f"Invalid face index: {face_index}. Count: {faces.Count}"}
+
+            face = faces.Item(face_index + 1)
+            edges = face.Edges
+            if edge_index < 0 or edge_index >= edges.Count:
+                return {"error": f"Invalid edge index: {edge_index}. Count: {edges.Count}"}
+
+            edge = edges.Item(edge_index + 1)
+
+            projected = profile.ProjectEdge(edge)
+
+            return {
+                "status": "projected",
+                "face_index": face_index,
+                "edge_index": edge_index,
+                "projected_geometry": str(type(projected).__name__) if projected else "unknown"
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+    def include_edge(self, face_index: int, edge_index: int) -> Dict[str, Any]:
+        """
+        Include a 3D body edge in the active sketch.
+
+        Uses Profile.IncludeEdge(Edge, Geometry2d) to include a body edge
+        as sketch geometry. Unlike ProjectEdge, IncludeEdge maintains an
+        associative link to the original edge.
+
+        Args:
+            face_index: 0-based face index (from get_body_faces)
+            edge_index: 0-based edge index on that face
+
+        Returns:
+            Dict with include status
+        """
+        try:
+            if not self.active_profile:
+                return {"error": "No active sketch. Call create_sketch() first"}
+
+            profile = self.active_profile
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+            if models.Count == 0:
+                return {"error": "No model exists"}
+
+            model = models.Item(1)
+            body = model.Body
+
+            faces = body.Faces(1)  # igQueryAll = 1
+            if face_index < 0 or face_index >= faces.Count:
+                return {"error": f"Invalid face index: {face_index}. Count: {faces.Count}"}
+
+            face = faces.Item(face_index + 1)
+            edges = face.Edges
+            if edge_index < 0 or edge_index >= edges.Count:
+                return {"error": f"Invalid edge index: {edge_index}. Count: {edges.Count}"}
+
+            edge = edges.Item(edge_index + 1)
+
+            # IncludeEdge takes Edge and returns Geometry2d via out-param
+            result = profile.IncludeEdge(edge)
+
+            return {
+                "status": "included",
+                "face_index": face_index,
+                "edge_index": edge_index,
+                "geometry_2d": str(type(result).__name__) if result else "unknown"
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     def get_sketch_constraints(self) -> Dict[str, Any]:
         """
         Get information about constraints in the active sketch.

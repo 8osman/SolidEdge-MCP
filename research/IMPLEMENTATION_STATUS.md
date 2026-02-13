@@ -4,15 +4,15 @@ Last Updated: 2026-02-12
 
 ## MCP Server Status: **OPERATIONAL**
 
-**241 MCP tools** are now registered and ready to use!
+**252 MCP tools** are now registered and ready to use!
 
 ## Quick Summary
 
 | Category | Implemented | Notes |
 |----------|-------------|-------|
-| **Connection** | 6 | Connect, disconnect, app info, quit, is_connected, process_info |
+| **Connection** | 7 | Connect, disconnect, app info, quit, is_connected, process_info, start_command |
 | **Document Management** | 13 | Create (part, assembly, sheet metal, draft), open, save, close, list, activate, undo, redo |
-| **Sketching** | 22 | Lines, circles, arcs (multiple), rects, polygons, ellipses, splines, points, constraints (9 types), fillet, chamfer, mirror, construction, hide profile |
+| **Sketching** | 24 | Lines, circles, arcs (multiple), rects, polygons, ellipses, splines, points, constraints (9 types), fillet, chamfer, mirror, construction, hide profile, project_edge, include_edge |
 | **Basic Primitives** | 8 | Box (3 variants), cylinder, sphere, box cutout, cylinder cutout, sphere cutout |
 | **Extrusions** | 4 | Finite, infinite, thin-wall, extruded surface |
 | **Revolves** | 5 | Basic, finite, sync, thin-wall |
@@ -31,15 +31,15 @@ Last Updated: 2026-02-12
 | **Custom Properties** | 3 | Get all, set/create, delete |
 | **Body Topology** | 3 | Body faces, body edges, face info |
 | **Performance** | 2 | Set performance mode, recompute |
-| **Query/Analysis** | 20 | Mass properties, bounding box, features, measurements, facet data, solid bodies, modeling mode, face/edge info, colors, angles, volume, delete feature, material table |
-| **Feature Management** | 5 | Suppress, unsuppress, face rotate (2), draft angle |
+| **Query/Analysis** | 25 | Mass properties, bounding box, features, measurements, facet data, solid bodies, modeling mode, face/edge info, colors, angles, volume, delete feature, material table, feature dimensions, material list/set/property |
+| **Feature Management** | 6 | Suppress, unsuppress, face rotate (2), draft angle, convert feature type |
 | **Export** | 10 | STEP, STL, IGES, PDF, DXF, flat DXF, Parasolid, JT, drawing, screenshot |
-| **Assembly** | 22 | Place, list, constraints, patterns, suppress, BOM, structured BOM, interference, bbox, relations, doc tree, replace, delete, visibility, color, transform, count |
-| **Draft/Drawing** | 10 | Sheets (add, activate, delete, rename), views, annotations (dimension, balloon, note, leader, text box) |
+| **Assembly** | 24 | Place, list, constraints, patterns, suppress, BOM, structured BOM, interference, bbox, relations, doc tree, replace, delete, visibility, color, transform, count, move, rotate |
+| **Draft/Drawing** | 11 | Sheets (add, activate, delete, rename), views, annotations (dimension, balloon, note, leader, text box), parts list |
 | **Part Features** | 10 | Dimple, etch, rib, lip, drawn cutout, bead, louver, gusset, thread, slot, split |
 | **Diagnostics** | 2 | API and feature inspection |
 | **Select Set** | 3 | Get selection, clear selection, add to selection |
-| **TOTAL** | **241** | |
+| **TOTAL** | **252** | |
 
 ---
 

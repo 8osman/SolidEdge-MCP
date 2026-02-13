@@ -358,3 +358,78 @@ class TestSuppressComponent:
         result = am.suppress_component(0, suppress=False)
         assert result["status"] == "updated"
         occ.Unsuppress.assert_called_once()
+
+
+# ============================================================================
+# TIER 3: OCCURRENCE MOVE
+# ============================================================================
+
+class TestOccurrenceMove:
+    def test_success(self, asm_mgr):
+        am, doc = asm_mgr
+        occ = MagicMock()
+        occurrences = MagicMock()
+        occurrences.Count = 2
+        occurrences.Item.return_value = occ
+        doc.Occurrences = occurrences
+
+        result = am.occurrence_move(0, 0.1, 0.2, 0.3)
+        assert result["status"] == "moved"
+        assert result["delta"] == [0.1, 0.2, 0.3]
+        occ.Move.assert_called_once_with(0.1, 0.2, 0.3)
+
+    def test_not_assembly(self, asm_mgr):
+        am, doc = asm_mgr
+        del doc.Occurrences
+
+        result = am.occurrence_move(0, 0.1, 0.0, 0.0)
+        assert "error" in result
+
+    def test_invalid_index(self, asm_mgr):
+        am, doc = asm_mgr
+        occurrences = MagicMock()
+        occurrences.Count = 2
+        doc.Occurrences = occurrences
+
+        result = am.occurrence_move(5, 0.1, 0.0, 0.0)
+        assert "error" in result
+        assert "Invalid" in result["error"]
+
+
+# ============================================================================
+# TIER 3: OCCURRENCE ROTATE
+# ============================================================================
+
+class TestOccurrenceRotate:
+    def test_success(self, asm_mgr):
+        import math
+        am, doc = asm_mgr
+        occ = MagicMock()
+        occurrences = MagicMock()
+        occurrences.Count = 2
+        occurrences.Item.return_value = occ
+        doc.Occurrences = occurrences
+
+        result = am.occurrence_rotate(0, 0, 0, 0, 0, 0, 1, 90)
+        assert result["status"] == "rotated"
+        assert result["angle_degrees"] == 90
+        # Verify angle was converted to radians
+        occ.Rotate.assert_called_once()
+        call_args = occ.Rotate.call_args[0]
+        assert abs(call_args[6] - math.radians(90)) < 0.001
+
+    def test_not_assembly(self, asm_mgr):
+        am, doc = asm_mgr
+        del doc.Occurrences
+
+        result = am.occurrence_rotate(0, 0, 0, 0, 0, 0, 1, 45)
+        assert "error" in result
+
+    def test_invalid_index(self, asm_mgr):
+        am, doc = asm_mgr
+        occurrences = MagicMock()
+        occurrences.Count = 1
+        doc.Occurrences = occurrences
+
+        result = am.occurrence_rotate(5, 0, 0, 0, 0, 0, 1, 90)
+        assert "error" in result
