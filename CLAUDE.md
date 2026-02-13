@@ -85,7 +85,7 @@ Following the MCP spec, the server exposes:
 
 ### Tool Categories (252 total)
 
-See `IMPLEMENTATION_STATUS.md` for the complete list. High-level categories:
+See `reference/TYPELIB_IMPLEMENTATION_MAP.md` for the complete list. High-level categories:
 
 1. **Connection (3)**: `connect_to_solidedge`, `get_application_info`, `quit_application`
 2. **Documents (11)**: Create (part, assembly, sheet metal), open, save, close, list, activate, undo, redo
@@ -235,7 +235,7 @@ When adding new capabilities:
 4. **Backend first**: Implement the raw COM operation in the appropriate `backends/` module (e.g., `features.py` for new feature types)
 5. **Test manually**: Use `python -i` to import and test the backend function directly, or use the diagnostic tools
 6. **Wrap as tool**: Add `@mcp.tool()` decorator wrapper in `server.py` that calls the backend manager method
-7. **Update tracking**: Update `IMPLEMENTATION_STATUS.md` to mark the tool as implemented
+7. **Update tracking**: Update `reference/TYPELIB_IMPLEMENTATION_MAP.md` to mark the tool as implemented
 8. **Add tests**: Write pytest tests in `tests/unit/` or `tests/integration/`
 9. **Update docs**: Add to README.md if it's a major user-facing feature
 
@@ -255,7 +255,7 @@ print(diagnose_document(doc))
 3. Add backend method to `backends/features.py` in the `FeatureManager` class, using exact parameter names/types from the type library
 4. Add MCP tool wrapper in `server.py` in the appropriate section (marked with comments)
 5. Follow the existing pattern: try/except, return dict with status or error
-6. Update `IMPLEMENTATION_STATUS.md` table and check off in `reference/TYPELIB_IMPLEMENTATION_MAP.md`
+6. Update `reference/TYPELIB_IMPLEMENTATION_MAP.md` - check off the tool and update counts
 
 **Checking tool count:**
 ```bash

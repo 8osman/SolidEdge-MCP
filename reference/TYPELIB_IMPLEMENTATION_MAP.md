@@ -21,6 +21,40 @@ against our current MCP tool coverage. It identifies gaps and prioritizes what t
 |      **Total **       |  869 items        | 140           |    16%    |   --      |
 |-----------------------------------------------------------------------------------|
 
+## Tool Count by Category (252 total)
+
+| Category | Count | Tools |
+|----------|-------|-------|
+| Connection | 7 | Connect, disconnect, app info, quit, is_connected, process_info, start_command |
+| Document Management | 13 | Create (part, assembly, sheet metal, draft), open, save, close, list, activate, undo, redo |
+| Sketching | 24 | Lines, circles, arcs (multiple), rects, polygons, ellipses, splines, points, constraints (9 types), fillet, chamfer, mirror, construction, hide profile, project_edge, include_edge |
+| Basic Primitives | 8 | Box (3 variants), cylinder, sphere, box cutout, cylinder cutout, sphere cutout |
+| Extrusions | 4 | Finite, infinite, thin-wall, extruded surface |
+| Revolves | 5 | Basic, finite, sync, thin-wall |
+| Cutouts | 9 | Extruded finite/through-all/through-next, revolved, normal/normal-through-all, lofted, swept, helix |
+| Rounds/Chamfers/Holes | 9 | Round (all/face), variable round, blend, chamfer (equal/unequal/angle/face), hole, hole through-all |
+| Reference Planes | 5 | Offset, normal-to-curve, angle, 3-points, mid-plane |
+| Loft | 2 | Basic, thin-wall |
+| Sweep | 2 | Basic, thin-wall |
+| Helix/Spiral | 4 | Basic, sync, thin-wall variants |
+| Construction Surfaces | 3 | Revolved surface, lofted surface, swept surface |
+| Sheet Metal | 8 | Base flange/tab, lofted flange, web network, advanced variants |
+| Body Operations | 9 | Add body, thicken, mesh, tag, construction, delete holes, delete blends |
+| Simplification | 4 | Auto-simplify, enclosure, duplicate |
+| View/Display | 7 | Orientation, zoom, display mode, background color, get/set camera |
+| Variables | 5 | Get all, get by name, set value, add variable, query/search |
+| Custom Properties | 3 | Get all, set/create, delete |
+| Body Topology | 3 | Body faces, body edges, face info |
+| Performance | 2 | Set performance mode, recompute |
+| Query/Analysis | 25 | Mass properties, bounding box, features, measurements, facet data, solid bodies, modeling mode, face/edge info, colors, angles, volume, delete feature, material table, feature dimensions, material list/set/property |
+| Feature Management | 6 | Suppress, unsuppress, face rotate (2), draft angle, convert feature type |
+| Export | 10 | STEP, STL, IGES, PDF, DXF, flat DXF, Parasolid, JT, drawing, screenshot |
+| Assembly | 24 | Place, list, constraints, patterns, suppress, BOM, structured BOM, interference, bbox, relations, doc tree, replace, delete, visibility, color, transform, count, move, rotate |
+| Draft/Drawing | 11 | Sheets (add, activate, delete, rename), views, annotations (dimension, balloon, note, leader, text box), parts list |
+| Part Features | 10 | Dimple, etch, rib, lip, drawn cutout, bead, louver, gusset, thread, slot, split |
+| Diagnostics | 2 | API and feature inspection |
+| Select Set | 3 | Get selection, clear selection, add to selection |
+
 ## Part 1: Part Feature Collections (Part.tlb)
 
 ### Legend
@@ -621,6 +655,17 @@ Key interfaces for precise geometry queries:
 
 ---
 
+## Known Limitations
+
+1. **Assembly constraints** require face/edge geometry selection which is complex to automate via COM
+2. **Feature patterns** (model.Patterns) require SAFEARRAY(IDispatch) marshaling that fails in late binding
+3. **Shell/Thinwalls** requires face selection for open faces, not automatable via COM
+4. **Cutout via models.Add*Cutout** does NOT work - must use collection-level methods (ExtrudedCutouts.AddFiniteMulti)
+5. **Mirror copy** creates feature tree entry but no geometry via COM (partially broken)
+6. **Extrude thin wall/infinite** via models.AddExtrudedProtrusionWithThinWall has unknown extra params
+
+---
+
 ## Part 6: Priority Implementation Roadmap
 
 ### Tier 1: HIGH IMPACT, LIKELY FEASIBLE (14 tools) - ✅ 12/14 IMPLEMENTED
@@ -799,3 +844,37 @@ AddCutoutByTwoPoints(x1: VT_R8, y1: VT_R8, z1: VT_R8,
 Add(Profile: VT_DISPATCH, FaceToEmboss: VT_DISPATCH,
     EmbossType: FeaturePropertyConstants, ...) -> EmbossFeature*
 ```
+
+---
+
+## Appendix: Future Server Refactoring
+
+### Problem
+`server.py` is a monolith of ~4300 lines containing all 252 `@mcp.tool()` wrappers. This is a significant context sink for LLMs and hard to maintain.
+
+### Proposed Solution
+1. **Modularize** tool definitions into `src/solidedge_mcp/tools/` (connection.py, documents.py, sketching.py, etc.)
+2. **Dynamic registration** via `mcp.add_tool(func)` in `tools/__init__.py`
+3. **Thin entry point**: `server.py` becomes <100 lines (init FastMCP + call `register_tools`)
+
+### Target Structure
+```
+src/solidedge_mcp/
+├── server.py              <-- Thin entry point (< 100 lines)
+├── tools/                 <-- Modular tool definitions
+│   ├── __init__.py        <-- register_tools(mcp) function
+│   ├── connection.py
+│   ├── documents.py
+│   ├── sketching.py
+│   ├── features.py
+│   ├── assembly.py
+│   ├── query.py
+│   ├── export.py
+│   └── diagnostics.py
+└── backends/              <-- EXISTING: Core logic (unchanged)
+```
+
+### Notes
+- `mcp.add_tool` method confirmed available on FastMCP
+- Existing unit tests verify `backends` logic and should pass without modification
+- A verification script will confirm all tools register correctly after refactoring
