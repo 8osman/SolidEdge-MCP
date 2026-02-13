@@ -1,0 +1,1513 @@
+====================================================================================================
+DETAILED METHODS FOR TOP 30: Program/framewrk.tlb
+====================================================================================================
+
+1. Application
+   Total: 157 (81 methods + 76 properties)
+
+   Methods (81):
+      AbortCommand
+      Activate
+      AddNote
+      ArrangeWindows
+      BiDM_RegisterCustomProps
+      ClearMRU
+      CloseNoteLibrary
+      CommandEnabled
+      ConvertByFilePath
+      CreateCommand
+      CreateONNXModelsForAIAutomaticDrawingCreation
+      CreateSEDocumentFromForeignFile
+      CreateSEDocumentFromTDMAuto
+      CreateSEDraftDocFromDXFAuto
+      CreateSecurityString
+      DisableBuilInDataMgmt
+      DisableEventsForGivenAddIn
+      DoIdle
+      EnableEventsForGivenAddIn
+      ExtractDataForAIAutomaticDrawingCreation
+      FindFile
+      FindSEDocumentsContainingText
+      FindWhereUsedDocuments
+      GenerateMasterImportListForDataPrep
+      GenerateSourceImportListForDataPrep
+      GetActiveCommand
+      GetCountOfOpenModelsInFemap
+      GetDefaultTemplatePath
+      GetDirectoryName
+      GetDocNameFormulaForFile
+      GetDraftPrintUtility
+      GetGlobalParameter
+      GetLatestRevision
+      GetListOfTopLevelAssembliesFromFolder
+      GetMaterialTable
+      GetNextDocumentNumbers
+      GetOpenFileName
+      GetOpenFileNameWithOptions
+      GetRevisionLinkInfo
+      GetRevisionsHistory
+      GetRuntimeDebugValue
+      GetSaveAsFileName
+      GetSavedNote
+      GetSavedNoteList
+      GetSolidEdgeWorkflowInformation
+      GetSysColor
+      GetTemplateFileName
+      GetTopLevelAssemblyFileNames
+      Get_Set_FileNamingRule
+      Get_Set_UseBiDM_SEOption
+      LicenseCheck
+      MailLogoff
+      MailLogon
+      OpenDraft
+      OpenNoteLibrary
+      PerformSolidEdgeWorkflow
+      Publish3DPDF
+      Publish3DPDFEx
+      QuerySystemInformation
+      Quit
+      ReplaceReference
+      ResetConfigFile
+      ResumeMRU
+      RunMacro
+      SEAdminUpdate
+      SEGetFileVersionInfo
+      SearchDocuments
+      SetAddInInterfaces
+      SetBIDMATPInfo
+      SetBuiltInATPRunningFlagAndATPID
+      SetDefaultTemplatePath
+      SetGlobalParameter
+      SetMessageForBIDMCPD
+      SetOLERequestPendingTimeout
+      SetOLEServerBusyTimeout
+      SetRuntimeDebugValue
+      SetValuesForBIDMCPD
+      ShowCommand
+      StartCommand
+      SuspendMRU
+      WriteDocumentFormulaIntoXML
+
+   Properties (76):
+      ActiveDocument
+      ActiveDocumentType
+      ActiveEnvironment
+      ActiveFramehWnd
+      ActiveObject
+      ActivePrinter
+      ActiveSelectSet
+      ActiveStatusBarPart
+      ActiveWindow
+      AddIns
+      AppDataFolder
+      Application
+      ApplicationEvents
+      ApplicationV8AfterDocumentOpenEvent
+      ApplicationWindowEvents
+      ApprenticeMode
+      BeforeFileSaveAsEvents
+      BiDMEvents
+      Caption
+      CommandPredictionLearningMode
+      Customization
+      DefaultFilePath
+      DelayCompute
+      DisplayAlerts
+      DisplayFullScreen
+      DisplayRecentFiles
+      DisplayRecentFilesCount
+      Documents
+      DynamicVisualization
+      EdgeBarVisible
+      EnableStereo
+      Environments
+      FeatureLibraryEvents
+      FeatureSelectedFromPFEvents
+      FileUIEvents
+      Height
+      Insight
+      Interactive
+      IsIdling
+      Left
+      LicenseHandle
+      LicenseType
+      MailSession
+      Name
+      NewFileUIEvents
+      OpenNonSolidEdgeFileUIEvents
+      Parent
+      ProcessID
+      RegistryPath
+      ResolveLink
+      SEECEvents
+      SESPEvents
+      SaveAllSelection
+      ScreenUpdating
+      ShortcutMenuEvents
+      ShowStartupScreen
+      SoldToID
+      SolidEdgeInsightXT
+      SolidEdgeTCE
+      StatusBar
+      StatusBarDelayUpdate
+      StatusBarHeight
+      StatusBarPartCount
+      StatusBarPartWidth
+      StatusBarVisible
+      Top
+      UsableHeight
+      UsableWidth
+      UserName
+      Value
+      Version
+      Visible
+      Width
+      WindowState
+      Windows
+      hWnd
+
+2. FaceStyle
+   Total: 118 (49 methods + 69 properties)
+
+   Methods (49):
+      BeginPropertyBuffer
+      ClearPointProperties
+      ClearSurfaceProperties
+      ClearWireframeProperties
+      Delete
+      DeleteSkybox
+      Detach
+      FlushPropertyBuffer
+      GetAmbient
+      GetBumpmapOffset
+      GetBumpmapScale
+      GetDiffuse
+      GetEmission
+      GetMaterial
+      GetPointColor
+      GetPointOptions
+      GetShaderData
+      GetSkyboxOrientation
+      GetSkyboxSideFilename
+      GetSpecular
+      GetTextureOffset
+      GetTextureScale
+      GetTextureTransparentColor
+      GetVersion
+      GetWireframeColor
+      HasPointProperties
+      HasSurfaceProperties
+      HasWireframeProperties
+      ResetSkyboxOrientation
+      SetAmbient
+      SetBumpmapOffset
+      SetBumpmapScale
+      SetDiffuse
+      SetEmission
+      SetMaterial
+      SetPointColor
+      SetPointOptions
+      SetShaderData
+      SetSkyboxOrientation
+      SetSkyboxSideFilename
+      SetSkyboxSkyFile
+      SetSpecular
+      SetTextureOffset
+      SetTextureScale
+      SetTextureTransparentColor
+      SetVersion
+      SetWireframeColor
+      SkyboxClear
+      SkyboxClearAll
+
+   Properties (69):
+      AcceptsShadows
+      AmbientBlue
+      AmbientGreen
+      AmbientRed
+      AttributeSets
+      AutomaticShaderType
+      BumpmapFileName
+      BumpmapHeight
+      BumpmapInvert
+      BumpmapMirrorX
+      BumpmapMirrorY
+      BumpmapOffsetX
+      BumpmapOffsetY
+      BumpmapRotation
+      BumpmapScaleX
+      BumpmapScaleY
+      BumpmapUnits
+      CastsShadows
+      DiffuseBlue
+      DiffuseGreen
+      DiffuseRed
+      EmissionBlue
+      EmissionGreen
+      EmissionRed
+      Flags
+      IsAttributeSetPresent
+      LineWidth
+      Material
+      Opacity
+      Parent
+      PointSize
+      PointSizeSpace
+      Reflectivity
+      Refraction
+      RenderModeType
+      ShaderType
+      Shininess
+      SkyboxAltitude
+      SkyboxAzimuth
+      SkyboxConeAngle
+      SkyboxRoll
+      SkyboxType
+      SpecularBlue
+      SpecularGreen
+      SpecularRed
+      StipplePattern
+      StippleScale
+      StyleID
+      StyleName
+      TextureFileName
+      TextureFileNameEx
+      TextureMirrorX
+      TextureMirrorY
+      TextureOffsetX
+      TextureOffsetY
+      TextureRotation
+      TextureScaleX
+      TextureScaleY
+      TextureTransparent
+      TextureTransparentColorBlue
+      TextureTransparentColorGreen
+      TextureTransparentColorRed
+      TextureUnits
+      TextureWeight
+      Type
+      WidthSpace
+      WireframeColorBlue
+      WireframeColorGreen
+      WireframeColorRed
+
+3. SolidEdgeTCE
+   Total: 103 (103 methods + 0 properties)
+
+   Methods (103):
+      AddOrRemoveItemsToOrFromProjects
+      AssignItemID
+      AssignItemIDAndRevUsingPatterns
+      AutoAssign
+      CheckBomStructure
+      CheckBomStructureUsingKeyProperties
+      CheckInDocumentsToTeamCenterServer
+      CheckInDocumentsToTeamCenterServerEx
+      CheckInStdPartsToTeamcenter
+      CheckOutDocumentsFromTeamCenterServer
+      CheckOutDocumentsFromTeamCenterServerUsingKeyProperties
+      CloneDraftDocument
+      CreateBOMAndRelations
+      CreateNewProject
+      CreateZipOfCache
+      DeleteAllProjects
+      DeleteFilesFromCache
+      DeleteProject
+      DoesTeamCenterFileExists
+      DoesTeamCenterFileExistsUsingKeyProperties
+      DownladDocumentsFromServerWithOptions
+      DownloadDocumentsFromServerWithOptionsUsingKeyProperties
+      DownloadDocumentsFromServerWithOptionsUsingKeyPropertiesEx
+      ExecuteWorkflow
+      ExtractTranslatedFiles
+      ExtractTranslatedFilesOfActiveDocument
+      GetActiveDocumentFilename
+      GetActivePDMMode
+      GetAllRevisions
+      GetBOMProperties
+      GetBomStructure
+      GetBomStructureUsingKeyProperties
+      GetCurrentUserName
+      GetDatasetNameFromCookie
+      GetDocumentUID
+      GetDocumentUIDEx
+      GetErrorMessages
+      GetFamilyOfAssemblyMembers
+      GetFamilyOfAssemblyMembersOfActiveDocument
+      GetItemIDAndRevisionPatterns
+      GetItemRevBasedOnSEType
+      GetItemTypesInfo
+      GetItemTypesInfoEx
+      GetListOfFilesFromTeamcenterServer
+      GetListOfFilesFromTeamcenterServerUsingKeyProperties
+      GetListOfFilesUnderItemRevision
+      GetListOfIndirectFilesForGivenFile
+      GetListOfIndirectFilesForGivenFileUsingKeyProperties
+      GetListOfWorkflows
+      GetMFKAttributesAndItemTypeForGivenFile
+      GetMFKAttributesForGivenItemType
+      GetMappedPropertiesForGivenFile
+      GetMappedPropertiesForGivenFileUsingKeyProperties
+      GetOutOfDateDocuments
+      GetPDMCachePath
+      GetProjectsForGivenItemIDs
+      GetProjectsForLoggedInUSer
+      GetRequiredPDMProperties
+      GetSEECOrTCPreferenceValues
+      GetSmartCodes
+      GetSolidEdgePreferencePath
+      GetStorageNameForProperties
+      GetTALLogFileName
+      GetTCSaveAsTranslationMBDPrefValues
+      GetTCSaveAsTranslationPrefValues
+      GetTCSaveAsTranslationPrefValuesEx
+      GetTeamCenterMode
+      GetTeamcenterDefaultItemTypePreference
+      GetTeamcenterInformation
+      GetTeamcenterVersion
+      GetUserLogMessages
+      GetWhereUsedInfo
+      GetWhereUsedInfoForPublishedActiveFamilyOfAssemblyDocument
+      GetWhereUsedInfoForPublishedFamilyOfAssembly
+      ImportDocumentsToServer
+      IsItemTypeSmartCodesConfigured
+      IsTeamCenterFileCheckedOut
+      MapMFKAttributtesToFileProperties
+      OnGetWhereUsedForAutomation
+      OnGetWhereUsedForAutomationUsingKeyProperties
+      OnSynchronizeFile
+      OnUndoCheckOutDocuments
+      OnUndoCheckOutDocumentsEx
+      PublishFamilyOfAssemblyMembers
+      PublishMembersOfActiveFamilyOfAssemblyDocument
+      PutItemTypeAsCustomProp
+      ReviseToTeamCenter
+      ReviseToTeamCenterUsingKeyProperties
+      SaveAsToTeamCenter
+      SaveAsToTeamCenterUsingKeyProperties
+      SetPDMProperties
+      SetPDMPropsAndUploadTranslatedFile
+      SetSEECOptions
+      SetTeamCenterMode
+      UnGetSmartCodes
+      UpdateStatusInformation
+      UploadModelViewsOfActiveAssemblyDocument
+      ValidateKeyProperties
+      ValidateLogin
+      ValidateLogin_TCCS
+      ValidateTcObjectModel
+      ValidateTcObjectModelUsingKeyProperties
+      VerifyFileExistenceOnTC
+
+4. View
+   Total: 93 (60 methods + 33 properties)
+
+   Methods (60):
+      AddFrameToMovie
+      ApplyNamedView
+      AreaZoomCamera
+      BeginCameraDynamics
+      BeginMovieRecording
+      ClearRotationFocus
+      CreateMovieRecorder
+      CreateUserRange
+      DeleteUserRange
+      DestroyMovieRecorder
+      EndCameraDynamics
+      EndMovieRecording
+      Fit
+      GetAttribute
+      GetAvailableMovieCodecs
+      GetCamera
+      GetCameraEx
+      GetCounter
+      GetDisplayDepths
+      GetModelRange
+      GetRotationFocus
+      GetSectionPlanes
+      GetSectionPlanesParams
+      GetUserRange
+      Locate
+      ModelToDC
+      ModelToView
+      OrientCamera
+      OrientCameraEx
+      PanCamera
+      RangeZoomCamera
+      RefreshView
+      RotateCamera
+      SaveAsImage
+      SaveCurrentView
+      SetAttribute
+      SetCamera
+      SetCameraEx
+      SetCustomMovieResolution
+      SetDisplayDepths
+      SetMovieResolution
+      SetRenderMode
+      SetRotationAxis
+      SetRotationFocus
+      SetRotationPoint
+      SetSectionPlanes
+      SetSectionPlanesParams
+      SetUserRange
+      ShowDrawDC
+      SwapBuffers
+      TransformDCToModel
+      TransformGLProjectionToView
+      TransformModelToDC
+      TransformModelToView
+      TransformViewToGLProjection
+      TransformViewToModel
+      Update
+      UserRangeZoomCamera
+      ViewToGLProjection
+      ZoomCamera
+
+   Properties (33):
+      AnimationEvents
+      CullingEnabled
+      DisplayEnabled
+      DisplayEvents
+      DrawDC
+      GDIBufferModified
+      GLDisplayEvents
+      MovieAuthor
+      MovieAuthorURL
+      MovieBitRate
+      MovieCodec
+      MovieCopyright
+      MovieDescription
+      MovieFrameRate
+      MovieQuality
+      MovieSubTitle
+      MovieTitle
+      RenderEvents
+      RenderModeType
+      SectionPlanesEnabled
+      SectionPlanesOptions
+      SharpenLevel
+      SharpnessLevel
+      SharpnessLevelCount
+      SilhouettesEnabled
+      StereoAngle
+      StereoDeviation
+      StereoEnabled
+      Style
+      StyleFallbackEnabled
+      ViewEvents
+      ViewStyle
+      Window
+
+5. ViewStyle
+   Total: 70 (32 methods + 38 properties)
+
+   Methods (32):
+      AddLight
+      BeginPropertyBuffer
+      Delete
+      DeleteLight
+      DeleteSkybox
+      FlushPropertyBuffer
+      GetAnalysisParameters
+      GetGradientBackground
+      GetGradientColor
+      GetLight
+      GetLightColor
+      GetLightFlags
+      GetLightIntensity
+      GetLightPhi
+      GetLightTheta
+      GetSkyboxOrientation
+      GetSkyboxSideFilename
+      ResetSkyboxOrientation
+      SetAnalysisParameters
+      SetGradientBackground
+      SetGradientColor
+      SetLight
+      SetLightColor
+      SetLightFlags
+      SetLightIntensity
+      SetLightPhi
+      SetLightTheta
+      SetSkyboxOrientation
+      SetSkyboxSideFilename
+      SetSkyboxSkyFile
+      SkyboxClear
+      SkyboxClearAll
+
+   Properties (38):
+      AllowOverrides
+      AmbientBlue
+      AmbientColor
+      AmbientGreen
+      AmbientIntensity
+      AmbientRed
+      AmbientShadows
+      AntialiasLevel
+      AntialiasSurface
+      AntialiasWireframe
+      BackgroundImageFile
+      BackgroundMirrorX
+      BackgroundMirrorY
+      BackgroundType
+      Bumpmaps
+      CastShadows
+      DepthFading
+      DimPercentage
+      DropShadow
+      FloorReflection
+      FloorShadow
+      FocalLength
+      HiddenLineMode
+      HiddenLines
+      HighQuality
+      IsBackgroundImageDisplayed
+      NumLights
+      Parent
+      Perspective
+      Reflections
+      RenderMode
+      RenderModeType
+      Silhouettes
+      SilhouettesEnabled
+      SkyboxType
+      StyleID
+      StyleName
+      Textures
+
+6. MatTable
+   Total: 59 (59 methods + 0 properties)
+
+   Methods (59):
+      AddCustomProperty
+      AddMaterial
+      AddMaterialToFavorites
+      AddMaterialToLibrary
+      ApplyGageFromGageTableToDoc
+      ApplyGageFromGageTableToInternalComponents
+      ApplyGageFromLibraryToDoc
+      ApplyGageFromLibraryToInternalComponents
+      ApplyMaterial
+      ApplyMaterialToDoc
+      ApplyMaterialToFile
+      ApplyMaterialToInternalComponents
+      ClearMRUList
+      CreateNewDirectory
+      CreateNewMaterialLibrary
+      DeleteCustomProperty
+      DeleteDirectory
+      DeleteMaterial
+      DeleteMaterialFromLibrary
+      EditOpenGageExcelFile
+      ExportMaterialDataToFile
+      GetCountOfCustomProperties
+      GetCurrentGageName
+      GetCurrentMaterialName
+      GetCustomMaterialPropertyFromDoc
+      GetCustomMaterialPropertyFromLibrary
+      GetDefaultGageFileName
+      GetFavoriteMaterialList
+      GetMRUMaterialLimit
+      GetMRUMaterialList
+      GetMatLibFileName
+      GetMatPropValue
+      GetMaterialLibraryFileList
+      GetMaterialLibraryList
+      GetMaterialList
+      GetMaterialListFromLibrary
+      GetMaterialPropValueFromDoc
+      GetMaterialPropValueFromLibrary
+      GetMaterialsFolderPath
+      GetNeutralFactor
+      GetOODStatusofMaterialAndGage
+      GetPSMGaugeInfoForDoc
+      GetPSMGaugeListFromExcel
+      ImportMaterialDataFromFile
+      PerformGageDataValidation
+      RenameDirectory
+      RenameLibrary
+      RenameMaterial
+      SetActiveDocument
+      SetDocumentToGageTableAssociation
+      SetMRUMaterialLimit
+      SetMatPropValue
+      SetMaterialPropValueToLibrary
+      SetMaterialToGageTableAssociation
+      SetMaterialsFolderPath
+      UpdateOODMaterialAndGageProperties
+      UseNeutralFactorFromExcel
+      WriteMatLibFileFromXML
+      WriteMaterialDataToXML
+
+7. Insight
+   Total: 57 (57 methods + 0 properties)
+
+   Methods (57):
+      CheckInAllCheckedOutDocumentsInCache
+      CheckInDocumentsToServer
+      CheckOutDocumentsFromServer
+      CheckSupport
+      ClearCache
+      CreateFolder
+      DeleteDocumentsFromCache
+      DeleteDocumentsFromServer
+      DeleteFolder
+      DisplayPropertyManagerDlg
+      DisplaySEPackNGoDlg
+      DoesUserHaveAdminRights
+      DownloadDocumentFromServer
+      DownloadDocumentFromServerWithAllLinks
+      EnableDeveloperLog
+      ExportDocumentsFromServer
+      FileExists
+      FindWhereUsedOnServer
+      FolderExists
+      GetCachePath
+      GetCookieData
+      GetDirs
+      GetDocState
+      GetFilePropertiesFromServer
+      GetFiles
+      GetIndirectFilesTree
+      GetLWFPathForUrl
+      GetLastInsightTransactionMessages
+      GetOutOfDateDocuments
+      GetRevisedFrom
+      GetSharePointServerType
+      GetUserRights
+      GetUserRole
+      ISDocumentParserEnabled
+      ImportDocumentsToServer
+      IsDocumentLibraryContainsRequiredProperty
+      IsFileCheckedOut
+      IsFileCheckedOutToSameUser
+      IsInsightSupported
+      IsVersioningEnabledForTheInputDocLib
+      MoveAllDocumentsThroughWorkFlow
+      MoveDocumentsThroughWorkFlow
+      PutUserNameAndPasswordIntoCache
+      RemoveAllFilesFromRecycleBin
+      RestoreAllFilesFromRecycleBin
+      SetFilePropertiesOnServer
+      SetInsightATPInfo
+      SetInsightATPRunning
+      SetInsightOfflineMode
+      SetInsightUserNamePassword
+      ShowRevisionsForServerDocument
+      SynchronizeAllDocumentsInCache
+      SynchronizeDocumentsInCache
+      UndoCheckOutDocumentsFromServer
+      UploadDocumentsToServer
+      UsePathAsDefaultFolderMapPath
+      ValidateDocsOnLCA
+
+8. Symbol2d
+   Total: 55 (24 methods + 31 properties)
+
+   Methods (24):
+      BringForward
+      BringToFront
+      ConvertToGroup
+      Copy
+      Cut
+      Delete
+      DoVerb
+      Duplicate
+      GetKeyPoint
+      GetOrigin
+      GetRotations
+      Mirror
+      Move
+      ObjectVerbs
+      Range
+      Rotate
+      Scale
+      Select
+      SendBackward
+      SendToBack
+      SetKeyPoint
+      SetOrigin
+      SetRotations
+      Update
+
+   Properties (31):
+      AlternatePath
+      Angle
+      Application
+      AttributeSets
+      Class
+      ContentsLocatable
+      DisplayType
+      Document
+      Index
+      IsAttributeSetPresent
+      Key
+      KeyPointCount
+      Layer
+      MemberReference
+      Name
+      NestedDisplay
+      OLEType
+      Object
+      ObjectVerbsCount
+      Parent
+      Quantity
+      ScaleFactor
+      ScaleFactorLock
+      SourceDoc
+      SourceDocument
+      Style
+      Type
+      UpdateOptions
+      UseSymbolLayer
+      User
+      ZOrder
+
+9. SolidEdgeDocument
+   Total: 53 (22 methods + 31 properties)
+
+   Methods (22):
+      Activate
+      Close
+      CreatePreview
+      EditProperties
+      GetRegisteredCustomPropertiesBiDM
+      ImportStyles2
+      NewWindow
+      PrintOut
+      ReviseBIDM
+      ReviseWithCustomPropertiesBIDM
+      Save
+      SaveAs
+      SaveAs3DPrint
+      SaveAsBIDM
+      SaveAsJT
+      SaveAsPLMXML
+      SaveAsPRC
+      SaveAsWithCustomPropertiesBIDM
+      SaveCopyAs
+      SeekReadOnlyAccess
+      SeekWriteAccess
+      SendMail
+
+   Properties (31):
+      ActiveSketch
+      AddInsStorage
+      Application
+      AttributeQuery
+      Blocks
+      CreatedVersion
+      Dirty
+      DocumentEvents
+      FullName
+      GetPredefineRelationProducer
+      HighlightSets
+      InPlaceActivated
+      IsInsightFile
+      IsTemplate
+      LastSavedVersion
+      Name
+      NamedViews
+      Parent
+      Path
+      Properties
+      ReadOnly
+      RootStorage
+      RoutingSlip
+      SelectSet
+      Status
+      SummaryInfo
+      Type
+      UndoSteps
+      UnitsOfMeasure
+      Variables
+      Windows
+
+10. variable
+   Total: 51 (35 methods + 16 properties)
+
+   Methods (35):
+      AddDiscreteValue
+      AddDiscreteVariables
+      BreakExternalLink
+      ClearLimitsOrDiscreteValues
+      Delete
+      FreezeExternalLink
+      GetComment
+      GetDiscreteValues
+      GetDiscreteVariables
+      GetExternalLinkInfo
+      GetRange
+      GetRangeEx
+      GetValue
+      GetValueDiscreteValues
+      GetValueEx
+      GetValueOutOfRange
+      GetValueRangeHighValue
+      GetValueRangeLowValue
+      GetValueRangeValues
+      HasExternalLink
+      HasVariableLimit
+      IsExternalLinkFrozen
+      RemoveDiscreteValue
+      RemoveDiscreteVariables
+      SetComment
+      SetDiscreteValues
+      SetRange
+      SetRangeEx
+      SetValue
+      SetValueDiscreteValues
+      SetValueEx
+      SetValueRangeHighValue
+      SetValueRangeLowValue
+      SetValueRangeValues
+      ThawExternalLink
+
+   Properties (16):
+      AttributeSets
+      DisplayName
+      Expose
+      ExposeName
+      Formula
+      IsAttributeSetPresent
+      IsReadOnly
+      IsSuppressVariable
+      Name
+      Properties
+      SystemName
+      Type
+      UnitsType
+      Value
+      VariableTableName
+      VariableType
+
+11. SolidEdgeInsightXT
+   Total: 50 (50 methods + 0 properties)
+
+   Methods (50):
+      AddOrRemoveItemsToOrFromProjects
+      AssignItemID
+      CheckBomStructure
+      CheckInDocumentsToInsightXTServer
+      CheckInDocumentsToInsightXTServerEx
+      CheckOutDocumentsFromInsightXTServer
+      CreateNewProject
+      DeleteAllProjects
+      DeleteFilesFromCache
+      DeleteProject
+      DoesInsightXTFileExists
+      DownladDocumentsFromServerWithOptions
+      GetBomStructure
+      GetDatasetNameFromCookie
+      GetDocumentUID
+      GetInsightXTMode
+      GetInsightXTOrTCPreferenceValues
+      GetItemContentTypesSupportingRevisioning
+      GetItemRevBasedOnSEType
+      GetItemTypesInfo
+      GetListOfFilesFromInsightXTServer
+      GetListOfIndirectFilesForGivenFile
+      GetMappedPropertiesForGivenFile
+      GetOutOfDateDocuments
+      GetPDMCachePath
+      GetProjectsForGivenItemIDs
+      GetProjectsForLoggedInUSer
+      GetSmartCodes
+      GetTALLogFileName
+      GetUserLogMessages
+      ImportDocumentsToServer
+      IsInsightXTFileCheckedOut
+      IsInsightXTLicenseAvailable
+      IsItemTypeSmartCodesConfigured
+      OnGetWhereUsedForAutomation
+      OnSynchronizeFile
+      OnUndoCheckOutDocuments
+      ProcessUpdateDrawing
+      PutContentTypeIntoStorage
+      PutItemTypeAsCustomProp
+      ReviseToInsightXT
+      SESPGetActiveUrl
+      SESPUpdateWFCallouts
+      SESP_GetItemAndRevisionNo
+      SaveAsToInsightXT
+      SetInsightXTMode
+      UnGetSmartCodes
+      UpdateStatusInformation
+      ValidateLogin
+      ValidateTcObjectModel
+
+12. HatchPatternStyle
+   Total: 45 (34 methods + 11 properties)
+
+   Methods (34):
+      AddHatch
+      AddHatchWithOption
+      GetColor
+      GetDashGap
+      GetDashType
+      GetElementType
+      GetHatch
+      GetHatchWithOption
+      GetOrigin
+      GetRadialElementAxisRatio
+      GetRadialElementCenterLocation
+      GetRotation
+      GetShift
+      GetSpacing
+      GetWidth
+      RemoveHatch
+      SetColor
+      SetDashGap
+      SetDashType
+      SetDisplayIndex
+      SetElementType
+      SetHatch
+      SetHatchWithOption
+      SetMasterColor
+      SetMasterWidth
+      SetOrigin
+      SetRadialElementAxisRatio
+      SetRadialElementCenterLocation
+      SetRotation
+      SetShift
+      SetSourceColor
+      SetSourceWidth
+      SetSpacing
+      SetWidth
+
+   Properties (11):
+      AttributeSets
+      Count
+      DashGapCount
+      IsAttributeSetPresent
+      MasterRotation
+      MasterScale
+      Name
+      Parent
+      SourceRotation
+      SourceScale
+      Units
+
+13. DISEMouse
+   Total: 38 (3 methods + 35 properties)
+
+   Methods (3):
+      AddToLocateFilter
+      ClearLocateFilter
+      PointOnGraphic
+
+   Properties (35):
+      DynamicsMode
+      EnabledDrag
+      EnabledMove
+      InterDocumentLocate
+      LastDownEventButton
+      LastDownEventShift
+      LastDownEventWindow
+      LastDownEventX
+      LastDownEventY
+      LastDownEventZ
+      LastEventButton
+      LastEventShift
+      LastEventType
+      LastEventWindow
+      LastEventX
+      LastEventY
+      LastEventZ
+      LastMoveEventButton
+      LastMoveEventShift
+      LastMoveEventWindow
+      LastMoveEventX
+      LastMoveEventY
+      LastMoveEventZ
+      LastUpEventButton
+      LastUpEventShift
+      LastUpEventWindow
+      LastUpEventX
+      LastUpEventY
+      LastUpEventZ
+      LocateFrontToBack
+      LocateMode
+      PathfinderLocate
+      PauseLocate
+      ScaleMode
+      WindowTypes
+
+14. Window
+   Total: 33 (8 methods + 25 properties)
+
+   Methods (8):
+      Activate
+      ActivateNext
+      ActivatePrevious
+      Close
+      DockWindow
+      FloatWindow
+      Paste
+      PrintOut
+
+   Properties (25):
+      Application
+      AttributeSets
+      Caption
+      DrawHwnd
+      Environment
+      Floating
+      Height
+      HeightEx
+      Icon
+      Index
+      IsAttributeSetPresent
+      Left
+      Parent
+      SelectSet
+      Top
+      Type
+      UsableHeight
+      UsableWidth
+      View
+      Visible
+      Width
+      WidthEx
+      WindowNumber
+      WindowState
+      hWnd
+
+15. CommandBarButton
+   Total: 31 (4 methods + 27 properties)
+
+   Methods (4):
+      Delete
+      Execute
+      Help
+      LoadFace
+
+   Properties (27):
+      Application
+      BeginGroup
+      BuiltIn
+      BuiltInFace
+      Caption
+      CommandBarButtonEvents
+      DescriptionText
+      Enabled
+      FaceId
+      Height
+      HelpContextId
+      HelpFile
+      Id
+      Index
+      Left
+      OnAction
+      ParameterText
+      Parent
+      ShortcutText
+      State
+      Style
+      Tag
+      TooltipText
+      Top
+      Type
+      Visible
+      Width
+
+16. CommandBarPopup
+   Total: 30 (4 methods + 26 properties)
+
+   Methods (4):
+      Delete
+      Execute
+      Help
+      LoadFace
+
+   Properties (26):
+      Application
+      BeginGroup
+      BuiltIn
+      BuiltInFace
+      Caption
+      CommandBar
+      Controls
+      DescriptionText
+      Enabled
+      FaceId
+      Height
+      HelpContextId
+      HelpFile
+      Id
+      Index
+      Left
+      OnAction
+      ParameterText
+      Parent
+      ShortcutText
+      Tag
+      TooltipText
+      Top
+      Type
+      Visible
+      Width
+
+17. CommandBarControl
+   Total: 28 (4 methods + 24 properties)
+
+   Methods (4):
+      Delete
+      Execute
+      Help
+      LoadFace
+
+   Properties (24):
+      Application
+      BeginGroup
+      BuiltIn
+      BuiltInFace
+      Caption
+      DescriptionText
+      Enabled
+      FaceId
+      Height
+      HelpContextId
+      HelpFile
+      Id
+      Index
+      Left
+      OnAction
+      ParameterText
+      Parent
+      ShortcutText
+      Tag
+      TooltipText
+      Top
+      Type
+      Visible
+      Width
+
+18. Layer
+   Total: 25 (15 methods + 10 properties)
+
+   Methods (15):
+      Activate
+      ActivateInContext
+      Delete
+      DeleteLayerAndObjects
+      HideEverywhere
+      HideInContext
+      IsLocatableInContext
+      IsShownInContext
+      MakeLocatableInContext
+      MakeNonLocatableInContext
+      MoveAllObjectsToLayer
+      ShowEverywhere
+      ShowInContext
+      ShowOnly
+      ShowOnlyInContext
+
+   Properties (10):
+      Application
+      AttributeSets
+      Description
+      IsAttributeSetPresent
+      IsEmpty
+      Key
+      Locatable
+      Name
+      Parent
+      Show
+
+19. PredefineRelationProducer
+   Total: 24 (22 methods + 2 properties)
+
+   Methods (22):
+      AddAxialRelation
+      AddConnectRelation
+      AddMateRelation
+      AddParallelRelation
+      AddPlanarRelation
+      AddPredefineRelationGroup
+      AddTangentRelation
+      ClearDefault
+      DeleteGroups
+      DeleteRelation
+      GetCaptureFitRelationCount
+      GetGroupName
+      GetGroupPolarity
+      GetRelationCount
+      GetRelationData
+      GroupCount
+      HasAssemblyCaptureFitRelation
+      MagneticGroupCount
+      SetCaptureFitDefault
+      SetGroupName
+      SetGroupPolarity
+      SetRelationData
+
+   Properties (2):
+      Application
+      DefaultGroup
+
+20. SummaryInfo
+   Total: 22 (0 methods + 22 properties)
+
+   Properties (22):
+      AccessDate
+      Application
+      Author
+      Category
+      Comments
+      Company
+      CreateApp
+      CreateDate
+      CreationLocale
+      DocumentNumber
+      Keywords
+      LastSavedBy
+      Manager
+      Parent
+      ProjectName
+      RevisionNumber
+      SaveApp
+      SaveDate
+      Subject
+      Template
+      Title
+      TotalEdits
+
+21. SectionView
+   Total: 21 (6 methods + 15 properties)
+
+   Methods (6):
+      AddToModelView
+      Delete
+      EditByPlane
+      EditByPlaneEx
+      RemoveFromModelView
+      Show
+
+   Properties (15):
+      AttributeSets
+      Caption
+      CutHardware
+      CuttingPlaneColor
+      CuttingPlaneEdgeColor
+      IsAttributeSetPresent
+      IsCutByPlane
+      IsShown
+      Name
+      Opacity
+      PlaneExtentType
+      SectionDisplayMode
+      ShowCuttingPlane
+      Style
+      ThroughAllExtent
+
+22. CommandBar
+   Total: 19 (4 methods + 15 properties)
+
+   Methods (4):
+      Delete
+      FindControl
+      Reset
+      ShowPopup
+
+   Properties (15):
+      Application
+      BuiltIn
+      Controls
+      Enabled
+      Height
+      Index
+      Left
+      Name
+      NameLocal
+      Parent
+      Position
+      Top
+      Type
+      Visible
+      Width
+
+23. RoutingSlip
+   Total: 19 (4 methods + 15 properties)
+
+   Methods (4):
+      AddRecipient
+      GetRouteInfo
+      Reset
+      Route
+
+   Properties (15):
+      Application
+      Approve
+      Approved
+      AskForApproval
+      AttributeSets
+      Delivery
+      HasRouted
+      IsAttributeSetPresent
+      Message
+      Parent
+      Recipients
+      ReturnWhenDone
+      Status
+      Subject
+      TrackStatus
+
+24. SelectSet
+   Total: 17 (13 methods + 4 properties)
+
+   Methods (13):
+      Add
+      AddAll
+      Copy
+      CopyProfile
+      Cut
+      CutProfile
+      Delete
+      Item
+      RefreshDisplay
+      Remove
+      RemoveAll
+      ResumeDisplay
+      SuspendDisplay
+
+   Properties (4):
+      Application
+      Count
+      Parent
+      Type
+
+25. Sensor
+   Total: 17 (2 methods + 15 properties)
+
+   Methods (2):
+      Delete
+      Update
+
+   Properties (15):
+      AttributeSets
+      CurrentValue
+      Description
+      DisplayType
+      IsAttributeSetPresent
+      IsInRange
+      LowerRange
+      MaximumThreshold
+      MinimumThreshold
+      Name
+      Operator
+      SensorType
+      Status
+      UpdateMechanism
+      UpperRange
+
+26. DISEApplicationEvents
+   Total: 16 (16 methods + 0 properties)
+
+   Methods (16):
+      AfterActiveDocumentChange
+      AfterCommandRun
+      AfterDocumentOpen
+      AfterDocumentPrint
+      AfterDocumentSave
+      AfterEnvironmentActivate
+      AfterNewDocumentOpen
+      AfterNewWindow
+      AfterWindowActivate
+      BeforeCommandRun
+      BeforeDocumentClose
+      BeforeDocumentPrint
+      BeforeDocumentSave
+      BeforeEnvironmentDeactivate
+      BeforeQuit
+      BeforeWindowDeactivate
+
+27. Variables
+   Total: 16 (13 methods + 3 properties)
+
+   Methods (13):
+      Add
+      AddFromClipboard
+      CopyToClipboard
+      Edit
+      EditFromClipboard
+      GetDisplayName
+      GetFormula
+      GetName
+      GetSystemName
+      Item
+      PutName
+      Query
+      Translate
+
+   Properties (3):
+      Application
+      Count
+      Parent
+
+28. Documents
+   Total: 15 (9 methods + 6 properties)
+
+   Methods (9):
+      Add
+      Close
+      CloseDocument
+      GetForeignFileConfigValue
+      Item
+      Open
+      OpenWithFileOpenDialog
+      OpenWithTemplate
+      SetForeignFileConfigValue
+
+   Properties (6):
+      Application
+      AutoCadConfigFile
+      Count
+      Parent
+      TemplateManager
+      TemplatePath
+
+29. TextStyle
+   Total: 15 (2 methods + 13 properties)
+
+   Methods (2):
+      GetLineLeading
+      SetLineLeading
+
+   Properties (13):
+      AfterSpacing
+      Alignment
+      AttributeSets
+      BeforeSpacing
+      CharStyleName
+      Description
+      IsAttributeSetPresent
+      LineSpacing
+      Name
+      NumberJustification
+      Parent
+      Tabs
+      Units
+
+30. TextCharStyle
+   Total: 15 (2 methods + 13 properties)
+
+   Methods (2):
+      GetTextSize
+      SetTextSize
+
+   Properties (13):
+      AspectRatio
+      AttributeSets
+      Color
+      Description
+      FontName
+      IsAttributeSetPresent
+      LangID
+      Name
+      Parent
+      Style
+      TextSize
+      UnderlineStyle
+      Units

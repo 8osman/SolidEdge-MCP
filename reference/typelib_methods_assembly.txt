@@ -1,0 +1,1474 @@
+====================================================================================================
+DETAILED METHODS FOR TOP 30: Program/assembly.tlb
+====================================================================================================
+
+1. AssemblyDocument
+   Total: 220 (98 methods + 122 properties)
+
+   Methods (98):
+      Activate
+      ActivateAll
+      AddMeasureVariable
+      ApplyFeatureStyleOverride
+      ArrangeDimensionsInSelectSet
+      AutoExplode
+      BeginCachedSolve
+      BindKeyToObject
+      BreakAllInterpartLinks
+      BundleOccurrences
+      CheckInterference
+      CheckInterference2
+      CheckInterference3
+      CheckInterference4
+      Close
+      CopySketch
+      CopytoPMI
+      CreateCloneComponents
+      CreateFamilyFile
+      CreateOrEditSimplifiedAssembly
+      CreatePreview
+      CreateReference
+      CreateReference2
+      DeleteSimplifiedAssembly
+      DeleteStructureCache
+      DisperseSubassembly
+      DragComponentRotation
+      DragComponentTranslation
+      EditAssembly
+      EditAssemblyWithOptions
+      EditProperties
+      EndCachedSolve
+      FreezeAllInterpartLinks
+      GenerateWireHarnessReport
+      GenerateWireReport
+      Get3dPrintInfo
+      GetAssemblyFeaturePresence
+      GetBaseStyle
+      GetCapturedRelationshipInformation
+      GetContainerDocumentAndMatrixOfIPADoc
+      GetContainerDocumentAndOccurrenceOfIPADoc
+      GetDrivenDrivingInfo
+      GetFeatureStyleOverride
+      GetGlobalParameter
+      GetInContextAssemblyNameForInterpartLinks
+      GetMissingFilesInfo
+      GetRegisteredCustomPropertiesBiDM
+      GetSimplifiedAssemblyInputs
+      GetSuppressedComponents
+      GetTopDocumentAndSubOccurrenceOfIPADoc
+      GoalSeek
+      HasInterpartLinks
+      ImportStyles
+      ImportStyles2
+      InquireElement
+      LoadUOMPreferences
+      MeasureAngle
+      MeasureAngleEx
+      MeasureDistance
+      MinimumDistance
+      NewNavigatorWindow
+      NewWindow
+      NormalDistance
+      PMI_ByModelState
+      PathfinderScrollToSelection
+      PrintOut
+      PublishInternalComponents
+      PublishVirtualComponents
+      PublishVirtualComponentsBIDM
+      Range
+      ReplaceComponents
+      ReviseBIDM
+      ReviseWithCustomPropertiesBIDM
+      RotateMultipleOccurrences
+      Save
+      SaveAs
+      SaveAsBIDM
+      SaveAsJT
+      SaveAsPRC
+      SaveAsWithCustomPropertiesBIDM
+      SaveCopyAs
+      SaveModelAs
+      SaveModelAsBiDM
+      SaveSimplifiedAssemblyAs
+      SeekReadOnlyAccess
+      SeekWriteAccess
+      SendMail
+      SetBaseStyle
+      SetGlobalParameter
+      SetSuppressComponent
+      ThawAllInterpartLinks
+      TransferOccurrences
+      TranslateMultipleOccurrences
+      UpdateAll
+      UpdateDocument
+      UpdatePathfinder
+      UpdateSimplifiedAssembly
+      UpdateStructureCache
+
+   Properties (122):
+      ActivateSimplifiedAssembly
+      ActiveConfiguration
+      ActiveSketch
+      AddInsStorage
+      Application
+      ArcSegments
+      AsmCADDirects
+      AsmRefPlanes
+      AssemblyBodies
+      AssemblyChangeEvents
+      AssemblyConfigurationChangeEvents
+      AssemblyCopies
+      AssemblyDrivenPartFeatures
+      AssemblyFamilyEvents
+      AssemblyFamilyEvents2
+      AssemblyFamilyMembers
+      AssemblyFeatures
+      AssemblyGroups
+      AssemblyMirrors
+      AssemblyModel
+      AssemblyPatterns
+      AssemblyPhysicalPropertiesChangeEvents
+      AssemblyPreview
+      AssemblyProperties
+      AssemblyRecomputeEvents
+      AttributeQuery
+      Blocks
+      CapturedRelationshipCount
+      ComponentLayouts
+      Configurations
+      Constructions
+      CoordinateSystems
+      CreatedVersion
+      CurveSegments
+      CutawaysCount
+      Decals
+      DimensionStyles
+      Dirty
+      DisplayName
+      DocumentEvents
+      EndCaps
+      ExplosionsCount
+      FaceStyles
+      FastenerSystems
+      FillStyles
+      FullName
+      GeometricVersion
+      Harnesses
+      HasCapturedRelationships
+      HasMissingFiles
+      HatchPatternStyles
+      HidePreviousLevel
+      HighlightSets
+      HoleDataCollection
+      InPlaceActivated
+      InterDocumentUpdate
+      InternalComponents
+      InterpartLinks
+      IsAssemblySimplified
+      IsFileAlternatePositionByDocument
+      IsFileFamilyByDocument
+      IsGeometricVersionDirty
+      IsInsightFile
+      IsMultiCADDriven
+      IsSimplifyStateActive
+      IsTemplate
+      ItemNumbers
+      LabelWeldDataCollection
+      LastSavedVersion
+      Layers
+      Layouts
+      LineSegments
+      LinearStyles
+      ModelingInAssembly
+      Name
+      NamedViews
+      Occurrences
+      PMI
+      Parent
+      Parts
+      Path
+      Paths
+      PerformanceMode
+      PhysicalProperties
+      Pipes
+      ProfileSets
+      ProfileUndoSteps
+      Properties
+      Queries
+      ReadOnly
+      ReferencePointClouds
+      Relations3d
+      RelationshipsSelectSet
+      RootStorage
+      RoutingSlip
+      SectionViews
+      SegmentRelations3d
+      Segments
+      SelectSet
+      Sensors
+      SimplifiedAssemblies
+      Sketches3D
+      Status
+      SteeringWheel
+      StructuralFrames
+      StudyOwner
+      SummaryInfo
+      TextCharStyles
+      TextStyles
+      Type
+      UndoSteps
+      UnitsOfMeasure
+      Variables
+      ViewStyles
+      VirtualComponentOccurrences
+      WeldmentAssembly
+      WeldmentAssemblyBeadDensity
+      WeldmentAssemblyBeadMaterial
+      Windows
+      WirePaths
+      WireRuns
+      Zones
+
+2. Occurrence
+   Total: 139 (66 methods + 73 properties)
+
+   Methods (66):
+      AddAlternateComponent
+      AddSuppressionVariable
+      ApplyFaceStyleOverride
+      BindKeyToTopology
+      CaptureRelationships
+      ClearCapturedRelationships
+      ClearUsedPartConfigurations
+      CreateTopologyReference
+      CreateTopologyReferenceToBodyOverride
+      CutLength
+      Delete
+      DeleteHoleLocation
+      DeleteSuppressionVariable
+      EndFaceEndAngle
+      FileMissing
+      FrameSaveAs
+      FrameSaveAsBiDM
+      FrameSaveAsTranslated
+      GetAdjustablePart
+      GetAllAlternateComponents
+      GetBodyInversionMatrix
+      GetExplodeMatrix
+      GetFaceStyle2
+      GetFaceStyleOverride
+      GetInterpartDrivenOccurrences
+      GetInterpartDrivingOccurrences
+      GetMatrix
+      GetNameEx
+      GetOrigin
+      GetRangeBox
+      GetReferenceKey
+      GetSectionedFacetData
+      GetSimplifiedBodies
+      GetSimplifiedBodies2
+      GetStyleNone
+      GetStyleUsePartStyle
+      GetSuppressionVariable
+      GetTransform
+      GetTube
+      GetUsedPartConfigurations
+      HasSuppressionVariable
+      IsAlternateComponent
+      IsTube
+      MakeAdjustablePart
+      MakeWritable
+      Mirror
+      MiterCut
+      Move
+      PutMatrix
+      PutOrigin
+      PutStyleNone
+      PutStyleUsePartStyle
+      PutTransform
+      Range
+      RecheckMissingFile
+      RemoveAllAlternateComponents
+      RemoveAlternateComponent
+      RemoveOverrideBody
+      Replace
+      ResetName
+      RetrieveHoleLocation
+      Rotate
+      Select
+      SetUsedPartConfigurations
+      SideFaceEndAngle
+      SwapFamilyMember
+
+   Properties (73):
+      Activate
+      Adjustable
+      Application
+      AttributeSets
+      Body
+      CoordinateSystemsVisible
+      CustomPropertyValue
+      DisplayAnnotations
+      DisplayAsLastSaved
+      DisplayAsReference
+      DisplayCenterline
+      DisplayConstrCurves
+      DisplayConstructions
+      DisplayCoordinateSystems
+      DisplayDesignBody
+      DisplayDimensions
+      DisplayInDrawings
+      DisplayInSubAssembly
+      DisplayLiveSections
+      DisplayReferenceAxes
+      DisplayReferencePlanes
+      DisplaySketches
+      FaceStyle
+      HasBodyOverride
+      HasNongraphicQuantity
+      HasUserDefinedName
+      IncludeInBom
+      IncludeInInterference
+      IncludeInPhysicalProperties
+      Index
+      InternalComponent
+      IsAdjustablePart
+      IsAttributeSetPresent
+      IsCopy
+      IsFamilyOfAssembly
+      IsFamilyOfParts
+      IsFastenerSystemItem
+      IsForeign
+      IsInternalComponent
+      IsNongraphic
+      IsPatternItem
+      IsPatterned
+      IsPipeFitting
+      IsPipeSegment
+      IsStructuralFrameItem
+      IsWire
+      ItemNumber
+      Locatable
+      Name
+      NodeType
+      NongraphicDescription
+      NongraphicPrecision
+      NongraphicQuantity
+      OccurrenceDocument
+      OccurrenceFileName
+      OccurrenceID
+      Parent
+      PartDocument
+      PartFileName
+      Quantity
+      ReferenceOnly
+      ReferencePlanesVisible
+      Relations3d
+      SketchesVisible
+      Status
+      Style
+      SubOccurrences
+      Subassembly
+      SubassemblyBodies
+      TopLevelDocument
+      Type
+      UseSimplified
+      Visible
+
+3. SubOccurrence
+   Total: 80 (31 methods + 49 properties)
+
+   Methods (31):
+      ApplyFaceStyleOverride
+      BindKeyToTopology
+      ClearUsedPartConfigurations
+      CreateTopologyReference
+      CreateTopologyReferenceToBodyOverride
+      FileMissing
+      GetAdjustablePart
+      GetBodyInversionMatrix
+      GetExplodeMatrix
+      GetFaceStyle2
+      GetFaceStyleOverride
+      GetInterpartDrivenOccurrences
+      GetInterpartDrivingOccurrences
+      GetMaterial
+      GetMatrix
+      GetNameEx
+      GetRangeBox
+      GetReferenceKey
+      GetSectionedFacetData
+      GetSimplifiedBodies
+      GetStyleNone
+      GetStyleUsePartStyle
+      GetUsedPartConfigurations
+      MakeAdjustablePart
+      PutMatrix
+      PutStyleNone
+      PutStyleUsePartStyle
+      Range
+      RecheckMissingFile
+      RemoveOverrideBody
+      SetUsedPartConfigurations
+
+   Properties (49):
+      Adjustable
+      Application
+      Body
+      CoordinateSystemsVisible
+      CustomPropertyValue
+      DisplayAnnotations
+      DisplayAsDraftReference
+      DisplayAsLastSaved
+      DisplayCenterline
+      DisplayConstrCurves
+      DisplayConstructions
+      DisplayCoordinateSystems
+      DisplayDesignBody
+      DisplayDimensions
+      DisplayLiveSections
+      DisplayReferenceAxes
+      DisplayReferencePlanes
+      DisplaySketches
+      ExcludeFromInterference
+      ExcludeFromPhysicalProperties
+      ExcludeFromReports
+      FaceStyle
+      HasBodyOverride
+      HideInDrawing
+      HideInSubassembly
+      InternalComponent
+      IsAdjustablePart
+      IsInternalComponent
+      IsPatternItem
+      IsPatterned
+      ItemNumber
+      Locatable
+      Name
+      NodeType
+      Parent
+      Reference
+      ReferencePlanesVisible
+      SketchesVisible
+      Style
+      SubOccurrenceDocument
+      SubOccurrenceFileName
+      SubOccurrences
+      Subassembly
+      SubassemblyBodies
+      ThisAsOccurrence
+      TopLevelDocument
+      Type
+      UseSimplified
+      Visible
+
+4. StructuralFrame
+   Total: 44 (35 methods + 9 properties)
+
+   Methods (35):
+      AddSuppressionVariable
+      ApplyExtendTrimToTools
+      AssociateLegacyFrameToCrossSection
+      CutLength
+      DeleteHoleLocation
+      DeleteSuppressionVariable
+      EndFaceEndAngle
+      FrameSaveAs
+      FrameSaveAsBiDM
+      FrameSaveAsTranslated
+      GetFramePath
+      GetFramePathObjects
+      GetGlobalEndCondition
+      GetOverrideEndCondition
+      GetOverrideEndConditionEx
+      GetPlaneOrientationForGivenSectionID
+      GetRedefineSectionDocument
+      GetRedefineSectionPlacement
+      GetSections
+      GetSetionIDObject
+      GetSplitPath
+      GetSuppressionVariable
+      HasSuppressionVariable
+      MiterCut
+      RetrieveHoleLocation
+      ReturnOccurrenceForGivenSectionID
+      ReturnPathForGivenSectionID
+      SegmentCutLength
+      SetFramePath
+      SetGlobalEndCondition
+      SetOverrideEndCondition
+      SetOverrideEndConditionEx
+      SetRedefineSectionDocument
+      SetRedefineSectionPlacement
+      SideFaceEndAngle
+
+   Properties (9):
+      Application
+      AutoPosition
+      GlobalDocument
+      Name
+      Parent
+      SingleFrameForCollinearPaths
+      SingleFrameForTangentialPaths
+      Visible
+      WeldGap
+
+5. Cable
+   Total: 40 (13 methods + 27 properties)
+
+   Methods (13):
+      CreatePhysicalConductor
+      Delete
+      DeletePhysicalConductor
+      Edit
+      GetAdders
+      GetAllPaths
+      GetEndPoints
+      GetOuterConductors
+      GetPaths
+      GetTopMostConductors
+      GetWires
+      Remove
+      SetAdders
+
+   Properties (27):
+      Application
+      AssemblyProperty
+      AttributeSets
+      Color
+      CutLength
+      Description
+      Diameter
+      FromComponentName
+      FromTerminalName
+      Gage
+      IsAttributeSetPresent
+      LinearDensity
+      Mass
+      Material
+      MaterialType
+      MinimumBendRadius
+      Name
+      NumberOfConductors
+      OuterDiameter
+      Parent
+      PartNumber
+      ToComponentName
+      ToTerminalName
+      TrueLength
+      Type
+      UseGlobalAdders
+      Visible
+
+6. Wire
+   Total: 38 (12 methods + 26 properties)
+
+   Methods (12):
+      CreatePhysicalConductor
+      Delete
+      DeletePhysicalConductor
+      Edit
+      GetAdders
+      GetAllPaths
+      GetEndPoints
+      GetOuterConductors
+      GetPaths
+      GetTopMostConductors
+      Remove
+      SetAdders
+
+   Properties (26):
+      Application
+      AssemblyProperty
+      AttributeSets
+      Color
+      CutLength
+      Description
+      Diameter
+      FromComponentName
+      FromTerminalName
+      Gage
+      IsAttributeSetPresent
+      LinearDensity
+      Mass
+      Material
+      MaterialType
+      MinimumBendRadius
+      Name
+      OuterDiameter
+      Parent
+      PartNumber
+      ToComponentName
+      ToTerminalName
+      TrueLength
+      Type
+      UseGlobalAdders
+      Visible
+
+7. Tube
+   Total: 37 (17 methods + 20 properties)
+
+   Methods (17):
+      AddSegment
+      BendTable
+      BreakLink
+      Freeze
+      GetBendRadius
+      GetEndTreatment
+      GetPathSegmentsRelations
+      GetTubePropertyNameAndValueByPid
+      IsBendRadiusOverridden
+      IsFrozen
+      IsLinked
+      Path
+      RemoveSegment
+      SetBendRadius
+      SetEndTreatment
+      Thaw
+      UpdateTubeFileProperties
+
+   Properties (20):
+      Application
+      AttributeSets
+      DefaultBendRadius
+      ExtentEnd
+      ExtentStart
+      InsideArea
+      InsideVolume
+      IsAttributeSetPresent
+      IsSolid
+      Material
+      MinimumFlatLength
+      OuterDiameter
+      Parent
+      PartFileName
+      TubeMaterial
+      UsesGlobalBendRadius
+      UsesGlobalMinimumFlatLength
+      UsesGlobalOuterDiameter
+      UsesGlobalWallThickness
+      WallThickness
+
+8. InternalComponent
+   Total: 36 (20 methods + 16 properties)
+
+   Methods (20):
+      Break
+      DeleteBodies
+      EditEnd
+      EditStart
+      GetBodies
+      GetCurrentGageName
+      GetCurrentMaterialName
+      GetOODStatusofMaterialAndGage
+      GetPhysicalProperties
+      GetSheetMetalParameter
+      GetType
+      IsActive
+      MakeActive
+      MoveBody
+      MoveToSynchronous
+      Optimize
+      Separate
+      SetSheetMetalParameter
+      TransformToSyncSheetmetalByBendDeductionOrBendAllowance
+      TransformToSynchronousSheetmetal
+
+   Properties (16):
+      Application
+      BendTable
+      Constraints
+      Constructions
+      Count
+      DisableMoveToSynchronous
+      ModelingMode
+      Models
+      Name
+      Parent
+      PartRefPlanes
+      ProfileSets
+      RefAxes
+      Sketches
+      UsedSketches
+      UserDefinedSets
+
+9. Part
+   Total: 35 (12 methods + 23 properties)
+
+   Methods (12):
+      Delete
+      GetMatrix
+      GetOrigin
+      GetTransform
+      MakeWritable
+      Move
+      PutMatrix
+      PutOrigin
+      PutTransform
+      Replace
+      Rotate
+      Select
+
+   Properties (23):
+      Application
+      AttributeSets
+      DisplayInDrawings
+      DisplayInSubAssembly
+      FaceStyle
+      IncludeInBom
+      IncludeInPhysicalProperties
+      Index
+      IsAttributeSetPresent
+      IsForeign
+      Locatable
+      Name
+      Parent
+      PartDocument
+      PartFileName
+      Quantity
+      ReferenceOnly
+      Relations3d
+      Status
+      Style
+      Subassembly
+      Type
+      Visible
+
+10. AssemblyFeaturesExtrudedCutout
+   Total: 35 (23 methods + 12 properties)
+
+   Methods (23):
+      AddSuppressionVariable
+      Delete
+      DeleteSuppressionVariable
+      GetDepth
+      GetExtentSide
+      GetExtentType
+      GetFromPlane
+      GetProfileSide
+      GetProfiles
+      GetScopeParts
+      GetSuppressionVariable
+      GetToPlane
+      HasSuppressionVariable
+      Range
+      RollToFeature
+      SetDepth
+      SetExtentSide
+      SetExtentType
+      SetFromPlane
+      SetProfileSide
+      SetProfiles
+      SetScopeParts
+      SetToPlane
+
+   Properties (12):
+      Application
+      Edges
+      EdgesForScopePart
+      Faces
+      FacesByRay
+      FacesByRayForScopePart
+      FacesForScopePart
+      FeatureType
+      Name
+      Parent
+      Status
+      Suppress
+
+11. AssemblyFeaturesHole
+   Total: 35 (23 methods + 12 properties)
+
+   Methods (23):
+      AddSuppressionVariable
+      Delete
+      DeleteSuppressionVariable
+      GetDepth
+      GetExtentSide
+      GetExtentType
+      GetFromPlane
+      GetHoleData
+      GetProfiles
+      GetScopeParts
+      GetSuppressionVariable
+      GetToPlane
+      HasSuppressionVariable
+      Range
+      RollToFeature
+      SetDepth
+      SetExtentSide
+      SetExtentType
+      SetFromPlane
+      SetHoleData
+      SetProfiles
+      SetScopeParts
+      SetToPlane
+
+   Properties (12):
+      Application
+      Edges
+      EdgesForScopePart
+      Faces
+      FacesByRay
+      FacesByRayForScopePart
+      FacesForScopePart
+      FeatureType
+      Name
+      Parent
+      Status
+      Suppress
+
+12. AssemblyFeaturesRevolvedCutout
+   Total: 33 (21 methods + 12 properties)
+
+   Methods (21):
+      AddSuppressionVariable
+      Delete
+      DeleteSuppressionVariable
+      GetAngle
+      GetExtentSide
+      GetExtentType
+      GetProfileSide
+      GetProfiles
+      GetReferenceAxis
+      GetScopeParts
+      GetSuppressionVariable
+      HasSuppressionVariable
+      Range
+      RollToFeature
+      SetAngle
+      SetExtentSide
+      SetExtentType
+      SetProfileSide
+      SetProfiles
+      SetReferenceAxis
+      SetScopeParts
+
+   Properties (12):
+      Application
+      Edges
+      EdgesForScopePart
+      Faces
+      FacesByRay
+      FacesByRayForScopePart
+      FacesForScopePart
+      FeatureType
+      Name
+      Parent
+      Status
+      Suppress
+
+13. AxialRelation3d
+   Total: 32 (11 methods + 21 properties)
+
+   Methods (11):
+      AddSuppressionVariable
+      Delete
+      DeleteSuppressionVariable
+      Flip
+      GetElement1
+      GetElement2
+      GetGeometry1
+      GetGeometry2
+      GetSuppressionVariable
+      HasSuppressionVariable
+      Select
+
+   Properties (21):
+      Application
+      AttributeSets
+      DetailedStatus
+      FixedParallelOffset
+      FixedRotate
+      Index
+      IsAttributeSetPresent
+      Occurrence1
+      Occurrence2
+      Offset
+      Orientation
+      ParallelOffset
+      Parent
+      Part1
+      Part2
+      RangeHigh
+      RangeLow
+      RangedOffset
+      Status
+      Suppress
+      Type
+
+14. AssemblyFeaturesExtrudedProtrusion
+   Total: 31 (21 methods + 10 properties)
+
+   Methods (21):
+      AddSuppressionVariable
+      Delete
+      DeleteSuppressionVariable
+      GetDepth
+      GetExtentSide
+      GetExtentType
+      GetFromPlane
+      GetProfileSide
+      GetProfiles
+      GetSuppressionVariable
+      GetToPlane
+      HasSuppressionVariable
+      Range
+      RollToFeature
+      SetDepth
+      SetExtentSide
+      SetExtentType
+      SetFromPlane
+      SetProfileSide
+      SetProfiles
+      SetToPlane
+
+   Properties (10):
+      Application
+      AssemblyBody
+      Edges
+      Faces
+      FacesByRay
+      FeatureType
+      Name
+      Parent
+      Status
+      Suppress
+
+15. Bundle
+   Total: 31 (13 methods + 18 properties)
+
+   Methods (13):
+      CreatePhysicalConductor
+      Delete
+      DeletePhysicalConductor
+      Edit
+      GetAdders
+      GetAllPaths
+      GetConductors
+      GetEndPoints
+      GetOuterConductors
+      GetPaths
+      GetTopMostConductors
+      Remove
+      SetAdders
+
+   Properties (18):
+      Application
+      AssemblyProperty
+      AttributeSets
+      Color
+      CutLength
+      Description
+      IsAttributeSetPresent
+      LinearDensity
+      Mass
+      MinimumBendRadius
+      Name
+      OuterDiameter
+      Parent
+      PartNumber
+      TrueLength
+      Type
+      UseGlobalAdders
+      Visible
+
+16. PlanarRelation3d
+   Total: 29 (10 methods + 19 properties)
+
+   Methods (10):
+      AddSuppressionVariable
+      Delete
+      DeleteSuppressionVariable
+      GetElement1
+      GetElement2
+      GetGeometry1
+      GetGeometry2
+      GetSuppressionVariable
+      HasSuppressionVariable
+      Select
+
+   Properties (19):
+      Application
+      AttributeSets
+      DetailedStatus
+      FixedOffset
+      Index
+      IsAttributeSetPresent
+      NormalsAligned
+      Occurrence1
+      Occurrence2
+      Offset
+      Parent
+      Part1
+      Part2
+      RangeHigh
+      RangeLow
+      RangedOffset
+      Status
+      Suppress
+      Type
+
+17. AssemblyFeaturesRevolvedProtrusion
+   Total: 29 (19 methods + 10 properties)
+
+   Methods (19):
+      AddSuppressionVariable
+      Delete
+      DeleteSuppressionVariable
+      GetAngle
+      GetExtentSide
+      GetExtentType
+      GetProfileSide
+      GetProfiles
+      GetReferenceAxis
+      GetSuppressionVariable
+      HasSuppressionVariable
+      Range
+      RollToFeature
+      SetAngle
+      SetExtentSide
+      SetExtentType
+      SetProfileSide
+      SetProfiles
+      SetReferenceAxis
+
+   Properties (10):
+      Application
+      AssemblyBody
+      Edges
+      Faces
+      FacesByRay
+      FeatureType
+      Name
+      Parent
+      Status
+      Suppress
+
+18. AngularRelation3d
+   Total: 28 (11 methods + 17 properties)
+
+   Methods (11):
+      AddSuppressionVariable
+      Delete
+      DeleteSuppressionVariable
+      GetDefinition
+      GetElement1
+      GetElement2
+      GetGeometry1
+      GetGeometry2
+      GetSuppressionVariable
+      HasSuppressionVariable
+      Select
+
+   Properties (17):
+      Angle
+      Application
+      AttributeSets
+      DetailedStatus
+      Index
+      IsAttributeSetPresent
+      Occurrence1
+      Occurrence2
+      Parent
+      Part1
+      Part2
+      RangeHigh
+      RangeLow
+      RangedAngle
+      Status
+      Suppress
+      Type
+
+19. AssemblyDrivenPartFeaturesExtrudedCutout
+   Total: 28 (20 methods + 8 properties)
+
+   Methods (20):
+      Delete
+      GetDepth
+      GetExtentSide
+      GetExtentType
+      GetFromPlane
+      GetPartFeatures
+      GetProfileSide
+      GetProfiles
+      GetScopeParts
+      GetToPlane
+      Range
+      RollToFeature
+      SetDepth
+      SetExtentSide
+      SetExtentType
+      SetFromPlane
+      SetProfileSide
+      SetProfiles
+      SetScopeParts
+      SetToPlane
+
+   Properties (8):
+      Application
+      Edges
+      Faces
+      FacesByRay
+      Name
+      Parent
+      Status
+      Suppress
+
+20. AssemblyDrivenPartFeaturesHole
+   Total: 28 (20 methods + 8 properties)
+
+   Methods (20):
+      Delete
+      GetDepth
+      GetExtentSide
+      GetExtentType
+      GetFromPlane
+      GetHoleData
+      GetPartFeatures
+      GetProfiles
+      GetScopeParts
+      GetToPlane
+      Range
+      RollToFeature
+      SetDepth
+      SetExtentSide
+      SetExtentType
+      SetFromPlane
+      SetHoleData
+      SetProfiles
+      SetScopeParts
+      SetToPlane
+
+   Properties (8):
+      Application
+      Edges
+      Faces
+      FacesByRay
+      Name
+      Parent
+      Status
+      Suppress
+
+21. VirtualComponentOccurrence
+   Total: 27 (17 methods + 10 properties)
+
+   Methods (17):
+      Delete
+      GetOrigin
+      GetOriginByKeypoints
+      GetViewDefinition
+      Hide
+      HideAll
+      IsMaster
+      IsSource
+      IsVisible
+      MoveTo
+      PositionComponent
+      ReplaceComponent
+      SetOrigin
+      SetOriginByKeypoints
+      SetViewDefinition
+      Show
+      ShowAll
+
+   Properties (10):
+      Angle
+      Application
+      AttributeSets
+      IsAttributeSetPresent
+      IsPositioned
+      IsPreDefined
+      Name
+      Parent
+      Type
+      VirtualComponent
+
+22. PointRelation3d
+   Total: 26 (10 methods + 16 properties)
+
+   Methods (10):
+      AddSuppressionVariable
+      Delete
+      DeleteSuppressionVariable
+      GetElement1
+      GetElement2
+      GetGeometry1
+      GetGeometry2
+      GetSuppressionVariable
+      HasSuppressionVariable
+      Select
+
+   Properties (16):
+      Application
+      AttributeSets
+      DetailedStatus
+      Index
+      IsAttributeSetPresent
+      Occurrence1
+      Occurrence2
+      Parent
+      Part1
+      Part2
+      RangeHigh
+      RangeLow
+      RangedOffset
+      Status
+      Suppress
+      Type
+
+23. TangentRelation3d
+   Total: 26 (10 methods + 16 properties)
+
+   Methods (10):
+      AddSuppressionVariable
+      Delete
+      DeleteSuppressionVariable
+      GetElement1
+      GetElement2
+      GetGeometry1
+      GetGeometry2
+      GetSuppressionVariable
+      HasSuppressionVariable
+      Select
+
+   Properties (16):
+      Application
+      AttributeSets
+      DetailedStatus
+      HalfSpacePositive
+      Index
+      IsAttributeSetPresent
+      Occurrence1
+      Occurrence2
+      Offset
+      Parent
+      RangeHigh
+      RangeLow
+      RangedOffset
+      Status
+      Suppress
+      Type
+
+24. AssemblyDrivenPartFeaturesRevolvedCutout
+   Total: 26 (18 methods + 8 properties)
+
+   Methods (18):
+      Delete
+      GetAngle
+      GetExtentSide
+      GetExtentType
+      GetPartFeatures
+      GetProfileSide
+      GetProfiles
+      GetReferenceAxis
+      GetScopeParts
+      Range
+      RollToFeature
+      SetAngle
+      SetExtentSide
+      SetExtentType
+      SetProfileSide
+      SetProfiles
+      SetReferenceAxis
+      SetScopeParts
+
+   Properties (8):
+      Application
+      Edges
+      Faces
+      FacesByRay
+      Name
+      Parent
+      Status
+      Suppress
+
+25. AssemblyFeaturesMirror
+   Total: 25 (13 methods + 12 properties)
+
+   Methods (13):
+      AddSuppressionVariable
+      Delete
+      DeleteSuppressionVariable
+      GetMirrorType
+      GetParentFeatures
+      GetPlane
+      GetSuppressionVariable
+      HasSuppressionVariable
+      Range
+      RollToFeature
+      SetMirrorType
+      SetParentFeatures
+      SetPlane
+
+   Properties (12):
+      Application
+      Edges
+      EdgesForScopePart
+      Faces
+      FacesByRay
+      FacesByRayForScopePart
+      FacesForScopePart
+      FeatureType
+      Name
+      Parent
+      Status
+      Suppress
+
+26. AssemblyFeaturesPattern
+   Total: 25 (13 methods + 12 properties)
+
+   Methods (13):
+      AddSuppressionVariable
+      Delete
+      DeleteSuppressionVariable
+      GetParentFeatures
+      GetPatternType
+      GetProfile
+      GetSuppressionVariable
+      HasSuppressionVariable
+      Range
+      RollToFeature
+      SetParentFeatures
+      SetPatternType
+      SetProfile
+
+   Properties (12):
+      Application
+      Edges
+      EdgesForScopePart
+      Faces
+      FacesByRay
+      FacesByRayForScopePart
+      FacesForScopePart
+      FeatureType
+      Name
+      Parent
+      Status
+      Suppress
+
+27. AssemblyFilletWeld
+   Total: 25 (9 methods + 16 properties)
+
+   Methods (9):
+      AddSuppressionVariable
+      Delete
+      DeleteSuppressionVariable
+      GetLabelWeldData
+      GetSuppressionVariable
+      GoTo
+      HasSuppressionVariable
+      Range
+      Recompute
+
+   Properties (16):
+      Application
+      AssemblyBody
+      AttributeSets
+      BaseThickness
+      Edges
+      Faces
+      FacesByRay
+      FeatureType
+      IsAttributeSetPresent
+      Name
+      Parent
+      SetBackType
+      Status
+      Suppress
+      TargetThickness
+      Visible
+
+28. Splice
+   Total: 25 (10 methods + 15 properties)
+
+   Methods (10):
+      AddConductors
+      CreatePhysicalConductor
+      Delete
+      DeletePhysicalConductor
+      Edit
+      GetConductors
+      GetOuterConductors
+      GetSplicePosition
+      GetTopMostConductors
+      Remove
+
+   Properties (15):
+      Application
+      AssemblyProperty
+      AttributeSets
+      Color
+      Description
+      Gage
+      IsAttributeSetPresent
+      Material
+      MaterialType
+      Name
+      OuterDiameter
+      Parent
+      PartNumber
+      Type
+      Visible
+
+29. GearRelation3d
+   Total: 24 (11 methods + 13 properties)
+
+   Methods (11):
+      AddSuppressionVariable
+      Delete
+      DeleteSuppressionVariable
+      Flip
+      GetElement1
+      GetElement2
+      GetGeometry1
+      GetGeometry2
+      GetSuppressionVariable
+      HasSuppressionVariable
+      Select
+
+   Properties (13):
+      Application
+      AttributeSets
+      DetailedStatus
+      Index
+      IsAttributeSetPresent
+      Occurrence1
+      Occurrence2
+      Parent
+      RatioValue1
+      RatioValue2
+      Status
+      Suppress
+      Type
+
+30. WirePath
+   Total: 24 (6 methods + 18 properties)
+
+   Methods (6):
+      AddCableMember
+      AddSegment
+      GetCableMemberIndex
+      RemoveCableMember
+      RemoveSegment
+      SetCableMemberIndex
+
+   Properties (18):
+      Application
+      AssemblyProperty
+      CableMaster
+      CableMembers
+      CableSource
+      Color
+      ColorName
+      Diameter
+      EndConnector
+      Length
+      Material
+      Name
+      Parent
+      Segments
+      StartConnector
+      Type
+      TypeEx
+      Visible
