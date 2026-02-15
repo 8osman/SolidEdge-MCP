@@ -208,6 +208,147 @@ class FeatureManager:
             }
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
+    def create_extruded_cutout(self, distance: float, direction: str = "Normal") -> dict[str, Any]:
+        """
+        Create an extruded cutout (removes material).
+        
+        Args:
+            distance: Cutout depth in meters
+            direction: 'Normal' or 'Reverse'
+            
+        Returns:
+            Dict with status and cutout info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+            
+            if not profile:
+                return {"error": "No active sketch profile. Create and close a sketch first"}
+            
+            models = doc.Models
+            if models.Count == 0:
+                return {"error": "No base feature exists. Create a base feature first."}
+            
+            model = models.Item(1)
+            
+            # Map direction
+            dir_const = DirectionConstants.igRight  # Normal
+            if direction == "Reverse":
+                dir_const = DirectionConstants.igLeft
+            
+            # Use ExtrudedCutouts.AddFiniteMulti
+            cutouts = model.ExtrudedCutouts
+            cutouts.AddFiniteMulti(1, (profile,), dir_const, distance)
+            
+            # Clear accumulated profiles
+            self.sketch_manager.clear_accumulated_profiles()
+            
+            return {
+                "status": "created",
+                "type": "extruded_cutout",
+                "distance": distance,
+                "direction": direction,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+    
+    def create_extruded_cutout_through_all(self, direction: str = "Normal") -> dict[str, Any]:
+        """
+        Create an extruded cutout through all material.
+        
+        Args:
+            direction: 'Normal' or 'Reverse'
+            
+        Returns:
+            Dict with status and cutout info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+            
+            if not profile:
+                return {"error": "No active sketch profile. Create and close a sketch first"}
+            
+            models = doc.Models
+            if models.Count == 0:
+                return {"error": "No base feature exists. Create a base feature first."}
+            
+            model = models.Item(1)
+            
+            # Map direction
+            dir_const = DirectionConstants.igRight  # Normal
+            if direction == "Reverse":
+                dir_const = DirectionConstants.igLeft
+            
+            # Use ExtrudedCutouts.AddThroughAllMulti
+            cutouts = model.ExtrudedCutouts
+            cutouts.AddThroughAllMulti(1, (profile,), dir_const)
+            
+            # Clear accumulated profiles
+            self.sketch_manager.clear_accumulated_profiles()
+            
+            return {
+                "status": "created",
+                "type": "extruded_cutout_through_all",
+                "direction": direction,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def create_revolved_cutout(self, angle: float = 360.0) -> dict[str, Any]:
+        """
+        Create a revolved cutout around set axis.
+        
+        Args:
+            angle: Revolution angle in degrees (360 for full revolution)
+            
+        Returns:
+            Dict with status and cutout info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            profile = self.sketch_manager.get_active_sketch()
+            refaxis = self.sketch_manager.get_active_refaxis()
+            
+            if not profile:
+                return {"error": "No active sketch profile. Create and close a sketch first."}
+            
+            if not refaxis:
+                return {
+                    "error": "No axis of revolution set. "
+                    "Use set_axis_of_revolution() before closing the sketch."
+                }
+            
+            models = doc.Models
+            if models.Count == 0:
+                return {"error": "No base feature exists. Create a base feature first."}
+            
+            model = models.Item(1)
+            
+            import math
+            angle_rad = math.radians(angle)
+            
+            # Use RevolvedCutouts.AddFiniteMulti
+            cutouts = model.RevolvedCutouts
+            cutouts.AddFiniteMulti(
+                1,  # NumberOfProfiles
+                (profile,),  # ProfileArray
+                refaxis,  # ReferenceAxis
+                DirectionConstants.igRight,  # ProfilePlaneSide
+                angle_rad,  # AngleofRevolution
+            )
+            
+            # Clear accumulated profiles
+            self.sketch_manager.clear_accumulated_profiles()
+            
+            return {
+                "status": "created",
+                "type": "revolved_cutout",
+                "angle": angle,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
     def create_round(self, radius: float) -> dict[str, Any]:
         """
@@ -1257,6 +1398,94 @@ class FeatureManager:
             }
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
+        
+    def create_extruded_cutout_finite(app,profile_index: int = 1,distance: float = 0.01,direction: str = "Normal") -> dict:
+        """
+        Create a finite extruded cutout (pocket/cavity).
+    
+        Args:
+        app: Solid Edge Application object
+        profile_index: Index of profile to use (1-based, default 1)
+        distance: Depth of cutout in meters (default 0.01 = 10mm)
+        direction: "Normal" (1) or "Reverse" (2)
+    
+        Returns:
+        dict: Status and feature info
+        """
+        try:
+            doc = app.ActiveDocument
+            model = doc.Models.Item(1)
+            profiles = model.Profiles
+        
+            if profiles.Count == 0:
+                return {"success": False, "error": "No profiles available"}
+        
+            profile = profiles.Item(profile_index)
+        
+            # Direction constant
+            dir_map = {"Normal": 1, "Reverse": 2}
+            dir_const = dir_map.get(direction, 1)
+        
+            # Access ExtrudedCutouts collection
+            cutouts = model.ExtrudedCutouts
+        
+            # Create the cutout using AddFiniteMulti
+            cutout = cutouts.AddFiniteMulti(1, (profile,), dir_const, distance)
+        
+            return {
+                "success": True,
+                "feature": "ExtrudedCutout",
+                "depth": distance,
+                "direction": direction
+            }
+        
+        except Exception as e:
+            return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def create_extruded_cutout_through_all(
+    app,
+    profile_index: int = 1,
+    direction: str = "Normal"
+) -> dict:
+    """
+    Create an extruded cutout through all material.
+    
+    Args:
+        app: Solid Edge Application object
+        profile_index: Index of profile to use (1-based)
+        direction: "Normal" (1) or "Reverse" (2)
+    
+    Returns:
+        dict: Status and feature info
+    """
+    try:
+        doc = app.ActiveDocument
+        model = doc.Models.Item(1)
+        profiles = model.Profiles
+        
+        if profiles.Count == 0:
+            return {"success": False, "error": "No profiles available"}
+        
+        profile = profiles.Item(profile_index)
+        
+        dir_map = {"Normal": 1, "Reverse": 2}
+        dir_const = dir_map.get(direction, 1)
+        
+        cutouts = model.ExtrudedCutouts
+        cutout = cutouts.AddThroughAllMulti(1, (profile,), dir_const)
+        
+        return {
+            "success": True,
+            "feature": "ExtrudedCutout (Through All)",
+            "direction": direction
+        }
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
     def create_extruded_cutout_from_to(
         self, from_plane_index: int, to_plane_index: int
