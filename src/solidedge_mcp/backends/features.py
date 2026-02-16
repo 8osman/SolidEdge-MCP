@@ -36,6 +36,73 @@ class FeatureManager:
         self.doc_manager = document_manager
         self.sketch_manager = sketch_manager
 
+    def _perform_feature_call(self, call_fn, consumes_profiles: bool = True):
+        """
+        Helper to execute a COM feature call, validate the result, and
+        clear accumulated profiles when appropriate.
+
+        Returns: (result, error_dict_or_None)
+        """
+        try:
+            # Try to get model and feature count for validation when possible
+            try:
+                doc = self.doc_manager.get_active_document()
+                models = doc.Models
+                model = models.Item(1) if models.Count >= 1 else None
+                try:
+                    feature_count_before = len(list(model.Features)) if model is not None else None
+                except Exception:
+                    feature_count_before = None
+            except Exception:
+                model = None
+                feature_count_before = None
+
+            result = call_fn()
+
+            # If COM call returned None, treat as failure
+            if result is None:
+                if consumes_profiles:
+                    try:
+                        self.sketch_manager.clear_accumulated_profiles()
+                    except Exception:
+                        pass
+                return None, {
+                    "error": "Feature operation failed - COM API returned None",
+                    "details": "The Solid Edge COM API did not create the feature."
+                }
+
+            # Verify feature count increased if we were able to read it
+            if feature_count_before is not None and model is not None:
+                try:
+                    feature_count_after = len(list(model.Features))
+                    if feature_count_after <= feature_count_before:
+                        if consumes_profiles:
+                            try:
+                                self.sketch_manager.clear_accumulated_profiles()
+                            except Exception:
+                                pass
+                        return None, {
+                            "error": "Feature not added to model",
+                            "details": f"Feature count before: {feature_count_before}, after: {feature_count_after}."
+                        }
+                except Exception:
+                    pass
+
+            if consumes_profiles:
+                try:
+                    self.sketch_manager.clear_accumulated_profiles()
+                except Exception:
+                    pass
+
+            return result, None
+        except Exception as e:
+            if consumes_profiles:
+                try:
+                    self.sketch_manager.clear_accumulated_profiles()
+                except Exception:
+                    pass
+            return None, {"error": str(e), "traceback": traceback.format_exc()}
+
     def create_extrude(
         self, distance: float, operation: str = "Add", direction: str = "Normal"
     ) -> dict[str, Any]:
@@ -76,11 +143,13 @@ class FeatureManager:
             }
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
 
-            # AddFiniteExtrudedProtrusion: NumProfiles, ProfileArray, ProfilePlaneSide, Distance
-            models.AddFiniteExtrudedProtrusion(1, (profile,), dir_const, distance)
-
-            # Clear accumulated profiles (consumed by this feature)
-            self.sketch_manager.clear_accumulated_profiles()
+            # Execute and validate the COM call
+            result, err = self._perform_feature_call(
+                lambda: models.AddFiniteExtrudedProtrusion(1, (profile,), dir_const, distance),
+                consumes_profiles=True,
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -130,16 +199,18 @@ class FeatureManager:
             # AddFiniteRevolvedProtrusion: NumProfiles,
             # ProfileArray, ReferenceAxis, ProfilePlaneSide, Angle
             # Do NOT pass None for optional params (KeyPointOrTangentFace, KeyPointFlags)
-            models.AddFiniteRevolvedProtrusion(
-                1,  # NumberOfProfiles
-                (profile,),  # ProfileArray
-                refaxis,  # ReferenceAxis
-                DirectionConstants.igRight,  # ProfilePlaneSide (2)
-                angle_rad,  # AngleofRevolution
+            result, err = self._perform_feature_call(
+                lambda: models.AddFiniteRevolvedProtrusion(
+                    1,  # NumberOfProfiles
+                    (profile,),  # ProfileArray
+                    refaxis,  # ReferenceAxis
+                    DirectionConstants.igRight,  # ProfilePlaneSide (2)
+                    angle_rad,  # AngleofRevolution
+                ),
+                consumes_profiles=True,
             )
-
-            # Clear accumulated profiles (consumed by this feature)
-            self.sketch_manager.clear_accumulated_profiles()
+            if err:
+                return err
 
             return {"status": "created", "type": "revolve", "angle": angle, "operation": operation}
         except Exception as e:
@@ -196,7 +267,12 @@ class FeatureManager:
 
             # Use ExtrudedCutouts.AddFiniteMulti for reliable hole creation
             cutouts = model.ExtrudedCutouts
-            cutouts.AddFiniteMulti(1, (profile,), dir_const, depth)
+            result, err = self._perform_feature_call(
+                lambda: cutouts.AddFiniteMulti(1, (profile,), dir_const, depth),
+                consumes_profiles=True,
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -239,11 +315,13 @@ class FeatureManager:
             
             # Use ExtrudedCutouts.AddFiniteMulti
             cutouts = model.ExtrudedCutouts
-            cutouts.AddFiniteMulti(1, (profile,), dir_const, distance)
-            
-            # Clear accumulated profiles
-            self.sketch_manager.clear_accumulated_profiles()
-            
+            result, err = self._perform_feature_call(
+                lambda: cutouts.AddFiniteMulti(1, (profile,), dir_const, distance),
+                consumes_profiles=True,
+            )
+            if err:
+                return err
+
             return {
                 "status": "created",
                 "type": "extruded_cutout",
@@ -283,11 +361,13 @@ class FeatureManager:
             
             # Use ExtrudedCutouts.AddThroughAllMulti
             cutouts = model.ExtrudedCutouts
-            cutouts.AddThroughAllMulti(1, (profile,), dir_const)
-            
-            # Clear accumulated profiles
-            self.sketch_manager.clear_accumulated_profiles()
-            
+            result, err = self._perform_feature_call(
+                lambda: cutouts.AddThroughAllMulti(1, (profile,), dir_const),
+                consumes_profiles=True,
+            )
+            if err:
+                return err
+
             return {
                 "status": "created",
                 "type": "extruded_cutout_through_all",
@@ -331,17 +411,19 @@ class FeatureManager:
             
             # Use RevolvedCutouts.AddFiniteMulti
             cutouts = model.RevolvedCutouts
-            cutouts.AddFiniteMulti(
-                1,  # NumberOfProfiles
-                (profile,),  # ProfileArray
-                refaxis,  # ReferenceAxis
-                DirectionConstants.igRight,  # ProfilePlaneSide
-                angle_rad,  # AngleofRevolution
+            result, err = self._perform_feature_call(
+                lambda: cutouts.AddFiniteMulti(
+                    1,  # NumberOfProfiles
+                    (profile,),  # ProfileArray
+                    refaxis,  # ReferenceAxis
+                    DirectionConstants.igRight,  # ProfilePlaneSide
+                    angle_rad,  # AngleofRevolution
+                ),
+                consumes_profiles=True,
             )
-            
-            # Clear accumulated profiles
-            self.sketch_manager.clear_accumulated_profiles()
-            
+            if err:
+                return err
+
             return {
                 "status": "created",
                 "type": "revolved_cutout",
@@ -428,11 +510,14 @@ class FeatureManager:
 
             models = doc.Models
 
-            models.AddFiniteExtrudedProtrusion(
-                1, (profile,), DirectionConstants.igSymmetric, distance
+            result, err = self._perform_feature_call(
+                lambda: models.AddFiniteExtrudedProtrusion(
+                    1, (profile,), DirectionConstants.igSymmetric, distance
+                ),
+                consumes_profiles=True,
             )
-
-            self.sketch_manager.clear_accumulated_profiles()
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -680,20 +765,25 @@ class FeatureManager:
 
             # AddBoxByCenter: x, y, z, dWidth, dHeight, dAngle, dDepth, pPlane,
             #                  ExtentSide, vbKeyPointExtent, pKeyPointObj, pKeyPointFlags
-            models.AddBoxByCenter(
-                center_x,
-                center_y,
-                center_z,
-                length,  # dWidth
-                width,  # dHeight
-                0,  # dAngle (rotation)
-                height,  # dDepth
-                top_plane,  # pPlane
-                DirectionConstants.igRight,  # ExtentSide
-                False,  # vbKeyPointExtent
-                None,  # pKeyPointObj
-                0,  # pKeyPointFlags
+            result, err = self._perform_feature_call(
+                lambda: models.AddBoxByCenter(
+                    center_x,
+                    center_y,
+                    center_z,
+                    length,  # dWidth
+                    width,  # dHeight
+                    0,  # dAngle (rotation)
+                    height,  # dDepth
+                    top_plane,  # pPlane
+                    DirectionConstants.igRight,  # ExtentSide
+                    False,  # vbKeyPointExtent
+                    None,  # pKeyPointObj
+                    0,  # pKeyPointFlags
+                ),
+                consumes_profiles=False,
             )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -729,21 +819,26 @@ class FeatureManager:
 
             # AddBoxByTwoPoints: x1, y1, z1, x2, y2, z2, dAngle, dDepth, pPlane,
             #                     ExtentSide, vbKeyPointExtent, pKeyPointObj, pKeyPointFlags
-            models.AddBoxByTwoPoints(
-                x1,
-                y1,
-                z1,
-                x2,
-                y2,
-                z2,
-                0,  # dAngle
-                depth,  # dDepth
-                top_plane,  # pPlane
-                DirectionConstants.igRight,  # ExtentSide
-                False,  # vbKeyPointExtent
-                None,  # pKeyPointObj
-                0,  # pKeyPointFlags
+            result, err = self._perform_feature_call(
+                lambda: models.AddBoxByTwoPoints(
+                    x1,
+                    y1,
+                    z1,
+                    x2,
+                    y2,
+                    z2,
+                    0,  # dAngle
+                    depth,  # dDepth
+                    top_plane,  # pPlane
+                    DirectionConstants.igRight,  # ExtentSide
+                    False,  # vbKeyPointExtent
+                    None,  # pKeyPointObj
+                    0,  # pKeyPointFlags
+                ),
+                consumes_profiles=False,
             )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -796,23 +891,28 @@ class FeatureManager:
 
             # AddBoxByThreePoints: x1,y1,z1, x2,y2,z2, x3,y3,z3, dDepth, pPlane,
             #                       ExtentSide, vbKeyPointExtent, pKeyPointObj, pKeyPointFlags
-            models.AddBoxByThreePoints(
-                x1,
-                y1,
-                z1,
-                x2,
-                y2,
-                z2,
-                x3,
-                y3,
-                z3,
-                depth,  # dDepth
-                top_plane,  # pPlane
-                DirectionConstants.igRight,  # ExtentSide
-                False,  # vbKeyPointExtent
-                None,  # pKeyPointObj
-                0,  # pKeyPointFlags
+            result, err = self._perform_feature_call(
+                lambda: models.AddBoxByThreePoints(
+                    x1,
+                    y1,
+                    z1,
+                    x2,
+                    y2,
+                    z2,
+                    x3,
+                    y3,
+                    z3,
+                    depth,  # dDepth
+                    top_plane,  # pPlane
+                    DirectionConstants.igRight,  # ExtentSide
+                    False,  # vbKeyPointExtent
+                    None,  # pKeyPointObj
+                    0,  # pKeyPointFlags
+                ),
+                consumes_profiles=False,
             )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -854,18 +954,23 @@ class FeatureManager:
             # AddCylinderByCenterAndRadius: x, y, z, dRadius,
             # dDepth, pPlane, ExtentSide, vbKeyPointExtent,
             # pKeyPointObj, pKeyPointFlags
-            models.AddCylinderByCenterAndRadius(
-                base_center_x,
-                base_center_y,
-                base_center_z,
-                radius,
-                height,  # dDepth
-                top_plane,  # pPlane
-                DirectionConstants.igRight,  # ExtentSide
-                False,  # vbKeyPointExtent
-                None,  # pKeyPointObj
-                0,  # pKeyPointFlags
+            result, err = self._perform_feature_call(
+                lambda: models.AddCylinderByCenterAndRadius(
+                    base_center_x,
+                    base_center_y,
+                    base_center_z,
+                    radius,
+                    height,  # dDepth
+                    top_plane,  # pPlane
+                    DirectionConstants.igRight,  # ExtentSide
+                    False,  # vbKeyPointExtent
+                    None,  # pKeyPointObj
+                    0,  # pKeyPointFlags
+                ),
+                consumes_profiles=False,
             )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -899,18 +1004,23 @@ class FeatureManager:
             # AddSphereByCenterAndRadius: x, y, z, dRadius,
             # pPlane, ExtentSide, vbKeyPointExtent,
             # vbCreateLiveSection, pKeyPointObj, pKeyPointFlags
-            models.AddSphereByCenterAndRadius(
-                center_x,
-                center_y,
-                center_z,
-                radius,
-                top_plane,  # pPlane
-                DirectionConstants.igRight,  # ExtentSide
-                False,  # vbKeyPointExtent
-                False,  # vbCreateLiveSection
-                None,  # pKeyPointObj
-                0,  # pKeyPointFlags
+            result, err = self._perform_feature_call(
+                lambda: models.AddSphereByCenterAndRadius(
+                    center_x,
+                    center_y,
+                    center_z,
+                    radius,
+                    top_plane,  # pPlane
+                    DirectionConstants.igRight,  # ExtentSide
+                    False,  # vbKeyPointExtent
+                    False,  # vbCreateLiveSection
+                    None,  # pKeyPointObj
+                    0,  # pKeyPointFlags
+                ),
+                consumes_profiles=False,
             )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -984,16 +1094,21 @@ class FeatureManager:
             try:
                 model = models.Item(1)
                 lp = model.LoftedProtrusions
-                lp.AddSimple(
-                    len(profiles),
-                    v_profiles,
-                    v_types,
-                    v_origins,
-                    DirectionConstants.igRight,
-                    ExtentTypeConstants.igNone,
-                    ExtentTypeConstants.igNone,
+                result, err = self._perform_feature_call(
+                    lambda: lp.AddSimple(
+                        len(profiles),
+                        v_profiles,
+                        v_types,
+                        v_origins,
+                        DirectionConstants.igRight,
+                        ExtentTypeConstants.igNone,
+                        ExtentTypeConstants.igNone,
+                    ),
+                    consumes_profiles=True,
                 )
-                self.sketch_manager.clear_accumulated_profiles()
+                if err:
+                    raise Exception("Loft AddSimple failed")
+
                 return {
                     "status": "created",
                     "type": "loft",
@@ -1005,26 +1120,29 @@ class FeatureManager:
 
             # Fall back to models.AddLoftedProtrusion (works as initial feature)
             v_seg = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_VARIANT, [])
-            model = models.AddLoftedProtrusion(
-                len(profiles),
-                v_profiles,
-                v_types,
-                v_origins,
-                v_seg,  # SegmentMaps (empty)
-                DirectionConstants.igRight,  # MaterialSide
-                ExtentTypeConstants.igNone,
-                0.0,
-                None,  # Start extent
-                ExtentTypeConstants.igNone,
-                0.0,
-                None,  # End extent
-                ExtentTypeConstants.igNone,
-                0.0,  # Start tangent
-                ExtentTypeConstants.igNone,
-                0.0,  # End tangent
+            result, err = self._perform_feature_call(
+                lambda: models.AddLoftedProtrusion(
+                    len(profiles),
+                    v_profiles,
+                    v_types,
+                    v_origins,
+                    v_seg,  # SegmentMaps (empty)
+                    DirectionConstants.igRight,  # MaterialSide
+                    ExtentTypeConstants.igNone,
+                    0.0,
+                    None,  # Start extent
+                    ExtentTypeConstants.igNone,
+                    0.0,
+                    None,  # End extent
+                    ExtentTypeConstants.igNone,
+                    0.0,  # Start tangent
+                    ExtentTypeConstants.igNone,
+                    0.0,  # End tangent
+                ),
+                consumes_profiles=True,
             )
-
-            self.sketch_manager.clear_accumulated_profiles()
+            if err:
+                return err
             return {
                 "status": "created",
                 "type": "loft",
@@ -1087,25 +1205,29 @@ class FeatureManager:
             v_seg = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_VARIANT, [])
 
             # AddSweptProtrusion: 15 required params
-            models.AddSweptProtrusion(
-                1,
-                v_paths,
-                v_path_types,  # Path (1 curve)
-                len(cross_sections),
-                v_sections,
-                v_section_types,
-                v_origins,
-                v_seg,  # Sections
-                DirectionConstants.igRight,  # MaterialSide
-                ExtentTypeConstants.igNone,
-                0.0,
-                None,  # Start extent
-                ExtentTypeConstants.igNone,
-                0.0,
-                None,  # End extent
+            result, err = self._perform_feature_call(
+                lambda: models.AddSweptProtrusion(
+                    1,
+                    v_paths,
+                    v_path_types,  # Path (1 curve)
+                    len(cross_sections),
+                    v_sections,
+                    v_section_types,
+                    v_origins,
+                    v_seg,  # Sections
+                    DirectionConstants.igRight,  # MaterialSide
+                    ExtentTypeConstants.igNone,
+                    0.0,
+                    None,  # Start extent
+                    ExtentTypeConstants.igNone,
+                    0.0,
+                    None,  # End extent
+                ),
+                consumes_profiles=True,
             )
+            if err:
+                return err
 
-            self.sketch_manager.clear_accumulated_profiles()
             return {
                 "status": "created",
                 "type": "sweep",
@@ -1151,13 +1273,18 @@ class FeatureManager:
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
 
             # AddExtrudedProtrusionWithThinWall
-            models.AddExtrudedProtrusionWithThinWall(
-                NumberOfProfiles=1,
-                ProfileArray=(profile,),
-                ProfilePlaneSide=dir_const,
-                ExtrusionDistance=distance,
-                WallThickness=wall_thickness,
+            result, err = self._perform_feature_call(
+                lambda: models.AddExtrudedProtrusionWithThinWall(
+                    NumberOfProfiles=1,
+                    ProfileArray=(profile,),
+                    ProfilePlaneSide=dir_const,
+                    ExtrusionDistance=distance,
+                    WallThickness=wall_thickness,
+                ),
+                consumes_profiles=True,
             )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -1203,13 +1330,18 @@ class FeatureManager:
 
             angle_rad = math.radians(angle)
 
-            models.AddFiniteRevolvedProtrusion(
-                1,  # NumberOfProfiles
-                (profile,),  # ProfileArray
-                refaxis,  # ReferenceAxis
-                DirectionConstants.igRight,  # ProfilePlaneSide (2)
-                angle_rad,  # AngleofRevolution
+            result, err = self._perform_feature_call(
+                lambda: models.AddFiniteRevolvedProtrusion(
+                    1,  # NumberOfProfiles
+                    (profile,),  # ProfileArray
+                    refaxis,  # ReferenceAxis
+                    DirectionConstants.igRight,  # ProfilePlaneSide (2)
+                    angle_rad,  # AngleofRevolution
+                ),
+                consumes_profiles=True,
             )
+            if err:
+                return err
 
             return {"status": "created", "type": "revolve_finite", "angle": angle}
         except Exception as e:
@@ -1249,14 +1381,19 @@ class FeatureManager:
 
             angle_rad = math.radians(angle)
 
-            models.AddRevolvedProtrusionWithThinWall(
-                1,  # NumberOfProfiles
-                (profile,),  # ProfileArray
-                refaxis,  # ReferenceAxis
-                DirectionConstants.igRight,  # ProfilePlaneSide
-                angle_rad,  # AngleofRevolution
-                wall_thickness,  # WallThickness
+            result, err = self._perform_feature_call(
+                lambda: models.AddRevolvedProtrusionWithThinWall(
+                    1,  # NumberOfProfiles
+                    (profile,),  # ProfileArray
+                    refaxis,  # ReferenceAxis
+                    DirectionConstants.igRight,  # ProfilePlaneSide
+                    angle_rad,  # AngleofRevolution
+                    wall_thickness,  # WallThickness
+                ),
+                consumes_profiles=True,
             )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -1294,9 +1431,14 @@ class FeatureManager:
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
 
             # AddExtrudedProtrusion (infinite)
-            models.AddExtrudedProtrusion(
-                NumberOfProfiles=1, ProfileArray=(profile,), ProfilePlaneSide=dir_const
+            result, err = self._perform_feature_call(
+                lambda: models.AddExtrudedProtrusion(
+                    NumberOfProfiles=1, ProfileArray=(profile,), ProfilePlaneSide=dir_const
+                ),
+                consumes_profiles=True,
             )
+            if err:
+                return err
 
             return {"status": "created", "type": "extrude_infinite", "direction": direction}
         except Exception as e:
@@ -1335,9 +1477,11 @@ class FeatureManager:
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
 
             protrusions = model.ExtrudedProtrusions
-            protrusions.AddThroughNext(profile, dir_const)
-
-            self.sketch_manager.clear_accumulated_profiles()
+            result, err = self._perform_feature_call(
+                lambda: protrusions.AddThroughNext(profile, dir_const), consumes_profiles=True
+            )
+            if err:
+                return err
 
             return {"status": "created", "type": "extrude_through_next", "direction": direction}
         except Exception as e:
@@ -1386,9 +1530,11 @@ class FeatureManager:
             to_plane = ref_planes.Item(to_plane_index)
 
             protrusions = model.ExtrudedProtrusions
-            protrusions.AddFromTo(profile, from_plane, to_plane)
-
-            self.sketch_manager.clear_accumulated_profiles()
+            result, err = self._perform_feature_call(
+                lambda: protrusions.AddFromTo(profile, from_plane, to_plane), consumes_profiles=True
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -1532,9 +1678,12 @@ def create_extruded_cutout_through_all(
             to_plane = ref_planes.Item(to_plane_index)
 
             cutouts = model.ExtrudedCutouts
-            cutouts.AddFromToMulti(1, (profile,), from_plane, to_plane)
-
-            self.sketch_manager.clear_accumulated_profiles()
+            result, err = self._perform_feature_call(
+                lambda: cutouts.AddFromToMulti(1, (profile,), from_plane, to_plane),
+                consumes_profiles=True,
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -1585,45 +1734,50 @@ def create_extruded_cutout_through_all(
                 else DirectionConstants.igRight
             )
 
-            extruded_surfaces.Add(
-                1,  # NumberOfProfiles
-                profile_array,  # ProfileArray
-                ExtentTypeConstants.igFinite,  # ExtentType1
-                side1,  # ExtentSide1
-                depth1,  # FiniteDepth1
-                None,  # KeyPointOrTangentFace1
-                KeyPointExtentConstants.igTangentNormal,  # KeyPointFlags1
-                None,  # FromFaceOrRefPlane
-                OffsetSideConstants.seOffsetNone,  # FromFaceOffsetSide
-                0.0,  # FromFaceOffsetDistance
-                TreatmentTypeConstants.seTreatmentNone,  # TreatmentType1
-                DraftSideConstants.seDraftNone,  # TreatmentDraftSide1
-                0.0,  # TreatmentDraftAngle1
-                TreatmentCrownTypeConstants.seTreatmentCrownByOffset,  # TreatmentCrownType1
-                TreatmentCrownSideConstants.seTreatmentCrownSideInside,  # TreatmentCrownSide1
-                # TreatmentCrownCurvatureSide1
-                TreatmentCrownCurvatureSideConstants.seTreatmentCrownCurvatureInside,
-                0.0,  # TreatmentCrownRadiusOrOffset1
-                0.0,  # TreatmentCrownTakeOffAngle1
-                ExtentTypeConstants.igFinite,  # ExtentType2
-                side2,  # ExtentSide2
-                depth2,  # FiniteDepth2
-                None,  # KeyPointOrTangentFace2
-                KeyPointExtentConstants.igTangentNormal,  # KeyPointFlags2
-                None,  # ToFaceOrRefPlane
-                OffsetSideConstants.seOffsetNone,  # ToFaceOffsetSide
-                0.0,  # ToFaceOffsetDistance
-                TreatmentTypeConstants.seTreatmentNone,  # TreatmentType2
-                DraftSideConstants.seDraftNone,  # TreatmentDraftSide2
-                0.0,  # TreatmentDraftAngle2
-                TreatmentCrownTypeConstants.seTreatmentCrownByOffset,  # TreatmentCrownType2
-                TreatmentCrownSideConstants.seTreatmentCrownSideInside,  # TreatmentCrownSide2
-                # TreatmentCrownCurvatureSide2
-                TreatmentCrownCurvatureSideConstants.seTreatmentCrownCurvatureInside,
-                0.0,  # TreatmentCrownRadiusOrOffset2
-                0.0,  # TreatmentCrownTakeOffAngle2
-                end_caps,  # WantEndCaps
+            result, err = self._perform_feature_call(
+                lambda: extruded_surfaces.Add(
+                    1,  # NumberOfProfiles
+                    profile_array,  # ProfileArray
+                    ExtentTypeConstants.igFinite,  # ExtentType1
+                    side1,  # ExtentSide1
+                    depth1,  # FiniteDepth1
+                    None,  # KeyPointOrTangentFace1
+                    KeyPointExtentConstants.igTangentNormal,  # KeyPointFlags1
+                    None,  # FromFaceOrRefPlane
+                    OffsetSideConstants.seOffsetNone,  # FromFaceOffsetSide
+                    0.0,  # FromFaceOffsetDistance
+                    TreatmentTypeConstants.seTreatmentNone,  # TreatmentType1
+                    DraftSideConstants.seDraftNone,  # TreatmentDraftSide1
+                    0.0,  # TreatmentDraftAngle1
+                    TreatmentCrownTypeConstants.seTreatmentCrownByOffset,  # TreatmentCrownType1
+                    TreatmentCrownSideConstants.seTreatmentCrownSideInside,  # TreatmentCrownSide1
+                    # TreatmentCrownCurvatureSide1
+                    TreatmentCrownCurvatureSideConstants.seTreatmentCrownCurvatureInside,
+                    0.0,  # TreatmentCrownRadiusOrOffset1
+                    0.0,  # TreatmentCrownTakeOffAngle1
+                    ExtentTypeConstants.igFinite,  # ExtentType2
+                    side2,  # ExtentSide2
+                    depth2,  # FiniteDepth2
+                    None,  # KeyPointOrTangentFace2
+                    KeyPointExtentConstants.igTangentNormal,  # KeyPointFlags2
+                    None,  # ToFaceOrRefPlane
+                    OffsetSideConstants.seOffsetNone,  # ToFaceOffsetSide
+                    0.0,  # ToFaceOffsetDistance
+                    TreatmentTypeConstants.seTreatmentNone,  # TreatmentType2
+                    DraftSideConstants.seDraftNone,  # TreatmentDraftSide2
+                    0.0,  # TreatmentDraftAngle2
+                    TreatmentCrownTypeConstants.seTreatmentCrownByOffset,  # TreatmentCrownType2
+                    TreatmentCrownSideConstants.seTreatmentCrownSideInside,  # TreatmentCrownSide2
+                    # TreatmentCrownCurvatureSide2
+                    TreatmentCrownCurvatureSideConstants.seTreatmentCrownCurvatureInside,
+                    0.0,  # TreatmentCrownRadiusOrOffset2
+                    0.0,  # TreatmentCrownTakeOffAngle2
+                    end_caps,  # WantEndCaps
+                ),
+                consumes_profiles=True,
             )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -1668,13 +1822,18 @@ def create_extruded_cutout_through_all(
                 revolutions = height / pitch
 
             # AddFiniteBaseHelix
-            models.AddFiniteBaseHelix(
-                NumberOfProfiles=1,
-                ProfileArray=(profile,),
-                Pitch=pitch,
-                Height=height,
-                Revolutions=revolutions,
+            result, err = self._perform_feature_call(
+                lambda: models.AddFiniteBaseHelix(
+                    NumberOfProfiles=1,
+                    ProfileArray=(profile,),
+                    Pitch=pitch,
+                    Height=height,
+                    Revolutions=revolutions,
+                ),
+                consumes_profiles=True,
             )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -1718,12 +1877,17 @@ def create_extruded_cutout_through_all(
                 bend_radius = thickness * 2
 
             # AddBaseContourFlange
-            models.AddBaseContourFlange(
-                NumberOfProfiles=1,
-                ProfileArray=(profile,),
-                Thickness=thickness,
-                BendRadius=bend_radius,
+            result, err = self._perform_feature_call(
+                lambda: models.AddBaseContourFlange(
+                    NumberOfProfiles=1,
+                    ProfileArray=(profile,),
+                    Thickness=thickness,
+                    BendRadius=bend_radius,
+                ),
+                consumes_profiles=True,
             )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -1755,7 +1919,12 @@ def create_extruded_cutout_through_all(
             models = doc.Models
 
             # AddBaseTab
-            models.AddBaseTab(NumberOfProfiles=1, ProfileArray=(profile,), Thickness=thickness)
+            result, err = self._perform_feature_call(
+                lambda: models.AddBaseTab(NumberOfProfiles=1, ProfileArray=(profile,), Thickness=thickness),
+                consumes_profiles=True,
+            )
+            if err:
+                return err
 
             return {"status": "created", "type": "base_tab", "thickness": thickness}
         except Exception as e:
@@ -1780,7 +1949,9 @@ def create_extruded_cutout_through_all(
             models = doc.Models
 
             # AddBody
-            models.AddBody()
+            result, err = self._perform_feature_call(lambda: models.AddBody(), consumes_profiles=False)
+            if err:
+                return err
 
             return {"status": "created", "type": "body", "body_type": body_type}
         except Exception as e:
@@ -1802,7 +1973,11 @@ def create_extruded_cutout_through_all(
             models = doc.Models
 
             # AddThickenFeature
-            models.AddThickenFeature(Thickness=thickness)
+            result, err = self._perform_feature_call(
+                lambda: models.AddThickenFeature(Thickness=thickness), consumes_profiles=False
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -1845,27 +2020,31 @@ def create_extruded_cutout_through_all(
             v_profiles, v_types, v_origins = self._make_loft_variant_arrays(profiles)
             v_seg = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_VARIANT, [])
 
-            models.AddLoftedProtrusionWithThinWall(
-                len(profiles),
-                v_profiles,
-                v_types,
-                v_origins,
-                v_seg,  # SegmentMaps
-                DirectionConstants.igRight,  # MaterialSide
-                ExtentTypeConstants.igNone,
-                0.0,
-                None,  # Start extent
-                ExtentTypeConstants.igNone,
-                0.0,
-                None,  # End extent
-                ExtentTypeConstants.igNone,
-                0.0,  # Start tangent
-                ExtentTypeConstants.igNone,
-                0.0,  # End tangent
-                wall_thickness,  # WallThickness
+            result, err = self._perform_feature_call(
+                lambda: models.AddLoftedProtrusionWithThinWall(
+                    len(profiles),
+                    v_profiles,
+                    v_types,
+                    v_origins,
+                    v_seg,  # SegmentMaps
+                    DirectionConstants.igRight,  # MaterialSide
+                    ExtentTypeConstants.igNone,
+                    0.0,
+                    None,  # Start extent
+                    ExtentTypeConstants.igNone,
+                    0.0,
+                    None,  # End extent
+                    ExtentTypeConstants.igNone,
+                    0.0,  # Start tangent
+                    ExtentTypeConstants.igNone,
+                    0.0,  # End tangent
+                    wall_thickness,  # WallThickness
+                ),
+                consumes_profiles=True,
             )
+            if err:
+                return err
 
-            self.sketch_manager.clear_accumulated_profiles()
             return {
                 "status": "created",
                 "type": "loft_thin_wall",
@@ -1920,26 +2099,30 @@ def create_extruded_cutout_through_all(
             )
             v_seg = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_VARIANT, [])
 
-            models.AddSweptProtrusionWithThinWall(
-                1,
-                v_paths,
-                v_path_types,
-                len(cross_sections),
-                v_sections,
-                v_section_types,
-                v_origins,
-                v_seg,
-                DirectionConstants.igRight,
-                ExtentTypeConstants.igNone,
-                0.0,
-                None,
-                ExtentTypeConstants.igNone,
-                0.0,
-                None,
-                wall_thickness,
+            result, err = self._perform_feature_call(
+                lambda: models.AddSweptProtrusionWithThinWall(
+                    1,
+                    v_paths,
+                    v_path_types,
+                    len(cross_sections),
+                    v_sections,
+                    v_section_types,
+                    v_origins,
+                    v_seg,
+                    DirectionConstants.igRight,
+                    ExtentTypeConstants.igNone,
+                    0.0,
+                    None,
+                    ExtentTypeConstants.igNone,
+                    0.0,
+                    None,
+                    wall_thickness,
+                ),
+                consumes_profiles=True,
             )
+            if err:
+                return err
 
-            self.sketch_manager.clear_accumulated_profiles()
             return {
                 "status": "created",
                 "type": "sweep_thin_wall",
@@ -1959,7 +2142,9 @@ def create_extruded_cutout_through_all(
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            models.AddAutoSimplify()
+            result, err = self._perform_feature_call(lambda: models.AddAutoSimplify(), consumes_profiles=False)
+            if err:
+                return err
 
             return {"status": "created", "type": "auto_simplify"}
         except Exception as e:
@@ -1971,7 +2156,9 @@ def create_extruded_cutout_through_all(
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            models.AddSimplifyEnclosure()
+            result, err = self._perform_feature_call(lambda: models.AddSimplifyEnclosure(), consumes_profiles=False)
+            if err:
+                return err
 
             return {"status": "created", "type": "simplify_enclosure"}
         except Exception as e:
@@ -1983,7 +2170,9 @@ def create_extruded_cutout_through_all(
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            models.AddSimplifyDuplicate()
+            result, err = self._perform_feature_call(lambda: models.AddSimplifyDuplicate(), consumes_profiles=False)
+            if err:
+                return err
 
             return {"status": "created", "type": "simplify_duplicate"}
         except Exception as e:
@@ -1995,7 +2184,9 @@ def create_extruded_cutout_through_all(
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            models.AddLocalSimplifyEnclosure()
+            result, err = self._perform_feature_call(lambda: models.AddLocalSimplifyEnclosure(), consumes_profiles=False)
+            if err:
+                return err
 
             return {"status": "created", "type": "local_simplify_enclosure"}
         except Exception as e:
@@ -2027,13 +2218,18 @@ def create_extruded_cutout_through_all(
 
             angle_rad = math.radians(angle)
 
-            models.AddRevolvedProtrusionSync(
-                1,  # NumberOfProfiles
-                (profile,),  # ProfileArray
-                refaxis,  # ReferenceAxis
-                DirectionConstants.igRight,  # ProfilePlaneSide
-                angle_rad,  # AngleofRevolution
+            result, err = self._perform_feature_call(
+                lambda: models.AddRevolvedProtrusionSync(
+                    1,  # NumberOfProfiles
+                    (profile,),  # ProfileArray
+                    refaxis,  # ReferenceAxis
+                    DirectionConstants.igRight,  # ProfilePlaneSide
+                    angle_rad,  # AngleofRevolution
+                ),
+                consumes_profiles=True,
             )
+            if err:
+                return err
 
             return {"status": "created", "type": "revolve_sync", "angle": angle}
         except Exception as e:
@@ -2061,13 +2257,18 @@ def create_extruded_cutout_through_all(
 
             angle_rad = math.radians(angle)
 
-            models.AddFiniteRevolvedProtrusionSync(
-                1,  # NumberOfProfiles
-                (profile,),  # ProfileArray
-                refaxis,  # ReferenceAxis
-                DirectionConstants.igRight,  # ProfilePlaneSide
-                angle_rad,  # AngleofRevolution
+            result, err = self._perform_feature_call(
+                lambda: models.AddFiniteRevolvedProtrusionSync(
+                    1,  # NumberOfProfiles
+                    (profile,),  # ProfileArray
+                    refaxis,  # ReferenceAxis
+                    DirectionConstants.igRight,  # ProfilePlaneSide
+                    angle_rad,  # AngleofRevolution
+                ),
+                consumes_profiles=True,
             )
+            if err:
+                return err
 
             return {"status": "created", "type": "revolve_finite_sync", "angle": angle}
         except Exception as e:
@@ -2093,13 +2294,18 @@ def create_extruded_cutout_through_all(
             if revolutions is None:
                 revolutions = height / pitch
 
-            models.AddFiniteBaseHelixSync(
-                NumberOfProfiles=1,
-                ProfileArray=(profile,),
-                Pitch=pitch,
-                Height=height,
-                Revolutions=revolutions,
+            result, err = self._perform_feature_call(
+                lambda: models.AddFiniteBaseHelixSync(
+                    NumberOfProfiles=1,
+                    ProfileArray=(profile,),
+                    Pitch=pitch,
+                    Height=height,
+                    Revolutions=revolutions,
+                ),
+                consumes_profiles=True,
             )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -2127,14 +2333,19 @@ def create_extruded_cutout_through_all(
             if revolutions is None:
                 revolutions = height / pitch
 
-            models.AddFiniteBaseHelixWithThinWall(
-                NumberOfProfiles=1,
-                ProfileArray=(profile,),
-                Pitch=pitch,
-                Height=height,
-                Revolutions=revolutions,
-                WallThickness=wall_thickness,
+            result, err = self._perform_feature_call(
+                lambda: models.AddFiniteBaseHelixWithThinWall(
+                    NumberOfProfiles=1,
+                    ProfileArray=(profile,),
+                    Pitch=pitch,
+                    Height=height,
+                    Revolutions=revolutions,
+                    WallThickness=wall_thickness,
+                ),
+                consumes_profiles=True,
             )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -2162,14 +2373,19 @@ def create_extruded_cutout_through_all(
             if revolutions is None:
                 revolutions = height / pitch
 
-            models.AddFiniteBaseHelixSyncWithThinWall(
-                NumberOfProfiles=1,
-                ProfileArray=(profile,),
-                Pitch=pitch,
-                Height=height,
-                Revolutions=revolutions,
-                WallThickness=wall_thickness,
+            result, err = self._perform_feature_call(
+                lambda: models.AddFiniteBaseHelixSyncWithThinWall(
+                    NumberOfProfiles=1,
+                    ProfileArray=(profile,),
+                    Pitch=pitch,
+                    Height=height,
+                    Revolutions=revolutions,
+                    WallThickness=wall_thickness,
+                ),
+                consumes_profiles=True,
             )
+            if err:
+                return err
 
             return {
                 "status": "created",

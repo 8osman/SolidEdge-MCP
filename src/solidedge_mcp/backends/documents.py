@@ -189,16 +189,24 @@ class DocumentManager:
 
             for i in range(app.Documents.Count):
                 doc = app.Documents.Item(i + 1)  # COM is 1-indexed
-                documents.append(
-                    {
+                try:
+                    doc_info = {
                         "index": i,
                         "name": doc.Name,
                         "full_path": doc.FullName if doc.FullName else "untitled",
                         "type": self._get_document_type(doc),
-                        "modified": not doc.Saved,
-                        "read_only": doc.ReadOnly,
                     }
-                )
+                    try:
+                        doc_info["modified"] = not doc.Saved
+                    except (AttributeError, Exception):
+                        doc_info["modified"] = None
+                    try:
+                        doc_info["read_only"] = doc.ReadOnly
+                    except (AttributeError, Exception):
+                        doc_info["read_only"] = None
+                    documents.append(doc_info)
+                except Exception:
+                    documents.append({"index": i, "name": f"<inaccessible document {i}>", "error": True})
 
             return {"documents": documents, "count": len(documents)}
         except Exception as e:
