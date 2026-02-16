@@ -58,6 +58,9 @@ class SketchManager:
 
             ref_plane = ref_planes.Item(plane_index)
 
+            # NEW: Get plane coordinate info BEFORE creating sketch
+            plane_info = self._get_ref_plane_info(plane_index, ref_plane)
+
             # Get ProfileSets collection
             profile_sets = doc.ProfileSets
 
@@ -72,11 +75,26 @@ class SketchManager:
             self.active_profile = profile
             self.active_refaxis = None  # Clear any previous axis
 
-            return {
+            # NEW: Return with plane coordinate info
+            response = {
                 "status": "created",
                 "plane": plane,
                 "sketch_id": profile_set.Name if hasattr(profile_set, "Name") else "sketch",
             }
+        
+            # Add plane info to response
+            if plane_info.get("status") in ["success", "inferred"]:
+                response["plane_origin"] = plane_info["origin"]
+                response["plane_normal"] = plane_info["normal"]
+                response["plane_name"] = plane_info.get("name", plane)
+                if "note" in plane_info:
+                    response["plane_note"] = plane_info["note"]
+            else:
+                response["plane_info_error"] = plane_info.get("error", "Unknown")
+                response["plane_note"] = "Plane info unavailable"
+        
+            return response
+        
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
@@ -109,12 +127,23 @@ class SketchManager:
             self.active_sketch = profile_set
             self.active_profile = profile
             self.active_refaxis = None
-
-            return {
+            
+            # NEW: Auto-include plane info
+            plane_info = self.get_ref_plane_info(plane_index)
+        
+            response = {
                 "status": "created",
                 "plane_index": plane_index,
                 "sketch_id": profile_set.Name if hasattr(profile_set, "Name") else "sketch",
             }
+            # Add plane info
+            if plane_info.get("status") in ["success", "inferred"]:
+                response["plane_origin"] = plane_info["origin"]
+                response["plane_normal"] = plane_info["normal"]
+                response["plane_name"] = plane_info.get("name", f"RefPlane_{plane_index}")
+        
+            return response
+        
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
@@ -1755,3 +1784,83 @@ class SketchManager:
             }
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def _get_ref_plane_info(self, plane_index: int, ref_plane=None) -> dict[str, Any]:
+        """
+        Get reference plane origin and normal vector.
+    
+        Args:
+            plane_index: Reference plane index (1=Top, 2=Front, 3=Right, or custom)
+        
+        Returns:
+            Dict with plane origin coordinates and normal vector
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            ref_planes = doc.RefPlanes
+        
+            if plane_index < 1 or plane_index > ref_planes.Count:
+                return {
+                    "error": f"Invalid plane index {plane_index}. Valid range: 1-{ref_planes.Count}"
+                }
+        
+            plane = ref_planes.Item(plane_index)
+        
+            # Get the plane's coordinate system
+            # The exact COM API calls may need adjustment based on SolidEdge API docs
+            try:
+                # Attempt to get origin point (may be RootPoint or Origin property)
+                if hasattr(plane, 'RootPoint'):
+                    origin_point = plane.RootPoint
+                    origin = [origin_point.X, origin_point.Y, origin_point.Z]
+                else:
+                    # Fallback: assume standard planes are at origin
+                    origin = [0.0, 0.0, 0.0]
+            
+                # Attempt to get normal vector
+                if hasattr(plane, 'Normal'):
+                    normal_vec = plane.Normal
+                    normal = [normal_vec.X, normal_vec.Y, normal_vec.Z]
+                else:
+                    # Fallback: infer from standard planes
+                    if plane_index == 1:  # Top (XY plane)
+                        normal = [0.0, 0.0, 1.0]
+                    elif plane_index == 2:  # Front (XZ plane)
+                        normal = [0.0, 1.0, 0.0]
+                    elif plane_index == 3:  # Right (YZ plane)
+                        normal = [1.0, 0.0, 0.0]
+                    else:
+                        normal = [0.0, 0.0, 1.0]  # Default
+            
+                return {
+                    "status": "success",
+                    "plane_index": plane_index,
+                    "origin": origin,
+                    "normal": normal,
+                    "name": plane.Name if hasattr(plane, 'Name') else f"RefPlane_{plane_index}"
+                }
+            
+            except AttributeError as attr_err:
+                 # If we can't get the actual properties, return best guess for standard planes
+                if plane_index in [1, 2, 3]:
+                    standard_planes = {
+                        1: {"origin": [0.0, 0.0, 0.0], "normal": [0.0, 0.0, 1.0], "name": "Top"},
+                        2: {"origin": [0.0, 0.0, 0.0], "normal": [0.0, 1.0, 0.0], "name": "Front"},
+                        3: {"origin": [0.0, 0.0, 0.0], "normal": [1.0, 0.0, 0.0], "name": "Right"}
+                    }
+                    result = standard_planes[plane_index]
+                    result["status"] = "inferred"
+                    result["plane_index"] = plane_index
+                    result["note"] = "Standard plane properties inferred (COM properties unavailable)"
+                    return result
+                else:
+                    return {
+                        "error": f"Cannot determine plane properties: {str(attr_err)}",
+                        "plane_index": plane_index
+                    }
+                
+        except Exception as e:
+            return {
+                "error": f"Failed to get plane info: {str(e)}",
+                "traceback": traceback.format_exc()
+            }

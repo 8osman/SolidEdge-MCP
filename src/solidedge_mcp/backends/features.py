@@ -480,7 +480,11 @@ class FeatureManager:
             radius_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8, [radius])
 
             rounds = model.Rounds
-            rounds.Add(1, edge_arr, radius_arr)
+            result, err = self._perform_feature_call(
+                lambda: rounds.Add(1, edge_arr, radius_arr), consumes_profiles=False
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -566,7 +570,12 @@ class FeatureManager:
                 edge_list.append(edges.Item(ei))
 
             chamfers = model.Chamfers
-            chamfers.AddUnequalSetback(len(edge_list), edge_list, distance1, distance2)
+            result, err = self._perform_feature_call(
+                lambda: chamfers.AddUnequalSetback(len(edge_list), edge_list, distance1, distance2),
+                consumes_profiles=False
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -619,7 +628,12 @@ class FeatureManager:
                 return {"error": "No edges found on body"}
 
             chamfers = model.Chamfers
-            chamfers.AddEqualSetback(len(edge_list), edge_list, distance)
+            result, err = self._perform_feature_call(
+                lambda: chamfers.AddEqualSetback(len(edge_list), edge_list, distance),
+                consumes_profiles=False
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
