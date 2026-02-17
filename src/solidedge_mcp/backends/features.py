@@ -133,7 +133,7 @@ class FeatureManager:
                 "Cut": FeatureOperationConstants.igFeatureCut,
                 "Intersect": FeatureOperationConstants.igFeatureIntersect,
             }
-            operation_map.get(operation, FeatureOperationConstants.igFeatureAdd)
+            operation_const = operation_map.get(operation, FeatureOperationConstants.igFeatureAdd)
 
             # Map direction string to constant
             direction_map = {
@@ -144,10 +144,21 @@ class FeatureManager:
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
 
             # Execute and validate the COM call
-            result, err = self._perform_feature_call(
-                lambda: models.AddFiniteExtrudedProtrusion(1, (profile,), dir_const, distance),
-                consumes_profiles=True,
-            )
+            if operation == "Add":
+                result, err = self._perform_feature_call(
+                    lambda: models.AddFiniteExtrudedProtrusion(1, (profile,), dir_const, distance),
+                    consumes_profiles=True,
+                )
+            else:
+                # For Cut and Intersect, use ExtrudedCutouts
+                if models.Count == 0:
+                    return {"error": "No base feature exists. Create a base feature first."}
+                model = models.Item(1)
+                cutouts = model.ExtrudedCutouts
+                result, err = self._perform_feature_call(
+                    lambda: cutouts.AddFiniteMulti(1, (profile,), dir_const, distance),
+                    consumes_profiles=True,
+                )
             if err:
                 return err
 
@@ -281,153 +292,6 @@ class FeatureManager:
                 "diameter": diameter,
                 "depth": depth,
                 "hole_type": hole_type,
-            }
-        except Exception as e:
-            return {"error": str(e), "traceback": traceback.format_exc()}
-    def create_extruded_cutout(self, distance: float, direction: str = "Normal") -> dict[str, Any]:
-        """
-        Create an extruded cutout (removes material).
-        
-        Args:
-            distance: Cutout depth in meters
-            direction: 'Normal' or 'Reverse'
-            
-        Returns:
-            Dict with status and cutout info
-        """
-        try:
-            doc = self.doc_manager.get_active_document()
-            profile = self.sketch_manager.get_active_sketch()
-            
-            if not profile:
-                return {"error": "No active sketch profile. Create and close a sketch first"}
-            
-            models = doc.Models
-            if models.Count == 0:
-                return {"error": "No base feature exists. Create a base feature first."}
-            
-            model = models.Item(1)
-            
-            # Map direction
-            dir_const = DirectionConstants.igRight  # Normal
-            if direction == "Reverse":
-                dir_const = DirectionConstants.igLeft
-            
-            # Use ExtrudedCutouts.AddFiniteMulti
-            cutouts = model.ExtrudedCutouts
-            result, err = self._perform_feature_call(
-                lambda: cutouts.AddFiniteMulti(1, (profile,), dir_const, distance),
-                consumes_profiles=True,
-            )
-            if err:
-                return err
-
-            return {
-                "status": "created",
-                "type": "extruded_cutout",
-                "distance": distance,
-                "direction": direction,
-            }
-        except Exception as e:
-            return {"error": str(e), "traceback": traceback.format_exc()}
-    
-    def create_extruded_cutout_through_all(self, direction: str = "Normal") -> dict[str, Any]:
-        """
-        Create an extruded cutout through all material.
-        
-        Args:
-            direction: 'Normal' or 'Reverse'
-            
-        Returns:
-            Dict with status and cutout info
-        """
-        try:
-            doc = self.doc_manager.get_active_document()
-            profile = self.sketch_manager.get_active_sketch()
-            
-            if not profile:
-                return {"error": "No active sketch profile. Create and close a sketch first"}
-            
-            models = doc.Models
-            if models.Count == 0:
-                return {"error": "No base feature exists. Create a base feature first."}
-            
-            model = models.Item(1)
-            
-            # Map direction
-            dir_const = DirectionConstants.igRight  # Normal
-            if direction == "Reverse":
-                dir_const = DirectionConstants.igLeft
-            
-            # Use ExtrudedCutouts.AddThroughAllMulti
-            cutouts = model.ExtrudedCutouts
-            result, err = self._perform_feature_call(
-                lambda: cutouts.AddThroughAllMulti(1, (profile,), dir_const),
-                consumes_profiles=True,
-            )
-            if err:
-                return err
-
-            return {
-                "status": "created",
-                "type": "extruded_cutout_through_all",
-                "direction": direction,
-            }
-        except Exception as e:
-            return {"error": str(e), "traceback": traceback.format_exc()}
-
-    def create_revolved_cutout(self, angle: float = 360.0) -> dict[str, Any]:
-        """
-        Create a revolved cutout around set axis.
-        
-        Args:
-            angle: Revolution angle in degrees (360 for full revolution)
-            
-        Returns:
-            Dict with status and cutout info
-        """
-        try:
-            doc = self.doc_manager.get_active_document()
-            profile = self.sketch_manager.get_active_sketch()
-            refaxis = self.sketch_manager.get_active_refaxis()
-            
-            if not profile:
-                return {"error": "No active sketch profile. Create and close a sketch first."}
-            
-            if not refaxis:
-                return {
-                    "error": "No axis of revolution set. "
-                    "Use set_axis_of_revolution() before closing the sketch."
-                }
-            
-            models = doc.Models
-            if models.Count == 0:
-                return {"error": "No base feature exists. Create a base feature first."}
-            
-            model = models.Item(1)
-            
-            import math
-            angle_rad = math.radians(angle)
-            
-            # Use RevolvedCutouts.AddFiniteMulti
-            cutouts = model.RevolvedCutouts
-            result, err = self._perform_feature_call(
-                lambda: cutouts.AddFiniteMulti(
-                    1,  # NumberOfProfiles
-                    (profile,),  # ProfileArray
-                    refaxis,  # ReferenceAxis
-                    DirectionConstants.igRight,  # ProfilePlaneSide
-                    angle_rad,  # AngleofRevolution
-                ),
-                consumes_profiles=True,
-            )
-            if err:
-                return err
-
-            return {
-                "status": "created",
-                "type": "revolved_cutout",
-                "angle": angle,
             }
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
@@ -694,16 +558,16 @@ class FeatureManager:
         """List all features in the active part"""
         try:
             doc = self.doc_manager.get_active_document()
-            models = doc.Models
+            features_collection = doc.DesignEdgebarFeatures
 
             features = []
-            for i in range(models.Count):
-                model = models.Item(i + 1)
+            for i in range(features_collection.Count):
+                feature = features_collection.Item(i + 1)
                 features.append(
                     {
                         "index": i,
-                        "name": model.Name if hasattr(model, "Name") else f"Feature {i + 1}",
-                        "type": model.Type if hasattr(model, "Type") else "Unknown",
+                        "name": feature.Name if hasattr(feature, "Name") else f"Feature {i + 1}",
+                        "type": feature.Type if hasattr(feature, "Type") else "Unknown",
                     }
                 )
 
@@ -715,25 +579,25 @@ class FeatureManager:
         """Get detailed information about a specific feature"""
         try:
             doc = self.doc_manager.get_active_document()
-            models = doc.Models
+            features_collection = doc.DesignEdgebarFeatures
 
-            if feature_index < 0 or feature_index >= models.Count:
+            if feature_index < 0 or feature_index >= features_collection.Count:
                 return {"error": f"Invalid feature index: {feature_index}"}
 
-            model = models.Item(feature_index + 1)
+            feature = features_collection.Item(feature_index + 1)
 
             info = {
                 "index": feature_index,
-                "name": model.Name if hasattr(model, "Name") else "Unknown",
-                "type": model.Type if hasattr(model, "Type") else "Unknown",
+                "name": feature.Name if hasattr(feature, "Name") else "Unknown",
+                "type": feature.Type if hasattr(feature, "Type") else "Unknown",
             }
 
             # Try to get additional properties
             try:
-                if hasattr(model, "Visible"):
-                    info["visible"] = model.Visible
-                if hasattr(model, "Suppressed"):
-                    info["suppressed"] = model.Suppressed
+                if hasattr(feature, "Visible"):
+                    info["visible"] = feature.Visible
+                if hasattr(feature, "Suppressed"):
+                    info["suppressed"] = feature.Suppressed
             except Exception:
                 pass
 
@@ -896,10 +760,8 @@ class FeatureManager:
 
             import math
 
-            # Calculate depth from the three points
-            dx = x2 - x1
-            dy = y2 - y1
-            depth = math.sqrt(dx * dx + dy * dy)
+            # Calculate depth (height) from z-coordinates of the points
+            depth = abs(z3 - z1)
             if depth == 0:
                 depth = 0.01  # fallback
 
@@ -1289,11 +1151,11 @@ class FeatureManager:
             # AddExtrudedProtrusionWithThinWall
             result, err = self._perform_feature_call(
                 lambda: models.AddExtrudedProtrusionWithThinWall(
-                    NumberOfProfiles=1,
-                    ProfileArray=(profile,),
-                    ProfilePlaneSide=dir_const,
-                    ExtrusionDistance=distance,
-                    WallThickness=wall_thickness,
+                    1,
+                    (profile,),
+                    dir_const,
+                    distance,
+                    wall_thickness,
                 ),
                 consumes_profiles=True,
             )
@@ -1444,11 +1306,10 @@ class FeatureManager:
             }
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
 
-            # AddExtrudedProtrusion (infinite)
+            # Use ExtrudedProtrusions.AddThroughAll (assuming it exists for infinite extrusion)
+            protrusions = model.ExtrudedProtrusions
             result, err = self._perform_feature_call(
-                lambda: models.AddExtrudedProtrusion(
-                    NumberOfProfiles=1, ProfileArray=(profile,), ProfilePlaneSide=dir_const
-                ),
+                lambda: protrusions.AddThroughAll(1, (profile,), dir_const),
                 consumes_profiles=True,
             )
             if err:
@@ -2361,9 +2222,12 @@ class FeatureManager:
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
 
             cutouts = model.ExtrudedCutouts
-            cutouts.AddFiniteMulti(1, (profile,), dir_const, distance)
-
-            self.sketch_manager.clear_accumulated_profiles()
+            result, err = self._perform_feature_call(
+                lambda: cutouts.AddFiniteMulti(1, (profile,), dir_const, distance),
+                consumes_profiles=True,
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -2407,9 +2271,12 @@ class FeatureManager:
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
 
             cutouts = model.ExtrudedCutouts
-            cutouts.AddThroughAllMulti(1, (profile,), dir_const)
-
-            self.sketch_manager.clear_accumulated_profiles()
+            result, err = self._perform_feature_call(
+                lambda: cutouts.AddThroughAllMulti(1, (profile,), dir_const),
+                consumes_profiles=True,
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -2459,15 +2326,18 @@ class FeatureManager:
             angle_rad = math.radians(angle)
 
             cutouts = model.RevolvedCutouts
-            cutouts.AddFiniteMulti(
-                1,  # NumberOfProfiles
-                (profile,),  # ProfileArray
-                refaxis,  # ReferenceAxis
-                DirectionConstants.igRight,  # ProfilePlaneSide
-                angle_rad,  # AngleOfRevolution
+            result, err = self._perform_feature_call(
+                lambda: cutouts.AddFiniteMulti(
+                    1,  # NumberOfProfiles
+                    (profile,),  # ProfileArray
+                    refaxis,  # ReferenceAxis
+                    DirectionConstants.igRight,  # ProfilePlaneSide
+                    angle_rad,  # AngleOfRevolution
+                ),
+                consumes_profiles=True,
             )
-
-            self.sketch_manager.clear_accumulated_profiles()
+            if err:
+                return err
 
             return {"status": "created", "type": "revolved_cutout", "angle": angle}
         except Exception as e:
@@ -2611,8 +2481,6 @@ class FeatureManager:
             Dict with status and mirror info
         """
         try:
-            import win32com.client as win32
-
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
@@ -2649,7 +2517,7 @@ class FeatureManager:
             mirror_plane = ref_planes.Item(mirror_plane_index)
 
             # Use AddSync which persists the feature tree entry
-            mc = win32.gencache.EnsureDispatch(model.MirrorCopies)
+            mc = model.MirrorCopies
             mirror = mc.AddSync(1, [target_feature], mirror_plane, False)
 
             return {
@@ -2745,8 +2613,9 @@ class FeatureManager:
 
             ref_planes = doc.RefPlanes
 
-            # igCurveEnd = 2, igCurveStart = 1
-            ignore_natural = curve_end == "End"
+            # bIgnoreNatural: True to ignore curve's natural direction
+            # Reverse mapping: for "Start" ignore natural, for "End" use natural
+            ignore_natural = curve_end == "Start"
             # NormalSide: igRight = 2
             normal_side = DirectionConstants.igRight
 
@@ -2793,7 +2662,7 @@ class FeatureManager:
             ref_planes = doc.RefPlanes
             pivot_plane = ref_planes.Item(pivot_plane_index)
 
-            ignore_natural = curve_end == "End"
+            ignore_natural = curve_end == "Start"
             normal_side = DirectionConstants.igRight
             # igPivotEnd = 2
             pivot_end_const = 2
@@ -2839,7 +2708,7 @@ class FeatureManager:
             ref_planes = doc.RefPlanes
             pivot_plane = ref_planes.Item(pivot_plane_index)
 
-            ignore_natural = curve_end == "End"
+            ignore_natural = curve_end == "Start"
             normal_side = DirectionConstants.igRight
             pivot_end_const = 2
 
@@ -2966,7 +2835,12 @@ class FeatureManager:
             radius_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8, [radius])
 
             rounds = model.Rounds
-            rounds.Add(1, edge_arr, radius_arr)
+            result, err = self._perform_feature_call(
+                lambda: rounds.Add(1, edge_arr, radius_arr),
+                consumes_profiles=False,
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -3016,7 +2890,12 @@ class FeatureManager:
                 edge_list.append(face_edges.Item(ei))
 
             chamfers = model.Chamfers
-            chamfers.AddEqualSetback(len(edge_list), edge_list, distance)
+            result, err = self._perform_feature_call(
+                lambda: chamfers.AddEqualSetback(len(edge_list), edge_list, distance),
+                consumes_profiles=False,
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
