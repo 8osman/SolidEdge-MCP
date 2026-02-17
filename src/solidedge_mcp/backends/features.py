@@ -1611,11 +1611,11 @@ class FeatureManager:
             # AddFiniteBaseHelix
             result, err = self._perform_feature_call(
                 lambda: models.AddFiniteBaseHelix(
-                    NumberOfProfiles=1,
-                    ProfileArray=(profile,),
-                    Pitch=pitch,
-                    Height=height,
-                    Revolutions=revolutions,
+                    1,
+                    (profile,),
+                    pitch,
+                    height,
+                    revolutions,
                 ),
                 consumes_profiles=True,
             )
@@ -1666,10 +1666,10 @@ class FeatureManager:
             # AddBaseContourFlange
             result, err = self._perform_feature_call(
                 lambda: models.AddBaseContourFlange(
-                    NumberOfProfiles=1,
-                    ProfileArray=(profile,),
-                    Thickness=thickness,
-                    BendRadius=bend_radius,
+                    1,
+                    (profile,),
+                    thickness,
+                    bend_radius,
                 ),
                 consumes_profiles=True,
             )
@@ -1707,7 +1707,7 @@ class FeatureManager:
 
             # AddBaseTab
             result, err = self._perform_feature_call(
-                lambda: models.AddBaseTab(NumberOfProfiles=1, ProfileArray=(profile,), Thickness=thickness),
+                lambda: models.AddBaseTab(1, (profile,), thickness),
                 consumes_profiles=True,
             )
             if err:
@@ -1761,7 +1761,8 @@ class FeatureManager:
 
             # AddThickenFeature
             result, err = self._perform_feature_call(
-                lambda: models.AddThickenFeature(Thickness=thickness), consumes_profiles=False
+                lambda: models.AddThickenFeature(thickness),
+                consumes_profiles=False,
             )
             if err:
                 return err
@@ -2083,11 +2084,11 @@ class FeatureManager:
 
             result, err = self._perform_feature_call(
                 lambda: models.AddFiniteBaseHelixSync(
-                    NumberOfProfiles=1,
-                    ProfileArray=(profile,),
-                    Pitch=pitch,
-                    Height=height,
-                    Revolutions=revolutions,
+                    1,
+                    (profile,),
+                    pitch,
+                    height,
+                    revolutions,
                 ),
                 consumes_profiles=True,
             )
@@ -2122,12 +2123,12 @@ class FeatureManager:
 
             result, err = self._perform_feature_call(
                 lambda: models.AddFiniteBaseHelixWithThinWall(
-                    NumberOfProfiles=1,
-                    ProfileArray=(profile,),
-                    Pitch=pitch,
-                    Height=height,
-                    Revolutions=revolutions,
-                    WallThickness=wall_thickness,
+                    1,
+                    (profile,),
+                    pitch,
+                    height,
+                    revolutions,
+                    wall_thickness,
                 ),
                 consumes_profiles=True,
             )
@@ -2162,12 +2163,12 @@ class FeatureManager:
 
             result, err = self._perform_feature_call(
                 lambda: models.AddFiniteBaseHelixSyncWithThinWall(
-                    NumberOfProfiles=1,
-                    ProfileArray=(profile,),
-                    Pitch=pitch,
-                    Height=height,
-                    Revolutions=revolutions,
-                    WallThickness=wall_thickness,
+                    1,
+                    (profile,),
+                    pitch,
+                    height,
+                    revolutions,
+                    wall_thickness,
                 ),
                 consumes_profiles=True,
             )
@@ -2379,7 +2380,12 @@ class FeatureManager:
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
 
             cutouts = model.NormalCutouts
-            cutouts.AddFiniteMulti(1, (profile,), dir_const, distance)
+            result, err = self._perform_feature_call(
+                lambda: cutouts.AddFiniteMulti(1, (profile,), dir_const, distance),
+                consumes_profiles=True,
+            )
+            if err:
+                return err
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -2438,15 +2444,20 @@ class FeatureManager:
             v_profiles, v_types, v_origins = self._make_loft_variant_arrays(profiles)
 
             lc = model.LoftedCutouts
-            lc.AddSimple(
-                len(profiles),
-                v_profiles,
-                v_types,
-                v_origins,
-                DirectionConstants.igRight,
-                ExtentTypeConstants.igNone,
-                ExtentTypeConstants.igNone,
+            result, err = self._perform_feature_call(
+                lambda: lc.AddSimple(
+                    len(profiles),
+                    v_profiles,
+                    v_types,
+                    v_origins,
+                    DirectionConstants.igRight,
+                    ExtentTypeConstants.igNone,
+                    ExtentTypeConstants.igNone,
+                ),
+                consumes_profiles=False,
             )
+            if err:
+                return err
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -2518,7 +2529,12 @@ class FeatureManager:
 
             # Use AddSync which persists the feature tree entry
             mc = model.MirrorCopies
-            mirror = mc.AddSync(1, [target_feature], mirror_plane, False)
+            result, err = self._perform_feature_call(
+                lambda: mc.AddSync(1, [target_feature], mirror_plane, False),
+                consumes_profiles=False,
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -2572,7 +2588,12 @@ class FeatureManager:
             }
             side_const = side_map.get(normal_side, DirectionConstants.igRight)
 
-            ref_planes.AddParallelByDistance(parent, distance, side_const)
+            result, err = self._perform_feature_call(
+                lambda: ref_planes.AddParallelByDistance(parent, distance, side_const),
+                consumes_profiles=False,
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -2619,7 +2640,12 @@ class FeatureManager:
             # NormalSide: igRight = 2
             normal_side = DirectionConstants.igRight
 
-            ref_planes.AddNormalToCurveAtDistance(profile, distance, ignore_natural, normal_side)
+            result, err = self._perform_feature_call(
+                lambda: ref_planes.AddNormalToCurveAtDistance(profile, distance, ignore_natural, normal_side),
+                consumes_profiles=False,
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -2667,9 +2693,14 @@ class FeatureManager:
             # igPivotEnd = 2
             pivot_end_const = 2
 
-            ref_planes.AddNormalToCurveAtArcLengthRatio(
-                profile, ratio, ignore_natural, normal_side, pivot_plane, pivot_end_const
+            result, err = self._perform_feature_call(
+                lambda: ref_planes.AddNormalToCurveAtArcLengthRatio(
+                    profile, ratio, ignore_natural, normal_side, pivot_plane, pivot_end_const
+                ),
+                consumes_profiles=False,
             )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -2712,9 +2743,14 @@ class FeatureManager:
             normal_side = DirectionConstants.igRight
             pivot_end_const = 2
 
-            ref_planes.AddNormalToCurveAtDistanceAlongCurve(
-                profile, distance_along, ignore_natural, normal_side, pivot_plane, pivot_end_const
+            result, err = self._perform_feature_call(
+                lambda: ref_planes.AddNormalToCurveAtDistanceAlongCurve(
+                    profile, distance_along, ignore_natural, normal_side, pivot_plane, pivot_end_const
+                ),
+                consumes_profiles=False,
             )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -2774,7 +2810,12 @@ class FeatureManager:
             }
             side_const = side_map.get(normal_side, DirectionConstants.igRight)
 
-            ref_planes.AddParallelByTangent(parent_plane, face, side_const)
+            result, err = self._perform_feature_call(
+                lambda: ref_planes.AddParallelByTangent(parent_plane, face, side_const),
+                consumes_profiles=False,
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -2941,7 +2982,12 @@ class FeatureManager:
                 face_objs.append(faces.Item(idx + 1))
 
             delete_faces = model.DeleteFaces
-            delete_faces.Add(len(face_objs), face_objs)
+            result, err = self._perform_feature_call(
+                lambda: delete_faces.Add(len(face_objs), face_objs),
+                consumes_profiles=False,
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -2987,7 +3033,12 @@ class FeatureManager:
                 face_objs.append(faces.Item(idx + 1))
 
             delete_faces = model.DeleteFaces
-            delete_faces.AddNoHeal(len(face_objs), face_objs)
+            result, err = self._perform_feature_call(
+                lambda: delete_faces.AddNoHeal(len(face_objs), face_objs),
+                consumes_profiles=False,
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -3028,7 +3079,12 @@ class FeatureManager:
             face = faces.Item(face_index + 1)
 
             delete_holes = model.DeleteHoles
-            delete_holes.AddByFace(face)
+            result, err = self._perform_feature_call(
+                lambda: delete_holes.AddByFace(face),
+                consumes_profiles=False,
+            )
+            if err:
+                return err
 
             return {"status": "created", "type": "delete_hole_by_face", "face_index": face_index}
         except Exception as e:
@@ -3044,7 +3100,12 @@ class FeatureManager:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            models.AddLoftedFlange(thickness)  # Positional arg
+            result, err = self._perform_feature_call(
+                lambda: models.AddLoftedFlange(thickness),
+                consumes_profiles=False,
+            )
+            if err:
+                return err
 
             return {"status": "created", "type": "lofted_flange", "thickness": thickness}
         except Exception as e:
@@ -3056,7 +3117,12 @@ class FeatureManager:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            models.AddWebNetwork()
+            result, err = self._perform_feature_call(
+                lambda: models.AddWebNetwork(),
+                consumes_profiles=False,
+            )
+            if err:
+                return err
 
             return {"status": "created", "type": "web_network"}
         except Exception as e:
@@ -3072,7 +3138,12 @@ class FeatureManager:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            models.AddBodyByMeshFacets()
+            result, err = self._perform_feature_call(
+                lambda: models.AddBodyByMeshFacets(),
+                consumes_profiles=False,
+            )
+            if err:
+                return err
 
             return {"status": "created", "type": "body_by_mesh"}
         except Exception as e:
@@ -3084,7 +3155,12 @@ class FeatureManager:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            models.AddBodyFeature()
+            result, err = self._perform_feature_call(
+                lambda: models.AddBodyFeature(),
+                consumes_profiles=False,
+            )
+            if err:
+                return err
 
             return {"status": "created", "type": "body_feature"}
         except Exception as e:
@@ -3096,7 +3172,12 @@ class FeatureManager:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            models.AddByConstruction()
+            result, err = self._perform_feature_call(
+                lambda: models.AddByConstruction(),
+                consumes_profiles=False,
+            )
+            if err:
+                return err
 
             return {"status": "created", "type": "construction_body"}
         except Exception as e:
@@ -3108,7 +3189,12 @@ class FeatureManager:
             doc = self.doc_manager.get_active_document()
             models = doc.Models
 
-            models.AddBodyByTag(tag)
+            result, err = self._perform_feature_call(
+                lambda: models.AddBodyByTag(tag),
+                consumes_profiles=False,
+            )
+            if err:
+                return err
 
             return {"status": "created", "type": "body_by_tag", "tag": tag}
         except Exception as e:
@@ -3132,9 +3218,14 @@ class FeatureManager:
             models = doc.Models
 
             # AddBaseContourFlangeByBendDeductionOrBendAllowance
-            models.AddBaseContourFlangeByBendDeductionOrBendAllowance(
-                Profile=profile, NormalSide=1, Thickness=thickness, BendRadius=bend_radius
+            result, err = self._perform_feature_call(
+                lambda: models.AddBaseContourFlangeByBendDeductionOrBendAllowance(
+                    profile, 1, thickness, bend_radius
+                ),
+                consumes_profiles=True,
             )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -3157,9 +3248,14 @@ class FeatureManager:
             models = doc.Models
 
             # AddBaseTabWithMultipleProfiles
-            models.AddBaseTabWithMultipleProfiles(
-                NumberOfProfiles=1, ProfileArray=(profile,), Thickness=thickness
+            result, err = self._perform_feature_call(
+                lambda: models.AddBaseTabWithMultipleProfiles(
+                    1, (profile,), thickness
+                ),
+                consumes_profiles=True,
             )
+            if err:
+                return err
 
             return {"status": "created", "type": "base_tab_multi_profile", "thickness": thickness}
         except Exception as e:
@@ -3172,9 +3268,14 @@ class FeatureManager:
             models = doc.Models
 
             # AddLoftedFlangeByBendDeductionOrBendAllowance
-            models.AddLoftedFlangeByBendDeductionOrBendAllowance(
-                Thickness=thickness, BendRadius=bend_radius
+            result, err = self._perform_feature_call(
+                lambda: models.AddLoftedFlangeByBendDeductionOrBendAllowance(
+                    thickness, bend_radius
+                ),
+                consumes_profiles=False,
             )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -3192,7 +3293,12 @@ class FeatureManager:
             models = doc.Models
 
             # AddLoftedFlangeEx
-            models.AddLoftedFlangeEx(thickness)  # Positional arg
+            result, err = self._perform_feature_call(
+                lambda: models.AddLoftedFlangeEx(thickness),
+                consumes_profiles=False,
+            )
+            if err:
+                return err
 
             return {"status": "created", "type": "lofted_flange_ex", "thickness": thickness}
         except Exception as e:
@@ -3431,7 +3537,12 @@ class FeatureManager:
             depth_side = 2 if direction == "Normal" else 1
 
             dimples = model.Dimples
-            dimples.Add(profile, depth, profile_side, depth_side)
+            result, err = self._perform_feature_call(
+                lambda: dimples.Add(profile, depth, profile_side, depth_side),
+                consumes_profiles=True,
+            )
+            if err:
+                return err
 
             return {"status": "created", "type": "dimple", "depth": depth, "direction": direction}
         except Exception as e:
@@ -3461,7 +3572,12 @@ class FeatureManager:
             model = models.Item(1)
 
             etches = model.Etches
-            etches.Add(profile)
+            result, err = self._perform_feature_call(
+                lambda: etches.Add(profile),
+                consumes_profiles=True,
+            )
+            if err:
+                return err
 
             return {"status": "created", "type": "etch"}
         except Exception as e:
@@ -3502,7 +3618,12 @@ class FeatureManager:
             side = dir_map.get(direction, DirectionConstants.igRight)
 
             ribs = model.Ribs
-            ribs.Add(profile, 1, 0, side, thickness)
+            result, err = self._perform_feature_call(
+                lambda: ribs.Add(profile, 1, 0, side, thickness),
+                consumes_profiles=True,
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -3545,7 +3666,12 @@ class FeatureManager:
             )
 
             lips = model.Lips
-            lips.Add(profile, side, depth)
+            result, err = self._perform_feature_call(
+                lambda: lips.Add(profile, side, depth),
+                consumes_profiles=True,
+            )
+            if err:
+                return err
 
             return {"status": "created", "type": "lip", "depth": depth, "direction": direction}
         except Exception as e:
@@ -3583,7 +3709,12 @@ class FeatureManager:
             side = 2 if direction == "Normal" else 1
 
             drawn_cutouts = model.DrawnCutouts
-            drawn_cutouts.Add(profile, side, depth)
+            result, err = self._perform_feature_call(
+                lambda: drawn_cutouts.Add(profile, side, depth),
+                consumes_profiles=True,
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -3625,7 +3756,12 @@ class FeatureManager:
             side = 2 if direction == "Normal" else 1
 
             beads = model.Beads
-            beads.Add(profile, side, depth)
+            result, err = self._perform_feature_call(
+                lambda: beads.Add(profile, side, depth),
+                consumes_profiles=True,
+            )
+            if err:
+                return err
 
             return {"status": "created", "type": "bead", "depth": depth, "direction": direction}
         except Exception as e:
@@ -3662,7 +3798,12 @@ class FeatureManager:
             side = 2 if direction == "Normal" else 1
 
             louvers = model.Louvers
-            louvers.Add(profile, side, depth)
+            result, err = self._perform_feature_call(
+                lambda: louvers.Add(profile, side, depth),
+                consumes_profiles=True,
+            )
+            if err:
+                return err
 
             return {"status": "created", "type": "louver", "depth": depth, "direction": direction}
         except Exception as e:
@@ -3699,7 +3840,12 @@ class FeatureManager:
             side = 2 if direction == "Normal" else 1
 
             gussets = model.Gussets
-            gussets.Add(profile, side, thickness)
+            result, err = self._perform_feature_call(
+                lambda: gussets.Add(profile, side, thickness),
+                consumes_profiles=True,
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -3742,7 +3888,12 @@ class FeatureManager:
             face = faces.Item(face_index + 1)
 
             threads = model.Threads
-            threads.Add(face, pitch)
+            result, err = self._perform_feature_call(
+                lambda: threads.Add(face, pitch),
+                consumes_profiles=False,
+            )
+            if err:
+                return err
 
             return {
                 "status": "created",
@@ -3786,7 +3937,12 @@ class FeatureManager:
             side = 2 if direction == "Normal" else 1
 
             slots = model.Slots
-            slots.Add(profile, side, depth)
+            result, err = self._perform_feature_call(
+                lambda: slots.Add(profile, side, depth),
+                consumes_profiles=True,
+            )
+            if err:
+                return err
 
             return {"status": "created", "type": "slot", "depth": depth, "direction": direction}
         except Exception as e:
@@ -3821,7 +3977,12 @@ class FeatureManager:
             side = 2 if direction == "Normal" else 1
 
             splits = model.Splits
-            splits.Add(profile, side)
+            result, err = self._perform_feature_call(
+                lambda: splits.Add(profile, side),
+                consumes_profiles=True,
+            )
+            if err:
+                return err
 
             return {"status": "created", "type": "split", "direction": direction}
         except Exception as e:
@@ -5310,14 +5471,24 @@ class FeatureManager:
             if models.Count > 0:
                 model = models.Item(1)
                 rev_surfaces = model.RevolvedSurfaces
-                rev_surfaces.AddFinite(
-                    1, v_profiles, refaxis, DirectionConstants.igRight, angle_rad, want_end_caps
+                result, err = self._perform_feature_call(
+                    lambda: rev_surfaces.AddFinite(
+                        1, v_profiles, refaxis, DirectionConstants.igRight, angle_rad, want_end_caps
+                    ),
+                    consumes_profiles=True,
                 )
+                if err:
+                    return err
             else:
                 # First feature - use Models method if available
-                models.AddFiniteRevolvedSurface(
-                    1, v_profiles, refaxis, DirectionConstants.igRight, angle_rad, want_end_caps
+                result, err = self._perform_feature_call(
+                    lambda: models.AddFiniteRevolvedSurface(
+                        1, v_profiles, refaxis, DirectionConstants.igRight, angle_rad, want_end_caps
+                    ),
+                    consumes_profiles=True,
                 )
+                if err:
+                    return err
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -5372,21 +5543,26 @@ class FeatureManager:
             if models.Count > 0:
                 model = models.Item(1)
                 loft_surfaces = model.LoftedSurfaces
-                loft_surfaces.Add(
-                    len(all_profiles),
-                    v_sections,
-                    v_types,
-                    v_origins,
-                    ExtentTypeConstants.igNone,  # StartExtentType
-                    ExtentTypeConstants.igNone,  # EndExtentType
-                    0,
-                    0.0,  # StartTangentType, StartTangentMagnitude
-                    0,
-                    0.0,  # EndTangentType, EndTangentMagnitude
-                    0,
-                    None,  # NumGuideCurves, GuideCurves
-                    want_end_caps,
+                result, err = self._perform_feature_call(
+                    lambda: loft_surfaces.Add(
+                        len(all_profiles),
+                        v_sections,
+                        v_types,
+                        v_origins,
+                        ExtentTypeConstants.igNone,  # StartExtentType
+                        ExtentTypeConstants.igNone,  # EndExtentType
+                        0,
+                        0.0,  # StartTangentType, StartTangentMagnitude
+                        0,
+                        0.0,  # EndTangentType, EndTangentMagnitude
+                        0,
+                        None,  # NumGuideCurves, GuideCurves
+                        want_end_caps,
+                    ),
+                    consumes_profiles=True,
                 )
+                if err:
+                    return err
             else:
                 return {"error": "Lofted surface requires an existing base feature."}
 
@@ -5448,19 +5624,24 @@ class FeatureManager:
             v_sections = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, cross_sections)
 
             swept_surfaces = model.SweptSurfaces
-            swept_surfaces.Add(
-                1,
-                v_paths,
-                _CS,  # Path
-                len(cross_sections),
-                v_sections,
-                _CS,  # Sections
-                None,
-                None,  # Origins, OriginRefs
-                ExtentTypeConstants.igNone,  # StartExtentType
-                ExtentTypeConstants.igNone,  # EndExtentType
-                want_end_caps,
+            result, err = self._perform_feature_call(
+                lambda: swept_surfaces.Add(
+                    1,
+                    v_paths,
+                    _CS,  # Path
+                    len(cross_sections),
+                    v_sections,
+                    _CS,  # Sections
+                    None,
+                    None,  # Origins, OriginRefs
+                    ExtentTypeConstants.igNone,  # StartExtentType
+                    ExtentTypeConstants.igNone,  # EndExtentType
+                    want_end_caps,
+                ),
+                consumes_profiles=True,
             )
+            if err:
+                return err
 
             self.sketch_manager.clear_accumulated_profiles()
 
