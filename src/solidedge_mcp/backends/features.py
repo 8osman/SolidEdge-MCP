@@ -273,7 +273,9 @@ class FeatureManager:
             ps = doc.ProfileSets.Add()
             plane = doc.RefPlanes.Item(plane_index)
             profile = ps.Profiles.Add(plane)
-            profile.Circles2d.AddByCenterRadius(x, y, radius)
+            _feature = profile.Circles2d.AddByCenterRadius(x, y, radius)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
             profile.End(0)
 
             # Use ExtrudedCutouts.AddFiniteMulti for reliable hole creation
@@ -3363,9 +3365,11 @@ class FeatureManager:
             tools_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, face_list)
 
             emboss_features = model.EmbossFeatures
-            emboss_features.Add(
+            _feature = emboss_features.Add(
                 body, len(face_list), tools_arr, thicken, default_side, clearance, thickness
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -3451,7 +3455,7 @@ class FeatureManager:
                 # In late binding, pass them positionally
                 if inside_radius is not None and bend_angle is not None:
                     bend_angle_rad = math.radians(bend_angle)
-                    flanges.Add(
+                    _feature = flanges.Add(
                         edge,
                         side_const,
                         flange_length,
@@ -3466,11 +3470,15 @@ class FeatureManager:
                         None,
                         bend_angle_rad,
                     )
+                    if _feature is None:
+                        return {"error": "Feature creation failed: COM returned None"}
                 elif inside_radius is not None:
-                    flanges.Add(edge, side_const, flange_length, None, inside_radius)
+                    _feature = flanges.Add(edge, side_const, flange_length, None, inside_radius)
+                    if _feature is None:
+                        return {"error": "Feature creation failed: COM returned None"}
                 else:
                     bend_angle_rad = math.radians(bend_angle)
-                    flanges.Add(
+                    _feature = flanges.Add(
                         edge,
                         side_const,
                         flange_length,
@@ -3485,8 +3493,12 @@ class FeatureManager:
                         None,
                         bend_angle_rad,
                     )
+                    if _feature is None:
+                        return {"error": "Feature creation failed: COM returned None"}
             else:
-                flanges.Add(edge, side_const, flange_length)
+                _feature = flanges.Add(edge, side_const, flange_length)
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
 
             result = {
                 "status": "created",
@@ -4037,7 +4049,9 @@ class FeatureManager:
                 edge_list.append(face_edges.Item(ei))
 
             chamfers = model.Chamfers
-            chamfers.AddUnequalSetback(face, len(edge_list), edge_list, distance1, distance2)
+            _feature = chamfers.AddUnequalSetback(face, len(edge_list), edge_list, distance1, distance2)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -4095,7 +4109,9 @@ class FeatureManager:
 
             chamfers = model.Chamfers
             angle_rad = math.radians(angle)
-            chamfers.AddSetbackAngle(face, len(edge_list), edge_list, distance, angle_rad)
+            _feature = chamfers.AddSetbackAngle(face, len(edge_list), edge_list, distance, angle_rad)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -4162,7 +4178,9 @@ class FeatureManager:
 
             face_rotates = model.FaceRotates
             # igFaceRotateByGeometry = 1, igFaceRotateRecreateBlends = 1, igFaceRotateAxisEnd = 2
-            face_rotates.Add(face, 1, 1, None, None, edge, 2, angle_rad)
+            _feature = face_rotates.Add(face, 1, 1, None, None, edge, 2, angle_rad)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -4230,7 +4248,9 @@ class FeatureManager:
 
             face_rotates = model.FaceRotates
             # igFaceRotateByPoints = 2, igFaceRotateRecreateBlends = 1, igFaceRotateNone = 0
-            face_rotates.Add(face, 2, 1, point1, point2, None, 0, angle_rad)
+            _feature = face_rotates.Add(face, 2, 1, point1, point2, None, 0, angle_rad)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -4288,7 +4308,9 @@ class FeatureManager:
 
             # igRight = 2 (draft direction side)
             drafts = model.Drafts
-            drafts.Add(ref_plane, 1, [face], [angle_rad], 2)
+            _feature = drafts.Add(ref_plane, 1, [face], [angle_rad], 2)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -4335,9 +4357,11 @@ class FeatureManager:
             # igPivotEnd = 2
             pivot_end_const = 2
 
-            ref_planes.AddNormalToCurve(
+            _feature = ref_planes.AddNormalToCurve(
                 profile, curve_end_const, pivot_plane, pivot_end_const, True
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             new_index = ref_planes.Count
 
@@ -4414,7 +4438,7 @@ class FeatureManager:
 
             # SweptCutouts.Add: same 15 params as SweptProtrusions
             swept_cutouts = model.SweptCutouts
-            swept_cutouts.Add(
+            _feature = swept_cutouts.Add(
                 1,
                 v_paths,
                 v_path_types,  # Path (1 curve)
@@ -4431,6 +4455,8 @@ class FeatureManager:
                 0.0,
                 None,  # End extent
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
             return {
@@ -4499,7 +4525,7 @@ class FeatureManager:
             v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
             helix_cutouts = model.HelixCutouts
-            helix_cutouts.AddFinite(
+            _feature = helix_cutouts.AddFinite(
                 refaxis,  # HelixAxis
                 axis_start,  # AxisStart
                 1,  # NumCrossSections
@@ -4510,6 +4536,8 @@ class FeatureManager:
                 revolutions,  # NumberOfTurns
                 dir_const,  # HelixDir
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
             return {
@@ -4594,7 +4622,9 @@ class FeatureManager:
             )
 
             rounds = model.Rounds
-            rounds.AddVariable(1, edge_arr, radius_arr)
+            _feature = rounds.AddVariable(1, edge_arr, radius_arr)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -4667,7 +4697,9 @@ class FeatureManager:
             radius_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8, [radius])
 
             blends = model.Blends
-            blends.Add(1, edge_arr, radius_arr)
+            _feature = blends.Add(1, edge_arr, radius_arr)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -4722,7 +4754,9 @@ class FeatureManager:
             # Angle in radians for the COM API
             angle_rad = math.radians(angle)
 
-            ref_planes.AddAngularByAngle(parent, angle_rad, side_const)
+            _feature = ref_planes.AddAngularByAngle(parent, angle_rad, side_const)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -4770,7 +4804,9 @@ class FeatureManager:
             doc = self.doc_manager.get_active_document()
             ref_planes = doc.RefPlanes
 
-            ref_planes.AddBy3Points(x1, y1, z1, x2, y2, z2, x3, y3, z3)
+            _feature = ref_planes.AddBy3Points(x1, y1, z1, x2, y2, z2, x3, y3, z3)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -4814,7 +4850,9 @@ class FeatureManager:
             plane1 = ref_planes.Item(plane1_index)
             plane2 = ref_planes.Item(plane2_index)
 
-            ref_planes.AddMidPlane(plane1, plane2)
+            _feature = ref_planes.AddMidPlane(plane1, plane2)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -4867,12 +4905,16 @@ class FeatureManager:
             ps = doc.ProfileSets.Add()
             plane = doc.RefPlanes.Item(plane_index)
             profile = ps.Profiles.Add(plane)
-            profile.Circles2d.AddByCenterRadius(x, y, radius)
+            _feature = profile.Circles2d.AddByCenterRadius(x, y, radius)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
             profile.End(0)
 
             # Use through-all cutout
             cutouts = model.ExtrudedCutouts
-            cutouts.AddThroughAllMulti(1, (profile,), dir_const)
+            _feature = cutouts.AddThroughAllMulti(1, (profile,), dir_const)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -4928,7 +4970,7 @@ class FeatureManager:
             if box_features is None:
                 return {"error": "BoxFeatures collection not accessible"}
 
-            box_features.AddCutoutByTwoPoints(
+            _feature = box_features.AddCutoutByTwoPoints(
                 x1,
                 y1,
                 z1,
@@ -4943,6 +4985,8 @@ class FeatureManager:
                 None,  # pKeyPointObj
                 0,  # pKeyPointFlags
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -4997,7 +5041,7 @@ class FeatureManager:
             if box_features is None:
                 return {"error": "BoxFeatures collection not accessible"}
 
-            box_features.AddCutoutByCenter(
+            _feature = box_features.AddCutoutByCenter(
                 center_x,
                 center_y,
                 center_z,
@@ -5011,6 +5055,8 @@ class FeatureManager:
                 None,  # pKeyPointObj
                 0,  # pKeyPointFlags
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -5075,7 +5121,7 @@ class FeatureManager:
             if box_features is None:
                 return {"error": "BoxFeatures collection not accessible"}
 
-            box_features.AddCutoutByThreePoints(
+            _feature = box_features.AddCutoutByThreePoints(
                 x1,
                 y1,
                 z1,
@@ -5092,6 +5138,8 @@ class FeatureManager:
                 None,  # pKeyPointObj
                 0,  # pKeyPointFlags
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -5154,7 +5202,7 @@ class FeatureManager:
             if cyl_features is None:
                 return {"error": "CylinderFeatures collection not accessible"}
 
-            cyl_features.AddCutoutByCenterAndRadius(
+            _feature = cyl_features.AddCutoutByCenterAndRadius(
                 center_x,
                 center_y,
                 center_z,
@@ -5167,6 +5215,8 @@ class FeatureManager:
                 None,  # pKeyPointObj
                 0,  # pKeyPointFlags
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -5220,7 +5270,7 @@ class FeatureManager:
             if sph_features is None:
                 return {"error": "SphereFeatures collection not accessible"}
 
-            sph_features.AddCutoutByCenterAndRadius(
+            _feature = sph_features.AddCutoutByCenterAndRadius(
                 center_x,
                 center_y,
                 center_z,
@@ -5233,6 +5283,8 @@ class FeatureManager:
                 None,  # pKeyPointObj
                 0,  # pKeyPointFlags
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -5280,7 +5332,9 @@ class FeatureManager:
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
 
             cutouts = model.ExtrudedCutouts
-            cutouts.AddThroughNextMulti(1, (profile,), dir_const)
+            _feature = cutouts.AddThroughNextMulti(1, (profile,), dir_const)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -5330,7 +5384,9 @@ class FeatureManager:
 
             # igNormalCutoutMethod_Normal = 0 (default method)
             cutouts = model.NormalCutouts
-            cutouts.AddThroughAllMulti(1, (profile,), dir_const, 0)
+            _feature = cutouts.AddThroughAllMulti(1, (profile,), dir_const, 0)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -5381,7 +5437,9 @@ class FeatureManager:
             hole_type_const = type_map.get(hole_type, 0)
 
             delete_holes = model.DeleteHoles
-            delete_holes.Add(hole_type_const, max_diameter)
+            _feature = delete_holes.Add(hole_type_const, max_diameter)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -5426,7 +5484,9 @@ class FeatureManager:
             face = faces.Item(face_index + 1)
 
             delete_blends = model.DeleteBlends
-            delete_blends.Add(face)
+            _feature = delete_blends.Add(face)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {"status": "created", "type": "delete_blend", "face_index": face_index}
         except Exception as e:
@@ -5772,7 +5832,7 @@ class FeatureManager:
                 else ReferenceElementConstants.igCurveEnd
             )
 
-            ref_planes.AddNormalToCurveAtKeyPoint(
+            _feature = ref_planes.AddNormalToCurveAtKeyPoint(
                 profile,  # Curve
                 orientation_plane,  # OrientationPlane
                 profile,  # KeyPoint (same as curve for endpoint)
@@ -5781,6 +5841,8 @@ class FeatureManager:
                 ReferenceElementConstants.igNormalSide,  # normalOrientation
                 curve_end_const,  # selectedCurveEnd
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -5837,7 +5899,7 @@ class FeatureManager:
 
             angle_rad = math.radians(angle)
 
-            ref_planes.AddTangentToCylinderOrConeAtAngle(
+            _feature = ref_planes.AddTangentToCylinderOrConeAtAngle(
                 face,  # Face
                 parent_plane,  # ParentPlane
                 angle_rad,  # AngleOfRotation
@@ -5845,6 +5907,8 @@ class FeatureManager:
                 DirectionConstants.igRight,  # ExtentSide
                 ReferenceElementConstants.igNormalSide,  # normalOrientation
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -5904,7 +5968,7 @@ class FeatureManager:
                 else KeyPointTypeConstants.igKeyPointEnd
             )
 
-            ref_planes.AddTangentToCylinderOrConeAtKeyPoint(
+            _feature = ref_planes.AddTangentToCylinderOrConeAtKeyPoint(
                 face,  # Face
                 parent_plane,  # ParentPlane
                 face,  # KeyPoint (use face itself as keypoint reference)
@@ -5913,6 +5977,8 @@ class FeatureManager:
                 DirectionConstants.igRight,  # ExtentSide
                 ReferenceElementConstants.igNormalSide,  # normalOrientation
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -5972,7 +6038,7 @@ class FeatureManager:
                 else KeyPointTypeConstants.igKeyPointEnd
             )
 
-            ref_planes.AddTangentToCurvedSurfaceAtKeyPoint(
+            _feature = ref_planes.AddTangentToCurvedSurfaceAtKeyPoint(
                 face,  # Face
                 parent_plane,  # ParentPlane
                 face,  # KeyPoint (use face itself as keypoint reference)
@@ -5980,6 +6046,8 @@ class FeatureManager:
                 0.0,  # XAxisAngle
                 ReferenceElementConstants.igNormalSide,  # normalOrientation
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -6039,13 +6107,15 @@ class FeatureManager:
             constructions = doc.Constructions
             extruded_surfaces = constructions.ExtrudedSurfaces
 
-            extruded_surfaces.AddFromTo(
+            _feature = extruded_surfaces.AddFromTo(
                 1,  # NumberOfProfiles
                 profile_array,  # ProfileArray
                 from_plane,  # FromFaceOrRefPlane
                 to_plane,  # ToFaceOrRefPlane
                 True,  # WantEndCaps
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -6083,7 +6153,7 @@ class FeatureManager:
             constructions = doc.Constructions
             extruded_surfaces = constructions.ExtrudedSurfaces
 
-            extruded_surfaces.AddFiniteByKeyPoint(
+            _feature = extruded_surfaces.AddFiniteByKeyPoint(
                 1,  # NumberOfProfiles
                 profile_array,  # ProfileArray
                 DirectionConstants.igRight,  # ProfilePlaneSide
@@ -6091,6 +6161,8 @@ class FeatureManager:
                 KeyPointExtentConstants.igTangentNormal,  # KeyPointFlags
                 True,  # WantEndCaps
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -6139,7 +6211,7 @@ class FeatureManager:
             constructions = doc.Constructions
             extruded_surfaces = constructions.ExtrudedSurfaces
 
-            extruded_surfaces.AddByCurves(
+            _feature = extruded_surfaces.AddByCurves(
                 1,  # NumberOfCurves
                 curve_array,  # CurveArray
                 ExtentTypeConstants.igFinite,  # ExtentType1
@@ -6176,6 +6248,8 @@ class FeatureManager:
                 0.0,  # TreatmentCrownTakeOffAngle2
                 True,  # WantEndCaps
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -6227,7 +6301,7 @@ class FeatureManager:
             v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
             rev_surfaces = model.RevolvedSurfaces
-            rev_surfaces.AddFiniteSync(
+            _feature = rev_surfaces.AddFiniteSync(
                 1,  # NumberOfProfiles
                 v_profiles,  # ProfileArray
                 refaxis,  # RefAxis
@@ -6235,6 +6309,8 @@ class FeatureManager:
                 angle_rad,  # AngleOfRevolution
                 want_end_caps,  # WantEndCaps
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -6283,7 +6359,7 @@ class FeatureManager:
             v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
             rev_surfaces = model.RevolvedSurfaces
-            rev_surfaces.AddFiniteByKeyPoint(
+            _feature = rev_surfaces.AddFiniteByKeyPoint(
                 1,  # NumberOfProfiles
                 v_profiles,  # ProfileArray
                 refaxis,  # RefAxis
@@ -6292,6 +6368,8 @@ class FeatureManager:
                 DirectionConstants.igRight,  # ProfilePlaneSide
                 want_end_caps,  # WantEndCaps
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -6344,7 +6422,7 @@ class FeatureManager:
             )
 
             loft_surfaces = model.LoftedSurfaces
-            loft_surfaces.Add2(
+            _feature = loft_surfaces.Add2(
                 len(all_profiles),  # NumSections
                 v_sections,  # CrossSections
                 v_types,  # CrossSectionTypes
@@ -6359,6 +6437,8 @@ class FeatureManager:
                 None,  # GuideCurves
                 want_end_caps,  # WantEndCaps
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -6420,7 +6500,7 @@ class FeatureManager:
             )
 
             swept_surfaces = model.SweptSurfaces
-            swept_surfaces.AddEx(
+            _feature = swept_surfaces.AddEx(
                 1,  # NumCurves
                 v_paths,  # TraceCurves
                 _CS,  # TraceCurveTypes
@@ -6433,6 +6513,8 @@ class FeatureManager:
                 ExtentTypeConstants.igNone,  # EndExtentType
                 want_end_caps,  # WantEndCaps
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -6511,7 +6593,7 @@ class FeatureManager:
             constructions = doc.Constructions
             extruded_surfaces = constructions.ExtrudedSurfaces
 
-            extruded_surfaces.Add(
+            _feature = extruded_surfaces.Add(
                 1,  # NumberOfProfiles
                 profile_array,  # ProfileArray
                 ExtentTypeConstants.igFinite,  # ExtentType1
@@ -6548,6 +6630,8 @@ class FeatureManager:
                 0.0,  # TreatmentCrownTakeOffAngle2
                 True,  # WantEndCaps
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -6599,7 +6683,9 @@ class FeatureManager:
             side = direction_map.get(direction, DirectionConstants.igRight)
 
             protrusions = model.ExtrudedProtrusions
-            protrusions.AddThroughNextMulti(1, (profile,), side)
+            _feature = protrusions.AddThroughNextMulti(1, (profile,), side)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -6652,7 +6738,9 @@ class FeatureManager:
             to_plane = ref_planes.Item(to_plane_index)
 
             protrusions = model.ExtrudedProtrusions
-            protrusions.AddFromToMulti(1, (profile,), from_plane, to_plane)
+            _feature = protrusions.AddFromToMulti(1, (profile,), from_plane, to_plane)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -6698,7 +6786,9 @@ class FeatureManager:
             side = direction_map.get(direction, DirectionConstants.igRight)
 
             protrusions = model.ExtrudedProtrusions
-            protrusions.AddFiniteByKeyPoint(profile, side)
+            _feature = protrusions.AddFiniteByKeyPoint(profile, side)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -6737,7 +6827,9 @@ class FeatureManager:
             model = models.Item(1)
 
             protrusions = model.RevolvedProtrusions
-            protrusions.AddFiniteByKeyPoint(profile, refaxis, DirectionConstants.igRight)
+            _feature = protrusions.AddFiniteByKeyPoint(profile, refaxis, DirectionConstants.igRight)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -6795,7 +6887,7 @@ class FeatureManager:
             profile_array = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
             protrusions = model.RevolvedProtrusions
-            protrusions.Add(
+            _feature = protrusions.Add(
                 1,  # NumProfiles
                 profile_array,  # ProfileArray
                 refaxis,  # RefAxis
@@ -6810,6 +6902,8 @@ class FeatureManager:
                 0.0,  # TreatmentCrownRadiusOrOffset
                 0.0,  # TreatmentCrownTakeOffAngle
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -6867,7 +6961,9 @@ class FeatureManager:
             to_plane = ref_planes.Item(to_plane_index)
 
             cutouts = model.ExtrudedCutouts
-            cutouts.AddFromToMulti(1, (profile,), from_plane, to_plane)
+            _feature = cutouts.AddFromToMulti(1, (profile,), from_plane, to_plane)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -6912,7 +7008,9 @@ class FeatureManager:
             side = direction_map.get(direction, DirectionConstants.igRight)
 
             cutouts = model.ExtrudedCutouts
-            cutouts.AddFiniteByKeyPointMulti(1, (profile,), side)
+            _feature = cutouts.AddFiniteByKeyPointMulti(1, (profile,), side)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -6961,13 +7059,15 @@ class FeatureManager:
             angle_rad = math.radians(angle)
 
             cutouts = model.RevolvedCutouts
-            cutouts.AddFiniteMultiSync(
+            _feature = cutouts.AddFiniteMultiSync(
                 1,  # NumProfiles
                 (profile,),  # ProfileArray
                 refaxis,  # RefAxis
                 DirectionConstants.igRight,  # PlaneSide
                 angle_rad,  # AngleOfRevolution
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -7006,12 +7106,14 @@ class FeatureManager:
             model = models.Item(1)
 
             cutouts = model.RevolvedCutouts
-            cutouts.AddFiniteByKeyPointMulti(
+            _feature = cutouts.AddFiniteByKeyPointMulti(
                 1,  # NumProfiles
                 (profile,),  # ProfileArray
                 refaxis,  # RefAxis
                 DirectionConstants.igRight,  # PlaneSide
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -7064,7 +7166,9 @@ class FeatureManager:
             to_plane = ref_planes.Item(to_plane_index)
 
             cutouts = model.NormalCutouts
-            cutouts.AddFromToMulti(1, (profile,), from_plane, to_plane, 0)
+            _feature = cutouts.AddFromToMulti(1, (profile,), from_plane, to_plane, 0)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -7109,7 +7213,9 @@ class FeatureManager:
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
 
             cutouts = model.NormalCutouts
-            cutouts.AddThroughNextMulti(1, (profile,), dir_const, 0)
+            _feature = cutouts.AddThroughNextMulti(1, (profile,), dir_const, 0)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -7154,7 +7260,9 @@ class FeatureManager:
             side = direction_map.get(direction, DirectionConstants.igRight)
 
             cutouts = model.NormalCutouts
-            cutouts.AddFiniteByKeyPointMulti(1, (profile,), side, 0)
+            _feature = cutouts.AddFiniteByKeyPointMulti(1, (profile,), side, 0)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -7210,7 +7318,7 @@ class FeatureManager:
             v_seg = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_VARIANT, [])
 
             lc = model.LoftedCutouts
-            lc.Add(
+            _feature = lc.Add(
                 len(profiles),
                 v_profiles,
                 v_types,
@@ -7224,6 +7332,8 @@ class FeatureManager:
                 0.0,
                 None,
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -7291,7 +7401,7 @@ class FeatureManager:
             v_seg = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_VARIANT, [])
 
             swept_cutouts = model.SweptCutouts
-            swept_cutouts.AddMultiBody(
+            _feature = swept_cutouts.AddMultiBody(
                 1,
                 v_paths,
                 v_path_types,
@@ -7308,6 +7418,8 @@ class FeatureManager:
                 0.0,
                 None,
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
             return {
@@ -7374,7 +7486,7 @@ class FeatureManager:
             v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
             helix = model.HelixProtrusions
-            helix.AddFromTo(
+            _feature = helix.AddFromTo(
                 refaxis,  # HelixAxis
                 DirectionConstants.igRight,  # AxisStart
                 1,  # NumCrossSections
@@ -7385,6 +7497,8 @@ class FeatureManager:
                 pitch,  # Pitch
                 DirectionConstants.igRight,  # HelixDir
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -7459,7 +7573,7 @@ class FeatureManager:
             v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
             helix = model.HelixProtrusions
-            helix.AddFromToWithThinWall(
+            _feature = helix.AddFromToWithThinWall(
                 refaxis,  # HelixAxis
                 DirectionConstants.igRight,  # AxisStart
                 1,  # NumCrossSections
@@ -7471,6 +7585,8 @@ class FeatureManager:
                 DirectionConstants.igRight,  # HelixDir
                 wall_thickness,  # WallThickness
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -7533,7 +7649,7 @@ class FeatureManager:
             v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
             helix_cutouts = model.HelixCutouts
-            helix_cutouts.AddFiniteSync(
+            _feature = helix_cutouts.AddFiniteSync(
                 refaxis,  # HelixAxis
                 DirectionConstants.igRight,  # AxisStart
                 1,  # NumCrossSections
@@ -7544,6 +7660,8 @@ class FeatureManager:
                 revolutions,  # NumberOfTurns
                 dir_const,  # HelixDir
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
             return {
@@ -7613,7 +7731,7 @@ class FeatureManager:
             v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
             helix_cutouts = model.HelixCutouts
-            helix_cutouts.AddFromTo(
+            _feature = helix_cutouts.AddFromTo(
                 refaxis,  # HelixAxis
                 DirectionConstants.igRight,  # AxisStart
                 1,  # NumCrossSections
@@ -7624,6 +7742,8 @@ class FeatureManager:
                 pitch,  # Pitch
                 DirectionConstants.igRight,  # HelixDir
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -7686,7 +7806,9 @@ class FeatureManager:
             face2 = faces.Item(face_index2 + 1)
 
             rounds = model.Rounds
-            rounds.AddBlend(face1, face2, radius)
+            _feature = rounds.AddBlend(face1, face2, radius)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -7742,7 +7864,9 @@ class FeatureManager:
             face2 = faces.Item(face_index2 + 1)
 
             rounds = model.Rounds
-            rounds.AddSurfaceBlend(face1, face2, radius)
+            _feature = rounds.AddSurfaceBlend(face1, face2, radius)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -7805,11 +7929,15 @@ class FeatureManager:
             # Create a circular profile on the from_plane
             ps = doc.ProfileSets.Add()
             profile = ps.Profiles.Add(from_plane)
-            profile.Circles2d.AddByCenterRadius(x, y, radius)
+            _feature = profile.Circles2d.AddByCenterRadius(x, y, radius)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
             profile.End(0)
 
             cutouts = model.ExtrudedCutouts
-            cutouts.AddFromToMulti(1, (profile,), from_plane, to_plane)
+            _feature = cutouts.AddFromToMulti(1, (profile,), from_plane, to_plane)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -7861,11 +7989,15 @@ class FeatureManager:
             ps = doc.ProfileSets.Add()
             plane = doc.RefPlanes.Item(plane_index)
             profile = ps.Profiles.Add(plane)
-            profile.Circles2d.AddByCenterRadius(x, y, radius)
+            _feature = profile.Circles2d.AddByCenterRadius(x, y, radius)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
             profile.End(0)
 
             cutouts = model.ExtrudedCutouts
-            cutouts.AddThroughNextMulti(1, (profile,), dir_const)
+            _feature = cutouts.AddThroughNextMulti(1, (profile,), dir_const)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -7914,11 +8046,15 @@ class FeatureManager:
             ps = doc.ProfileSets.Add()
             plane = doc.RefPlanes.Item(plane_index)
             profile = ps.Profiles.Add(plane)
-            profile.Circles2d.AddByCenterRadius(x, y, radius)
+            _feature = profile.Circles2d.AddByCenterRadius(x, y, radius)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
             profile.End(0)
 
             holes = model.Holes
-            holes.AddSync(profile, DirectionConstants.igRight, depth, None)
+            _feature = holes.AddSync(profile, DirectionConstants.igRight, depth, None)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -7971,11 +8107,15 @@ class FeatureManager:
             ps = doc.ProfileSets.Add()
             plane = doc.RefPlanes.Item(plane_index)
             profile = ps.Profiles.Add(plane)
-            profile.Circles2d.AddByCenterRadius(x, y, radius)
+            _feature = profile.Circles2d.AddByCenterRadius(x, y, radius)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
             profile.End(0)
 
             holes = model.Holes
-            holes.AddFiniteEx(profile, dir_const, depth, None)
+            _feature = holes.AddFiniteEx(profile, dir_const, depth, None)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -8037,11 +8177,15 @@ class FeatureManager:
 
             ps = doc.ProfileSets.Add()
             profile = ps.Profiles.Add(from_plane)
-            profile.Circles2d.AddByCenterRadius(x, y, radius)
+            _feature = profile.Circles2d.AddByCenterRadius(x, y, radius)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
             profile.End(0)
 
             holes = model.Holes
-            holes.AddFromToEx(profile, from_plane, to_plane, None)
+            _feature = holes.AddFromToEx(profile, from_plane, to_plane, None)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -8093,11 +8237,15 @@ class FeatureManager:
             ps = doc.ProfileSets.Add()
             plane = doc.RefPlanes.Item(plane_index)
             profile = ps.Profiles.Add(plane)
-            profile.Circles2d.AddByCenterRadius(x, y, radius)
+            _feature = profile.Circles2d.AddByCenterRadius(x, y, radius)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
             profile.End(0)
 
             holes = model.Holes
-            holes.AddThroughNextEx(profile, dir_const, None)
+            _feature = holes.AddThroughNextEx(profile, dir_const, None)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -8142,11 +8290,15 @@ class FeatureManager:
             ps = doc.ProfileSets.Add()
             plane = doc.RefPlanes.Item(plane_index)
             profile = ps.Profiles.Add(plane)
-            profile.Circles2d.AddByCenterRadius(x, y, radius)
+            _feature = profile.Circles2d.AddByCenterRadius(x, y, radius)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
             profile.End(0)
 
             holes = model.Holes
-            holes.AddThroughAllEx(profile, DirectionConstants.igRight, None)
+            _feature = holes.AddThroughAllEx(profile, DirectionConstants.igRight, None)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -8193,11 +8345,15 @@ class FeatureManager:
             ps = doc.ProfileSets.Add()
             plane = doc.RefPlanes.Item(plane_index)
             profile = ps.Profiles.Add(plane)
-            profile.Circles2d.AddByCenterRadius(x, y, radius)
+            _feature = profile.Circles2d.AddByCenterRadius(x, y, radius)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
             profile.End(0)
 
             holes = model.Holes
-            holes.AddSyncEx(profile, DirectionConstants.igRight, depth, None)
+            _feature = holes.AddSyncEx(profile, DirectionConstants.igRight, depth, None)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -8250,11 +8406,15 @@ class FeatureManager:
             ps = doc.ProfileSets.Add()
             plane = doc.RefPlanes.Item(plane_index)
             profile = ps.Profiles.Add(plane)
-            profile.Circles2d.AddByCenterRadius(x, y, radius)
+            _feature = profile.Circles2d.AddByCenterRadius(x, y, radius)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
             profile.End(0)
 
             holes = model.Holes
-            holes.AddMultiBody(profile, dir_const, depth, None)
+            _feature = holes.AddMultiBody(profile, dir_const, depth, None)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -8302,11 +8462,15 @@ class FeatureManager:
             ps = doc.ProfileSets.Add()
             plane = doc.RefPlanes.Item(plane_index)
             profile = ps.Profiles.Add(plane)
-            profile.Circles2d.AddByCenterRadius(x, y, radius)
+            _feature = profile.Circles2d.AddByCenterRadius(x, y, radius)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
             profile.End(0)
 
             holes = model.Holes
-            holes.AddSyncMultiBody(profile, DirectionConstants.igRight, depth, None)
+            _feature = holes.AddSyncMultiBody(profile, DirectionConstants.igRight, depth, None)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -8376,7 +8540,9 @@ class FeatureManager:
             radius_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8, [radius1, radius2])
 
             blends = model.Blends
-            blends.AddVariable(1, edge_arr, radius_arr)
+            _feature = blends.AddVariable(1, edge_arr, radius_arr)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -8429,7 +8595,9 @@ class FeatureManager:
             face2 = faces.Item(face_index2 + 1)
 
             blends = model.Blends
-            blends.AddSurfaceBlend(face1, face2)
+            _feature = blends.AddSurfaceBlend(face1, face2)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -8528,7 +8696,9 @@ class FeatureManager:
             side_const = side_map.get(side, DirectionConstants.igRight)
 
             flanges = model.Flanges
-            flanges.AddByMatchFace(edge, side_const, flange_length, None, inside_radius)
+            _feature = flanges.AddByMatchFace(edge, side_const, flange_length, None, inside_radius)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -8568,7 +8738,9 @@ class FeatureManager:
                 return err
 
             flanges = model.Flanges
-            flanges.AddSync(edge, flange_length, None, inside_radius)
+            _feature = flanges.AddSync(edge, flange_length, None, inside_radius)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -8629,7 +8801,9 @@ class FeatureManager:
             side_const = side_map.get(side, DirectionConstants.igRight)
 
             flanges = model.Flanges
-            flanges.AddFlangeByFace(edge, ref_face, side_const, flange_length, None, bend_radius)
+            _feature = flanges.AddFlangeByFace(edge, ref_face, side_const, flange_length, None, bend_radius)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -8682,7 +8856,9 @@ class FeatureManager:
             flanges = model.Flanges
             # AddByBendDeductionOrBendAllowance(pLocatedEdge, FlangeSide, FlangeLength,
             #   vtKeyPointOrTangentFace, vtKeyPointFlags, ...)
-            flanges.AddByBendDeductionOrBendAllowance(edge, side_const, flange_length, None, 0)
+            _feature = flanges.AddByBendDeductionOrBendAllowance(edge, side_const, flange_length, None, 0)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -8725,7 +8901,9 @@ class FeatureManager:
 
             flanges = model.Flanges
             # AddSyncByBendDeductionOrBendAllowance(pLocatedEdge, FlangeLength, ...)
-            flanges.AddSyncByBendDeductionOrBendAllowance(edge, flange_length)
+            _feature = flanges.AddSyncByBendDeductionOrBendAllowance(edge, flange_length)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -8779,7 +8957,7 @@ class FeatureManager:
             # AddEx(pProfile, varExtentType, varProjectionSide, varProjectionDistance,
             #   varKeyPointOrTangentFace, varKeyPointFlags, varBendRadius,
             #   vtBRType, vtBRWidth, vtBRLength, vtCRType, ...)
-            contour_flanges.AddEx(
+            _feature = contour_flanges.AddEx(
                 profile,
                 ExtentTypeConstants.igFinite,
                 dir_side,
@@ -8792,6 +8970,8 @@ class FeatureManager:
                 0.0,  # vtBRLength
                 0,  # vtCRType (no corner relief)
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -8847,7 +9027,7 @@ class FeatureManager:
             # AddSync(pProfile, pRefEdge, varExtentType, varProjectionSide,
             #   varProjectionDistance, varBendRadius, vtBRType, vtBRWidth,
             #   vtBRLength, vtCRType, ...)
-            contour_flanges.AddSync(
+            _feature = contour_flanges.AddSync(
                 profile,
                 edge,
                 ExtentTypeConstants.igFinite,
@@ -8859,6 +9039,8 @@ class FeatureManager:
                 0.0,  # vtBRLength
                 0,  # vtCRType
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -8918,7 +9100,7 @@ class FeatureManager:
             # AddSyncByBendDeductionOrBendAllowance(pProfile, pRefEdge,
             #   varExtentType, varProjectionSide, varProjectionDistance,
             #   varBendRadius, vtBRType, vtBRWidth, vtBRLength, vtCRType, ...)
-            contour_flanges.AddSyncByBendDeductionOrBendAllowance(
+            _feature = contour_flanges.AddSyncByBendDeductionOrBendAllowance(
                 profile,
                 edge,
                 ExtentTypeConstants.igFinite,
@@ -8930,6 +9112,8 @@ class FeatureManager:
                 0.0,  # vtBRLength
                 0,  # vtCRType
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -8989,7 +9173,9 @@ class FeatureManager:
 
             hems = model.Hems
             # Add(InputEdge, HemType, BendRadius1, FlangeLength1, ...)
-            hems.Add(edge, hem_type_const, bend_radius, hem_width)
+            _feature = hems.Add(edge, hem_type_const, bend_radius, hem_width)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -9050,7 +9236,9 @@ class FeatureManager:
 
             jogs = model.Jogs
             # AddFinite(Profile, Extent, MaterialSide, MovingSide, JogDirection, ...)
-            jogs.AddFinite(profile, jog_offset, material_side, move_side, jog_dir)
+            _feature = jogs.AddFinite(profile, jog_offset, material_side, move_side, jog_dir)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -9100,7 +9288,9 @@ class FeatureManager:
 
             close_corners = model.CloseCorners
             # Add(InputEdge, ClosureType, ...)
-            close_corners.Add(edge, closure_const)
+            _feature = close_corners.Add(edge, closure_const)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -9173,7 +9363,9 @@ class FeatureManager:
 
             multi_edge_flanges = model.MultiEdgeFlanges
             # Add(NumberOfEdges, Edges, FlangeSide, dFlangeLength, ...)
-            multi_edge_flanges.Add(len(edge_list), edge_arr, side_const, flange_length)
+            _feature = multi_edge_flanges.Add(len(edge_list), edge_arr, side_const, flange_length)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -9238,9 +9430,11 @@ class FeatureManager:
             bends = model.Bends
             # AddByBendDeductionOrBendAllowance(Profile, BendAngle, BendPZLSide,
             #   MovingSide, BendDirection, ...)
-            bends.AddByBendDeductionOrBendAllowance(
+            _feature = bends.AddByBendDeductionOrBendAllowance(
                 profile, bend_angle_rad, bend_pzl, move_side, bend_dir
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -9342,7 +9536,9 @@ class FeatureManager:
             # AddEx(NumberOfProfiles, ProfileArray, Depth, ProfileSide, DepthSide,
             #   PunchRadius, ...)
             punch_radius = punch_tool_diameter / 2.0
-            dimples.AddEx(1, (profile,), depth, profile_side, depth_side, punch_radius)
+            _feature = dimples.AddEx(1, (profile,), depth, profile_side, depth_side, punch_radius)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -9424,7 +9620,9 @@ class FeatureManager:
 
             face = faces.Item(face_index + 1)
             threads = model.Threads
-            threads.AddEx(face, depth, pitch)
+            _feature = threads.AddEx(face, depth, pitch)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -9470,7 +9668,9 @@ class FeatureManager:
             )
 
             slots = model.Slots
-            slots.AddEx(profile, width, depth, side)
+            _feature = slots.AddEx(profile, width, depth, side)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -9511,7 +9711,9 @@ class FeatureManager:
             model = models.Item(1)
 
             slots = model.Slots
-            slots.AddSync(profile, width, depth)
+            _feature = slots.AddSync(profile, width, depth)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -9555,7 +9757,9 @@ class FeatureManager:
             )
 
             drawn_cutouts = model.DrawnCutouts
-            drawn_cutouts.AddEx(profile, depth, side)
+            _feature = drawn_cutouts.AddEx(profile, depth, side)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -9594,7 +9798,9 @@ class FeatureManager:
             model = models.Item(1)
 
             louvers = model.Louvers
-            louvers.AddSync(profile, depth)
+            _feature = louvers.AddSync(profile, depth)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -9636,7 +9842,9 @@ class FeatureManager:
             side = direction_map.get(direction, DirectionConstants.igBoth)
 
             thickens = model.Thickens
-            thickens.AddSync(thickness, side)
+            _feature = thickens.AddSync(thickness, side)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -10019,9 +10227,11 @@ class FeatureManager:
             curve = edges.Item(curve_edge_index + 1)
             orient_plane = ref_planes.Item(orientation_plane_index)
 
-            ref_planes.AddNormalToCurveAtDistance(
+            _feature = ref_planes.AddNormalToCurveAtDistance(
                 curve, orient_plane, distance, normal_side, ReferenceElementConstants.igCurveEnd
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -10078,9 +10288,11 @@ class FeatureManager:
             curve = edges.Item(curve_edge_index + 1)
             orient_plane = ref_planes.Item(orientation_plane_index)
 
-            ref_planes.AddNormalToCurveAtArcLengthRatio(
+            _feature = ref_planes.AddNormalToCurveAtArcLengthRatio(
                 curve, orient_plane, ratio, normal_side, ReferenceElementConstants.igCurveEnd
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -10134,9 +10346,11 @@ class FeatureManager:
             curve = edges.Item(curve_edge_index + 1)
             orient_plane = ref_planes.Item(orientation_plane_index)
 
-            ref_planes.AddNormalToCurveAtDistanceAlongCurve(
+            _feature = ref_planes.AddNormalToCurveAtDistanceAlongCurve(
                 curve, orient_plane, distance, normal_side, ReferenceElementConstants.igCurveEnd
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -10191,7 +10405,9 @@ class FeatureManager:
             parent_plane = ref_planes.Item(parent_plane_index)
             face = faces.Item(face_index + 1)
 
-            ref_planes.AddParallelByTangent(face, parent_plane, normal_side)
+            _feature = ref_planes.AddParallelByTangent(face, parent_plane, normal_side)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -10236,13 +10452,15 @@ class FeatureManager:
             model = models.Item(1)
 
             protrusions = model.RevolvedProtrusions
-            protrusions.AddFiniteByKeyPointSync(
+            _feature = protrusions.AddFiniteByKeyPointSync(
                 profile,
                 refaxis,
                 None,  # KeyPointOrTangentFace
                 KeyPointExtentConstants.igTangentNormal,  # KeyPointFlags
                 DirectionConstants.igRight,  # ProfileSide
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -10308,7 +10526,7 @@ class FeatureManager:
             v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
             helix = model.HelixProtrusions
-            helix.AddFromToSync(
+            _feature = helix.AddFromToSync(
                 refaxis,  # HelixAxis
                 DirectionConstants.igRight,  # AxisStart
                 1,  # NumCrossSections
@@ -10322,6 +10540,8 @@ class FeatureManager:
                 to_plane,  # ToPlane
                 0.0,  # TaperAngle
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -10393,7 +10613,7 @@ class FeatureManager:
             v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
             helix = model.HelixProtrusions
-            helix.AddFromToSyncWithThinWall(
+            _feature = helix.AddFromToSyncWithThinWall(
                 refaxis,  # HelixAxis
                 DirectionConstants.igRight,  # AxisStart
                 1,  # NumCrossSections
@@ -10411,6 +10631,8 @@ class FeatureManager:
                 wall_thickness,  # Thickness
                 DirectionConstants.igRight,  # ThicknessSide
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -10478,7 +10700,7 @@ class FeatureManager:
             v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
             helix_cutouts = model.HelixCutouts
-            helix_cutouts.AddFromToSync(
+            _feature = helix_cutouts.AddFromToSync(
                 refaxis,  # HelixAxis
                 DirectionConstants.igRight,  # AxisStart
                 1,  # NumCrossSections
@@ -10492,6 +10714,8 @@ class FeatureManager:
                 to_plane,  # ToPlane
                 0.0,  # TaperAngle
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -10608,12 +10832,14 @@ class FeatureManager:
             to_plane = ref_planes.Item(to_plane_index)
 
             protrusions = model.ExtrudedProtrusions
-            protrusions.AddFromTo(
+            _feature = protrusions.AddFromTo(
                 profile,
                 DirectionConstants.igRight,  # ProfileSide
                 from_plane,
                 to_plane,
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -10656,11 +10882,13 @@ class FeatureManager:
             )
 
             protrusions = model.ExtrudedProtrusions
-            protrusions.AddThroughNext(
+            _feature = protrusions.AddThroughNext(
                 profile,
                 dir_const,  # ProfileSide
                 dir_const,  # ProfilePlaneSide
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -10704,11 +10932,13 @@ class FeatureManager:
             )
 
             cutouts = model.ExtrudedCutouts
-            cutouts.AddThroughNext(
+            _feature = cutouts.AddThroughNext(
                 profile,
                 dir_const,  # ProfileSide
                 dir_const,  # ProfilePlaneSide
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -10758,7 +10988,7 @@ class FeatureManager:
             body_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [body])
 
             cutouts = model.ExtrudedCutouts
-            cutouts.AddFiniteMultiBody(
+            _feature = cutouts.AddFiniteMultiBody(
                 1,  # NumberOfProfiles
                 (profile,),  # ProfileArray
                 dir_const,  # ProfileSide
@@ -10767,6 +10997,8 @@ class FeatureManager:
                 1,  # NumberOfBodies
                 body_arr,  # BodyArray
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -10826,7 +11058,7 @@ class FeatureManager:
             body_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [body])
 
             cutouts = model.ExtrudedCutouts
-            cutouts.AddFromToMultiBody(
+            _feature = cutouts.AddFromToMultiBody(
                 1,  # NumberOfProfiles
                 (profile,),  # ProfileArray
                 DirectionConstants.igRight,  # ProfileSide
@@ -10835,6 +11067,8 @@ class FeatureManager:
                 1,  # NumberOfBodies
                 body_arr,  # BodyArray
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -10882,7 +11116,7 @@ class FeatureManager:
             body_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [body])
 
             cutouts = model.ExtrudedCutouts
-            cutouts.AddThroughAllMultiBody(
+            _feature = cutouts.AddThroughAllMultiBody(
                 1,  # NumberOfProfiles
                 (profile,),  # ProfileArray
                 dir_const,  # ProfileSide
@@ -10890,6 +11124,8 @@ class FeatureManager:
                 1,  # NumberOfBodies
                 body_arr,  # BodyArray
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -10940,7 +11176,7 @@ class FeatureManager:
             body_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [body])
 
             cutouts = model.RevolvedCutouts
-            cutouts.AddFiniteMultiBody(
+            _feature = cutouts.AddFiniteMultiBody(
                 1,  # NumberOfProfiles
                 (profile,),  # ProfileArray
                 refaxis,  # RefAxis
@@ -10950,6 +11186,8 @@ class FeatureManager:
                 1,  # NumberOfBodies
                 body_arr,  # BodyArray
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -11001,7 +11239,7 @@ class FeatureManager:
             profile_array = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
             cutouts = model.RevolvedCutouts
-            cutouts.Add(
+            _feature = cutouts.Add(
                 1,
                 profile_array,
                 refaxis,
@@ -11017,6 +11255,8 @@ class FeatureManager:
                 None,
                 KeyPointExtentConstants.igTangentNormal,
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -11062,7 +11302,7 @@ class FeatureManager:
             profile_array = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
             cutouts = model.RevolvedCutouts
-            cutouts.AddSync(
+            _feature = cutouts.AddSync(
                 1,
                 profile_array,
                 refaxis,
@@ -11078,6 +11318,8 @@ class FeatureManager:
                 None,
                 KeyPointExtentConstants.igTangentNormal,
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -11125,7 +11367,7 @@ class FeatureManager:
             profile_array = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
             surfaces = model.RevolvedSurfaces
-            surfaces.Add(
+            _feature = surfaces.Add(
                 1,
                 profile_array,
                 refaxis,
@@ -11141,6 +11383,8 @@ class FeatureManager:
                 KeyPointExtentConstants.igTangentNormal,
                 want_end_caps,
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -11193,7 +11437,7 @@ class FeatureManager:
             profile_array = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
             surfaces = model.RevolvedSurfaces
-            surfaces.AddSync(
+            _feature = surfaces.AddSync(
                 1,
                 profile_array,
                 refaxis,
@@ -11209,6 +11453,8 @@ class FeatureManager:
                 KeyPointExtentConstants.igTangentNormal,
                 want_end_caps,
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -11268,7 +11514,7 @@ class FeatureManager:
             )
 
             flanges = model.Flanges
-            flanges.AddByMatchFaceAndBendDeductionOrBendAllowance(
+            _feature = flanges.AddByMatchFaceAndBendDeductionOrBendAllowance(
                 edge,
                 side_const,
                 flange_length,
@@ -11277,6 +11523,8 @@ class FeatureManager:
                 side_const,
                 inside_radius,
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -11341,7 +11589,7 @@ class FeatureManager:
             )
 
             flanges = model.Flanges
-            flanges.AddFlangeByFaceAndBendDeductionOrBendAllowance(
+            _feature = flanges.AddFlangeByFaceAndBendDeductionOrBendAllowance(
                 edge,
                 ref_face,
                 side_const,
@@ -11351,6 +11599,8 @@ class FeatureManager:
                 side_const,
                 bend_radius,
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -11399,7 +11649,7 @@ class FeatureManager:
             )
 
             contour_flanges = model.ContourFlanges
-            contour_flanges.Add3(
+            _feature = contour_flanges.Add3(
                 profile,
                 ExtentTypeConstants.igFinite,
                 dir_const,
@@ -11412,6 +11662,8 @@ class FeatureManager:
                 0.001,
                 0,
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -11477,7 +11729,7 @@ class FeatureManager:
             )
 
             contour_flanges = model.ContourFlanges
-            contour_flanges.AddSyncEx(
+            _feature = contour_flanges.AddSyncEx(
                 profile,
                 edge,
                 ExtentTypeConstants.igFinite,
@@ -11489,6 +11741,8 @@ class FeatureManager:
                 0.001,
                 0,
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -11547,7 +11801,9 @@ class FeatureManager:
             move_const = 5 if moving_side == "Right" else 6
 
             bends = model.Bends
-            bends.Add(profile, angle_rad, 11, move_const, dir_const, bend_radius)
+            _feature = bends.Add(profile, angle_rad, 11, move_const, dir_const, bend_radius)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -11749,7 +12005,7 @@ class FeatureManager:
             body_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [body])
 
             slots = model.Slots
-            slots.AddMultiBody(
+            _feature = slots.AddMultiBody(
                 1,
                 (profile,),
                 dir_const,
@@ -11771,6 +12027,8 @@ class FeatureManager:
                 1,
                 body_arr,
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
@@ -11820,7 +12078,7 @@ class FeatureManager:
             body_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [body])
 
             slots = model.Slots
-            slots.AddSyncMultiBody(
+            _feature = slots.AddSyncMultiBody(
                 1,
                 (profile,),
                 dir_const,
@@ -11842,6 +12100,8 @@ class FeatureManager:
                 1,
                 body_arr,
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             self.sketch_manager.clear_accumulated_profiles()
 
