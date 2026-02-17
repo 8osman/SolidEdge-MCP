@@ -129,7 +129,7 @@ class SketchManager:
             self.active_refaxis = None
             
             # NEW: Auto-include plane info
-            plane_info = self.get_ref_plane_info(plane_index)
+            plane_info = self._get_ref_plane_info(plane_index)
         
             response = {
                 "status": "created",
@@ -157,7 +157,9 @@ class SketchManager:
             lines = self.active_profile.Lines2d
 
             # Add line
-            lines.AddBy2Points(x1, y1, x2, y2)
+            _feature = lines.AddBy2Points(x1, y1, x2, y2)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {"status": "created", "type": "line", "start": [x1, y1], "end": [x2, y2]}
         except Exception as e:
@@ -173,7 +175,9 @@ class SketchManager:
             circles = self.active_profile.Circles2d
 
             # Add circle by center and radius
-            circles.AddByCenterRadius(center_x, center_y, radius)
+            _feature = circles.AddByCenterRadius(center_x, center_y, radius)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -194,10 +198,18 @@ class SketchManager:
             lines = self.active_profile.Lines2d
 
             # Draw 4 sides of rectangle
-            lines.AddBy2Points(x1, y1, x2, y1)  # Bottom
-            lines.AddBy2Points(x2, y1, x2, y2)  # Right
-            lines.AddBy2Points(x2, y2, x1, y2)  # Top
-            lines.AddBy2Points(x1, y2, x1, y1)  # Left
+            _feature = lines.AddBy2Points(x1, y1, x2, y1)  # Bottom
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
+            _feature = lines.AddBy2Points(x2, y1, x2, y2)  # Right
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
+            _feature = lines.AddBy2Points(x2, y2, x1, y2)  # Top
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
+            _feature = lines.AddBy2Points(x1, y2, x1, y1)  # Left
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -238,7 +250,9 @@ class SketchManager:
             arcs = self.active_profile.Arcs2d
 
             # Add arc by center and endpoints
-            arcs.AddByCenterStartEnd(center_x, center_y, start_x, start_y, end_x, end_y)
+            _feature = arcs.AddByCenterStartEnd(center_x, center_y, start_x, start_y, end_x, end_y)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -278,7 +292,9 @@ class SketchManager:
             for i in range(sides):
                 x1, y1 = points[i]
                 x2, y2 = points[(i + 1) % sides]
-                lines.AddBy2Points(x1, y1, x2, y2)
+                _feature = lines.AddBy2Points(x1, y1, x2, y2)
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -322,7 +338,9 @@ class SketchManager:
             axis_x = math.cos(angle_rad)
             axis_y = math.sin(angle_rad)
 
-            ellipses.AddByCenter(center_x, center_y, major_radius, minor_radius, axis_x, axis_y)
+            _feature = ellipses.AddByCenter(center_x, center_y, major_radius, minor_radius, axis_x, axis_y)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -364,11 +382,13 @@ class SketchManager:
 
             # Add spline by points
             # AddByPoints takes positional args: Order, NumPoints, PointArray
-            splines.AddByPoints(
+            _feature = splines.AddByPoints(
                 3,  # Order (cubic spline)
                 len(points),  # NumPoints
                 tuple(point_array),  # PointArray (flattened x,y,x,y,...)
             )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -404,7 +424,9 @@ class SketchManager:
                 return {"error": "No active sketch. Call create_sketch() first"}
 
             arcs = self.active_profile.Arcs2d
-            arcs.AddByStartCenterEnd(start_x, start_y, center_x, center_y, end_x, end_y)
+            _feature = arcs.AddByStartCenterEnd(start_x, start_y, center_x, center_y, end_x, end_y)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -435,7 +457,9 @@ class SketchManager:
                 return {"error": "No active sketch. Call create_sketch() first"}
 
             circles = self.active_profile.Circles2d
-            circles.AddBy2Points(x1, y1, x2, y2)
+            _feature = circles.AddBy2Points(x1, y1, x2, y2)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             center_x = (x1 + x2) / 2
             center_y = (y1 + y2) / 2
@@ -472,7 +496,9 @@ class SketchManager:
                 return {"error": "No active sketch. Call create_sketch() first"}
 
             circles = self.active_profile.Circles2d
-            circles.AddBy3Points(x1, y1, x2, y2, x3, y3)
+            _feature = circles.AddBy3Points(x1, y1, x2, y2, x3, y3)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -705,32 +731,46 @@ class SketchManager:
             if ct == "horizontal":
                 if len(objs) < 1:
                     return {"error": "Horizontal constraint requires 1 element"}
-                relations.AddHorizontal(objs[0])
+                _feature = relations.AddHorizontal(objs[0])
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
             elif ct == "vertical":
                 if len(objs) < 1:
                     return {"error": "Vertical constraint requires 1 element"}
-                relations.AddVertical(objs[0])
+                _feature = relations.AddVertical(objs[0])
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
             # Two-element constraints
             elif ct == "parallel":
                 if len(objs) < 2:
                     return {"error": "Parallel constraint requires 2 elements"}
-                relations.AddParallel(objs[0], objs[1])
+                _feature = relations.AddParallel(objs[0], objs[1])
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
             elif ct == "perpendicular":
                 if len(objs) < 2:
                     return {"error": "Perpendicular constraint requires 2 elements"}
-                relations.AddPerpendicular(objs[0], objs[1])
+                _feature = relations.AddPerpendicular(objs[0], objs[1])
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
             elif ct == "equal":
                 if len(objs) < 2:
                     return {"error": "Equal constraint requires 2 elements"}
-                relations.AddEqual(objs[0], objs[1])
+                _feature = relations.AddEqual(objs[0], objs[1])
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
             elif ct == "concentric":
                 if len(objs) < 2:
                     return {"error": "Concentric constraint requires 2 elements"}
-                relations.AddConcentric(objs[0], objs[1])
+                _feature = relations.AddConcentric(objs[0], objs[1])
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
             elif ct == "tangent":
                 if len(objs) < 2:
                     return {"error": "Tangent constraint requires 2 elements"}
-                relations.AddTangent(objs[0], objs[1])
+                _feature = relations.AddTangent(objs[0], objs[1])
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
             else:
                 return {
                     "error": f"Unknown constraint type: "
@@ -779,7 +819,9 @@ class SketchManager:
             obj2 = self._get_sketch_element(element2_type, element2_index)
 
             relations = self.active_profile.Relations2d
-            relations.AddKeypoint(obj1, keypoint1, obj2, keypoint2)
+            _feature = relations.AddKeypoint(obj1, keypoint1, obj2, keypoint2)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "constraint_added",
@@ -918,7 +960,9 @@ class SketchManager:
                 try:
                     line1 = lines.Item(i)
                     line2 = lines.Item(i + 1)
-                    profile.Arcs2d.AddByFillet(line1, line2, radius)
+                    _feature = profile.Arcs2d.AddByFillet(line1, line2, radius)
+                    if _feature is None:
+                        continue
                     fillet_count += 1
                 except Exception:
                     pass
@@ -959,7 +1003,9 @@ class SketchManager:
                 try:
                     line1 = lines.Item(i)
                     line2 = lines.Item(i + 1)
-                    profile.Lines2d.AddByChamfer(line1, line2, distance, distance)
+                    _feature = profile.Lines2d.AddByChamfer(line1, line2, distance, distance)
+                    if _feature is None:
+                        continue
                     chamfer_count += 1
                 except Exception:
                     pass
@@ -1019,7 +1065,9 @@ class SketchManager:
                     if length > 0:
                         nx = -dy / length * distance
                         ny = dx / length * distance
-                        profile.Lines2d.AddBy2Points(x1 + nx, y1 + ny, x2 + nx, y2 + ny)
+                        _feature = profile.Lines2d.AddBy2Points(x1 + nx, y1 + ny, x2 + nx, y2 + ny)
+                        if _feature is None:
+                            continue
                         offset_count += 1
                 except Exception:
                     pass
@@ -1064,9 +1112,13 @@ class SketchManager:
                     y2 = line.EndPoint.Y
 
                     if axis.upper() == "X":
-                        profile.Lines2d.AddBy2Points(x1, -y1, x2, -y2)
+                        _feature = profile.Lines2d.AddBy2Points(x1, -y1, x2, -y2)
+                        if _feature is None:
+                            continue
                     else:
-                        profile.Lines2d.AddBy2Points(-x1, y1, -x2, y2)
+                        _feature = profile.Lines2d.AddBy2Points(-x1, y1, -x2, y2)
+                        if _feature is None:
+                            continue
                     mirror_count += 1
                 except Exception:
                     pass
@@ -1081,9 +1133,13 @@ class SketchManager:
                     r = circle.Radius
 
                     if axis.upper() == "X":
-                        profile.Circles2d.AddByCenterRadius(cx, -cy, r)
+                        _feature = profile.Circles2d.AddByCenterRadius(cx, -cy, r)
+                        if _feature is None:
+                            continue
                     else:
-                        profile.Circles2d.AddByCenterRadius(-cx, cy, r)
+                        _feature = profile.Circles2d.AddByCenterRadius(-cx, cy, r)
+                        if _feature is None:
+                            continue
                     mirror_count += 1
                 except Exception:
                     pass
@@ -1352,7 +1408,9 @@ class SketchManager:
                 with contextlib.suppress(Exception):
                     lines.Item(i).Delete()
             for coords in new_lines:
-                lines.AddBy2Points(*coords)
+                _feature = lines.AddBy2Points(*coords)
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
                 rotated += 1
 
             # Rotate circles
@@ -1373,7 +1431,9 @@ class SketchManager:
                 with contextlib.suppress(Exception):
                     circles.Item(i).Delete()
             for c in new_circles:
-                circles.AddByCenterRadius(*c)
+                _feature = circles.AddByCenterRadius(*c)
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
                 rotated += 1
 
             return {
@@ -1433,7 +1493,9 @@ class SketchManager:
                 with contextlib.suppress(Exception):
                     lines.Item(i).Delete()
             for coords in new_lines:
-                lines.AddBy2Points(*coords)
+                _feature = lines.AddBy2Points(*coords)
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
                 scaled += 1
 
             # Scale circles
@@ -1454,7 +1516,9 @@ class SketchManager:
                 with contextlib.suppress(Exception):
                     circles.Item(i).Delete()
             for c in new_circles:
-                circles.AddByCenterRadius(*c)
+                _feature = circles.AddByCenterRadius(*c)
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
                 scaled += 1
 
             return {
