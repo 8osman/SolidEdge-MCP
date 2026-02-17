@@ -1307,6 +1307,10 @@ class FeatureManager:
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
 
             # Use ExtrudedProtrusions.AddThroughAll (assuming it exists for infinite extrusion)
+            if models.Count == 0:
+                return {"error": "No base feature exists. Create a base feature first."}
+
+            model = models.Item(1)
             protrusions = model.ExtrudedProtrusions
             result, err = self._perform_feature_call(
                 lambda: protrusions.AddThroughAll(1, (profile,), dir_const),
@@ -2541,7 +2545,7 @@ class FeatureManager:
                 "type": "mirror_copy",
                 "feature": feature_name,
                 "mirror_plane": mirror_plane_index,
-                "name": mirror.Name if hasattr(mirror, "Name") else None,
+                "name": result.Name if hasattr(result, "Name") else None,
                 "note": "Mirror feature created via AddSync. "
                 "Geometry may require manual verification "
                 "in Solid Edge UI.",
