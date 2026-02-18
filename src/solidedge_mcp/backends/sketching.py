@@ -35,8 +35,8 @@ class SketchManager:
         try:
             doc = self.doc_manager.get_active_document()
 
-            # Get reference planes
-            ref_planes = doc.RefPlanes
+            # Get reference planes (Part uses RefPlanes; Assembly uses AsmRefPlanes)
+            ref_planes = self._get_ref_planes(doc)
 
             # Map plane names to indices
             plane_map = {
@@ -112,7 +112,7 @@ class SketchManager:
         """
         try:
             doc = self.doc_manager.get_active_document()
-            ref_planes = doc.RefPlanes
+            ref_planes = self._get_ref_planes(doc)
 
             if plane_index < 1 or plane_index > ref_planes.Count:
                 return {"error": f"Invalid plane index: {plane_index}. Count: {ref_planes.Count}"}
@@ -1206,6 +1206,8 @@ class SketchManager:
 
             profile = self.active_profile
             doc = self.doc_manager.get_active_document()
+            if not hasattr(doc, "Models"):
+                return {"error": "project_edge requires a Part document; assembly documents do not have a Models collection"}
             models = doc.Models
             if models.Count == 0:
                 return {"error": "No model exists"}
@@ -1257,6 +1259,8 @@ class SketchManager:
 
             profile = self.active_profile
             doc = self.doc_manager.get_active_document()
+            if not hasattr(doc, "Models"):
+                return {"error": "include_edge requires a Part document; assembly documents do not have a Models collection"}
             models = doc.Models
             if models.Count == 0:
                 return {"error": "No model exists"}
@@ -1306,7 +1310,7 @@ class SketchManager:
 
             profile = self.active_profile
             doc = self.doc_manager.get_active_document()
-            ref_planes = doc.RefPlanes
+            ref_planes = self._get_ref_planes(doc)
 
             if plane_index < 1 or plane_index > ref_planes.Count:
                 return {"error": f"Invalid plane_index: {plane_index}. Count: {ref_planes.Count}"}
@@ -1680,6 +1684,8 @@ class SketchManager:
                 return {"error": "No face indices provided"}
 
             doc = self.doc_manager.get_active_document()
+            if not hasattr(doc, "Models"):
+                return {"error": "include_region_faces requires a Part document; assembly documents do not have a Models collection"}
             models = doc.Models
             if models.Count == 0:
                 return {"error": "No model exists"}
@@ -1849,6 +1855,22 @@ class SketchManager:
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
+    def _get_ref_planes(self, doc):
+        """
+        Return the reference-plane collection for the active document.
+
+        Part/SheetMetal documents expose RefPlanes; Assembly documents expose
+        AsmRefPlanes.  Both collections support .Count and .Item(n).
+        """
+        if hasattr(doc, "RefPlanes"):
+            return doc.RefPlanes
+        if hasattr(doc, "AsmRefPlanes"):
+            return doc.AsmRefPlanes
+        raise AttributeError(
+            "Document has neither RefPlanes nor AsmRefPlanes. "
+            "Ensure a Part or Assembly document is active."
+        )
+
     def _get_ref_plane_info(self, plane_index: int, ref_plane=None) -> dict[str, Any]:
         """
         Get reference plane origin and normal vector.
@@ -1861,8 +1883,8 @@ class SketchManager:
         """
         try:
             doc = self.doc_manager.get_active_document()
-            ref_planes = doc.RefPlanes
-        
+            ref_planes = self._get_ref_planes(doc)
+
             if plane_index < 1 or plane_index > ref_planes.Count:
                 return {
                     "error": f"Invalid plane index {plane_index}. Valid range: 1-{ref_planes.Count}"
