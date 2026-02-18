@@ -1861,11 +1861,21 @@ class SketchManager:
 
         Part/SheetMetal documents expose RefPlanes; Assembly documents expose
         AsmRefPlanes.  Both collections support .Count and .Item(n).
+
+        Uses try/except rather than hasattr because COM late-binding makes
+        hasattr() unreliable — GetIDsOfNames succeeds for any name, so
+        hasattr always returns True even when the property isn't usable.
         """
-        if hasattr(doc, "RefPlanes"):
-            return doc.RefPlanes
-        if hasattr(doc, "AsmRefPlanes"):
+        try:
+            planes = doc.RefPlanes
+            _ = planes.Count  # actually invoke the COM getter to confirm it works
+            return planes
+        except Exception:
+            pass
+        try:
             return doc.AsmRefPlanes
+        except Exception:
+            pass
         raise AttributeError(
             "Document has neither RefPlanes nor AsmRefPlanes. "
             "Ensure a Part or Assembly document is active."
