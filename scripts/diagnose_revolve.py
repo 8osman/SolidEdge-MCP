@@ -28,10 +28,10 @@ profile = profiles.Add(ref_plane)
 
 # Draw a simple L-shape
 lines = profile.Lines2d
-lines.AddBy2Points(0, 0, 0.02, 0)
-lines.AddBy2Points(0.02, 0, 0.02, 0.04)
-lines.AddBy2Points(0.02, 0.04, 0, 0.04)
-lines.AddBy2Points(0, 0.04, 0, 0)
+_line1 = lines.AddBy2Points(0, 0, 0.02, 0)
+_line2 = lines.AddBy2Points(0.02, 0, 0.02, 0.04)
+_line3 = lines.AddBy2Points(0.02, 0.04, 0, 0.04)
+_line4 = lines.AddBy2Points(0, 0.04, 0, 0)
 
 profile.End(0)
 
