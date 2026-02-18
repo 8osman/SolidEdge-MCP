@@ -3748,9 +3748,9 @@ class AssemblyManager:
 
         Args:
             feature_names: Names of existing assembly features to mirror
-                           (e.g. ["AssemblyFeaturesExtrudedCutout 1"])
-            plane_index: 1-based reference plane index to mirror across
-            mirror_type: Mirror type enum value (default 0)
+                           (e.g. ["Cutout 1"])
+            plane_index: 1-based AsmRefPlanes index to mirror across
+            mirror_type: MirrorType enum value (default 0)
 
         Returns:
             Dict with status
@@ -3761,12 +3761,12 @@ class AssemblyManager:
 
             features = self._find_asm_features_by_name(doc, feature_names)
 
-            # Assembly docs use AsmRefPlanes, not RefPlanes
+            # Assembly docs use AsmRefPlanes (try first), fall back to RefPlanes
             try:
-                ref_planes = doc.RefPlanes
+                ref_planes = doc.AsmRefPlanes
                 _ = ref_planes.Count
             except Exception:
-                ref_planes = doc.AsmRefPlanes
+                ref_planes = doc.RefPlanes
 
             if plane_index < 1 or plane_index > ref_planes.Count:
                 return {
@@ -3795,49 +3795,93 @@ class AssemblyManager:
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
+    def _build_points_profile(self, doc, plane_index: int, points: list[tuple[float, float]]):
+        """
+        Build a temporary Points2d sketch profile on the given AsmRefPlane.
+
+        Creates a new ProfileSet, adds a Profile on the plane, inserts one
+        Point2d per (x, y) tuple, and closes the profile with End(0).
+
+        Returns the profile COM object.  The caller owns the ProfileSet and
+        should delete it after the feature Add() call completes.
+        """
+        try:
+            plane = doc.AsmRefPlanes.Item(plane_index)
+        except Exception:
+            plane = doc.RefPlanes.Item(plane_index)
+
+        profile_set = doc.ProfileSets.Add()
+        profile = profile_set.Profiles.Add(plane)
+        pts = profile.Points2d
+        for x, y in points:
+            pts.Add(x, y)
+        profile.End(0)
+        return profile_set, profile
+
     def create_assembly_pattern_rectangular(
         self,
         feature_names: list[str],
-        pattern_type: int = 0,
+        x_count: int,
+        x_spacing: float,
+        y_count: int = 1,
+        y_spacing: float = 0.0,
     ) -> dict[str, Any]:
         """
-        Create a rectangular pattern of assembly features.
+        Create a rectangular pattern of assembly features using a Points2d sketch.
 
         Real COM signature:
         AssemblyFeaturesPatterns.Add(NumberOfFeatures, ppFeaturesArray,
                                      Profile, PatternType)
 
-        ppFeaturesArray contains existing assembly features (cutouts, holes,
-        protrusions) — NOT component occurrences. Profile may define the
-        pattern layout sketch; passing None to test if SE infers from PatternType.
+        Builds a temporary ProfileSet on AsmRefPlanes.Item(1) containing one
+        Point2d per grid cell (x_count × y_count), then passes it as Profile.
 
         Args:
             feature_names: Names of existing assembly features to pattern
-            pattern_type: PatternType enum value (default 0, try 1 if 0 fails)
+            x_count: Number of instances in X (must be >= 1)
+            x_spacing: Spacing between X instances in meters
+            y_count: Number of instances in Y (default 1)
+            y_spacing: Spacing between Y instances in meters (default 0.0)
 
         Returns:
             Dict with status
         """
         try:
+            if x_count < 1:
+                return {"error": "x_count must be >= 1"}
+            if y_count < 1:
+                return {"error": "y_count must be >= 1"}
+
             doc = self.doc_manager.get_active_document()
             asm_features = self._get_assembly_features(doc)
             features = self._find_asm_features_by_name(doc, feature_names)
 
-            # Profile may be a sketch profile for sketch-driven patterns;
-            # try None first to see if SE accepts it without one.
-            profile = None
-            if self.sketch_manager:
-                accumulated = self.sketch_manager.get_accumulated_profiles()
-                if accumulated:
-                    profile = accumulated[-1]
+            # Build grid of Points2d on the Top/XY plane (index 1)
+            grid_points = [
+                (xi * x_spacing, yi * y_spacing)
+                for yi in range(y_count)
+                for xi in range(x_count)
+            ]
+            profile_set, profile = self._build_points_profile(doc, 1, grid_points)
 
-            patterns = asm_features.AssemblyFeaturesPatterns
-            _feature = patterns.Add(
-                len(features),      # NumberOfFeatures
-                tuple(features),    # ppFeaturesArray
-                profile,            # Profile (sketch or None)
-                pattern_type,       # PatternType
-            )
+            try:
+                patterns = asm_features.AssemblyFeaturesPatterns
+                _feature = patterns.Add(
+                    len(features),      # NumberOfFeatures
+                    tuple(features),    # ppFeaturesArray
+                    profile,            # Profile (Points2d grid)
+                    0,                  # PatternType: rectangular
+                )
+            finally:
+                # Clean up temporary profile set
+                try:
+                    profile_set.Delete()
+                except Exception:
+                    try:
+                        doc.ProfileSets.Remove(profile_set)
+                    except Exception:
+                        pass
+
             if _feature is None:
                 return {"error": "Feature creation failed: COM returned None"}
 
@@ -3845,7 +3889,10 @@ class AssemblyManager:
                 "status": "created",
                 "type": "assembly_pattern_rectangular",
                 "feature_names": feature_names,
-                "pattern_type": pattern_type,
+                "x_count": x_count,
+                "x_spacing": x_spacing,
+                "y_count": y_count,
+                "y_spacing": y_spacing,
                 "name": _feature.Name if hasattr(_feature, "Name") else None,
             }
         except Exception as e:
@@ -3854,46 +3901,69 @@ class AssemblyManager:
     def create_assembly_pattern_circular(
         self,
         feature_names: list[str],
-        pattern_type: int = 1,
+        count: int,
+        angle: float = 360.0,
+        axis_plane_index: int = 1,
+        radius: float = 0.05,
     ) -> dict[str, Any]:
         """
-        Create a circular pattern of assembly features.
+        Create a circular pattern of assembly features using a Points2d sketch.
 
         Real COM signature:
         AssemblyFeaturesPatterns.Add(NumberOfFeatures, ppFeaturesArray,
                                      Profile, PatternType)
 
-        ppFeaturesArray contains existing assembly features (cutouts, holes,
-        protrusions) — NOT component occurrences. Pattern geometry (axis,
-        count, angle) is defined by the Profile sketch. A sketch profile
-        must be active (via create_sketch / draw / close_sketch) to define
-        the circular pattern layout.
+        Builds a temporary ProfileSet on AsmRefPlanes.Item(axis_plane_index)
+        with Points2d arranged on a circle of the given radius, then passes it
+        as Profile.
 
         Args:
             feature_names: Names of existing assembly features to pattern
-            pattern_type: PatternType enum value (default 1 for circular)
+            count: Total number of instances (including original)
+            angle: Total arc angle in degrees (360 = full circle)
+            axis_plane_index: 1-based AsmRefPlanes index whose normal is the
+                              rotation axis (default 1 = Top/XY)
+            radius: Radius of the circular pattern in meters (default 0.05)
 
         Returns:
             Dict with status
         """
         try:
+            if count < 1:
+                return {"error": "count must be >= 1"}
+
             doc = self.doc_manager.get_active_document()
             asm_features = self._get_assembly_features(doc)
             features = self._find_asm_features_by_name(doc, feature_names)
 
-            profile = None
-            if self.sketch_manager:
-                accumulated = self.sketch_manager.get_accumulated_profiles()
-                if accumulated:
-                    profile = accumulated[-1]
-
-            patterns = asm_features.AssemblyFeaturesPatterns
-            _feature = patterns.Add(
-                len(features),      # NumberOfFeatures
-                tuple(features),    # ppFeaturesArray
-                profile,            # Profile (sketch defining pattern layout)
-                pattern_type,       # PatternType
+            # Build circle of Points2d; step angle = total_angle / count
+            total_rad = math.radians(angle)
+            step = total_rad / count
+            circle_points = [
+                (radius * math.cos(step * i), radius * math.sin(step * i))
+                for i in range(count)
+            ]
+            profile_set, profile = self._build_points_profile(
+                doc, axis_plane_index, circle_points
             )
+
+            try:
+                patterns = asm_features.AssemblyFeaturesPatterns
+                _feature = patterns.Add(
+                    len(features),      # NumberOfFeatures
+                    tuple(features),    # ppFeaturesArray
+                    profile,            # Profile (Points2d circle)
+                    1,                  # PatternType: circular
+                )
+            finally:
+                try:
+                    profile_set.Delete()
+                except Exception:
+                    try:
+                        doc.ProfileSets.Remove(profile_set)
+                    except Exception:
+                        pass
+
             if _feature is None:
                 return {"error": "Feature creation failed: COM returned None"}
 
@@ -3901,8 +3971,61 @@ class AssemblyManager:
                 "status": "created",
                 "type": "assembly_pattern_circular",
                 "feature_names": feature_names,
-                "pattern_type": pattern_type,
+                "count": count,
+                "angle": angle,
+                "axis_plane_index": axis_plane_index,
+                "radius": radius,
                 "name": _feature.Name if hasattr(_feature, "Name") else None,
             }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def list_assembly_features(self) -> dict[str, Any]:
+        """
+        List all assembly features grouped by collection name.
+
+        Searches all known AssemblyFeatures sub-collections and returns a dict
+        mapping collection name → list of feature names.  Only non-empty
+        collections are included.
+
+        Returns:
+            Dict with status and features mapping
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            asm_features = self._get_assembly_features(doc)
+
+            collections_to_search = [
+                "AssemblyFeaturesExtrudedCutouts",
+                "AssemblyFeaturesHoles",
+                "AssemblyFeaturesRevolvedCutouts",
+                "ExtrudedProtrusions",
+                "RevolvedProtrusions",
+                "AssemblyFeaturesSweptProtrusions",
+                "AssemblyFeaturesMirrors",
+                "AssemblyFeaturesPatterns",
+            ]
+            result: dict[str, list[str]] = {}
+            for coll_name in collections_to_search:
+                try:
+                    coll = getattr(asm_features, coll_name)
+                    count = coll.Count
+                    if count == 0:
+                        continue
+                    names = []
+                    for i in range(count):
+                        try:
+                            item = coll.Item(i + 1)
+                            try:
+                                names.append(item.Name)
+                            except Exception:
+                                names.append(f"Item{i + 1}")
+                        except Exception:
+                            names.append(f"Item{i + 1}")
+                    result[coll_name] = names
+                except Exception:
+                    pass
+
+            return {"status": "success", "features": result}
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}

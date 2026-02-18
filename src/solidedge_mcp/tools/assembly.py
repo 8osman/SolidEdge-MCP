@@ -585,73 +585,89 @@ def assembly_create_revolved_protrusion(
 
 
 def assembly_create_mirror(
-    component_indices: list[int],
+    feature_names: list[str],
     plane_index: int,
+    mirror_type: int = 0,
 ) -> dict:
     """
-    Create an assembly-level mirror of one or more components.
+    Create an assembly-level mirror of one or more assembly features.
 
-    Uses doc.AssemblyFeatures.Mirrors.Add to create a parametric mirror
-    feature (distinct from Occurrence.Mirror which repositions a single component).
+    Uses AssemblyFeaturesMirrors.Add(NumberOfFeatures, ppFeaturesArray,
+    pMirrorPlane, MirrorType).  feature_names must refer to existing assembly
+    features (holes, cutouts, protrusions) — use assembly_list_features to
+    discover available names.
 
     Args:
-        component_indices: List of 0-based indices of components to mirror
-        plane_index: 1-based reference plane index to mirror across
+        feature_names: Names of assembly features to mirror (e.g. ["Cutout 1"])
+        plane_index: 1-based AsmRefPlanes index to mirror across
+        mirror_type: MirrorType enum value (default 0)
     """
-    return assembly_manager.create_assembly_mirror(component_indices, plane_index)
+    return assembly_manager.create_assembly_mirror(feature_names, plane_index, mirror_type)
 
 
 def assembly_create_pattern_rectangular(
-    component_indices: list[int],
+    feature_names: list[str],
     x_count: int,
     x_spacing: float,
     y_count: int = 1,
     y_spacing: float = 0.0,
 ) -> dict:
     """
-    Create a rectangular pattern of assembly components.
+    Create a rectangular pattern of assembly features.
 
-    Uses doc.AssemblyFeatures.Patterns.Add to create a parametric
-    rectangular array of the selected components.
+    Uses AssemblyFeaturesPatterns.Add with a Points2d sketch encoding the
+    grid layout.  feature_names must refer to existing assembly features —
+    use assembly_list_features to discover available names.
 
     Args:
-        component_indices: List of 0-based indices of components to pattern
-        x_count: Number of instances in X direction (including original)
-        x_spacing: Spacing between instances in X direction (meters)
+        feature_names: Names of assembly features to pattern (e.g. ["Cutout 1"])
+        x_count: Number of instances in X direction (>= 1, includes original)
+        x_spacing: Spacing between X instances in meters
         y_count: Number of instances in Y direction (default 1)
-        y_spacing: Spacing between instances in Y direction (meters)
+        y_spacing: Spacing between Y instances in meters (default 0.0)
     """
     return assembly_manager.create_assembly_pattern_rectangular(
-        component_indices, x_count, x_spacing, y_count, y_spacing
+        feature_names, x_count, x_spacing, y_count, y_spacing
     )
 
 
 def assembly_create_pattern_circular(
-    component_indices: list[int],
+    feature_names: list[str],
     count: int,
     angle: float = 360.0,
-    axis_x: float = 0.0,
-    axis_y: float = 0.0,
-    axis_z: float = 1.0,
-    origin_x: float = 0.0,
-    origin_y: float = 0.0,
-    origin_z: float = 0.0,
+    axis_plane_index: int = 1,
+    radius: float = 0.05,
 ) -> dict:
     """
-    Create a circular pattern of assembly components about an axis.
+    Create a circular pattern of assembly features.
 
-    Uses doc.AssemblyFeatures.Patterns.Add with circular type.
+    Uses AssemblyFeaturesPatterns.Add with a Points2d sketch arranged on a
+    circle.  feature_names must refer to existing assembly features — use
+    assembly_list_features to discover available names.
 
     Args:
-        component_indices: List of 0-based indices of components to pattern
-        count: Total number of instances (including original)
+        feature_names: Names of assembly features to pattern (e.g. ["Cutout 1"])
+        count: Total number of instances (>= 1, includes original)
         angle: Total arc angle in degrees (default 360 = full circle)
-        axis_x/y/z: Rotation axis direction vector (default Z-axis: 0,0,1)
-        origin_x/y/z: Rotation axis origin point (default 0,0,0)
+        axis_plane_index: 1-based AsmRefPlanes index whose normal is the
+                          rotation axis (default 1 = Top/XY plane)
+        radius: Radius of circular pattern in meters (default 0.05 = 50 mm)
     """
     return assembly_manager.create_assembly_pattern_circular(
-        component_indices, count, angle, axis_x, axis_y, axis_z, origin_x, origin_y, origin_z
+        feature_names, count, angle, axis_plane_index, radius
     )
+
+
+def assembly_list_features() -> dict:
+    """
+    List all assembly features grouped by collection name.
+
+    Returns a dict mapping each non-empty AssemblyFeatures sub-collection
+    (AssemblyFeaturesHoles, AssemblyFeaturesExtrudedCutouts, etc.) to the
+    list of feature names it contains.  Use the returned names as input to
+    assembly_create_mirror and assembly_create_pattern_*.
+    """
+    return assembly_manager.list_assembly_features()
 
 
 def register(mcp):
@@ -731,7 +747,7 @@ def register(mcp):
     mcp.tool()(assembly_apply_configuration)
     mcp.tool()(assembly_delete_configuration)
     mcp.tool()(assembly_detect_under_constrained)
-    # Batch 10: Assembly-level features (9)
+    # Batch 10: Assembly-level features (10)
     mcp.tool()(assembly_diagnose_features_api)
     mcp.tool()(assembly_create_extruded_cutout)
     mcp.tool()(assembly_create_extruded_protrusion)
@@ -741,3 +757,4 @@ def register(mcp):
     mcp.tool()(assembly_create_mirror)
     mcp.tool()(assembly_create_pattern_rectangular)
     mcp.tool()(assembly_create_pattern_circular)
+    mcp.tool()(assembly_list_features)
