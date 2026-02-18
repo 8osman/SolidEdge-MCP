@@ -3296,49 +3296,47 @@ class AssemblyManager:
                 except Exception:
                     doc_level[candidate] = {"error": "not available"}
 
-            # Deep type inspection: get VARTYPE of every parameter of Add()
-            # on AssemblyFeaturesExtrudedCutouts so we know exactly how to
-            # marshal the profiles argument.
-            typeinfo_result = {}
-            try:
-                cutouts = asm_features.AssemblyFeaturesExtrudedCutouts
-                ti = cutouts._oleobj_.GetTypeInfo()
-                ta = ti.GetTypeAttr()
-                methods = []
-                for i in range(ta.cFuncs):
-                    fd = ti.GetFuncDesc(i)
-                    names = ti.GetNames(fd.memid)
-                    method_name = names[0] if names else f"func_{i}"
-                    if method_name != "Add":
-                        continue
-                    args_info = []
-                    for j, arg in enumerate(fd.args):
-                        param_name = names[j + 1] if j + 1 < len(names) else f"p{j}"
-                        arg_detail = {"name": param_name, "arg_attrs": dir(arg)}
-                        # Try vt directly on arg
-                        if hasattr(arg, "vt"):
-                            arg_detail["vt"] = arg.vt
-                            arg_detail["vt_hex"] = hex(arg.vt)
-                        # Try via tdesc
-                        elif hasattr(arg, "tdesc"):
-                            try:
-                                arg_detail["tdesc_vt"] = arg.tdesc.vt
-                                arg_detail["tdesc_vt_hex"] = hex(arg.tdesc.vt)
-                            except Exception as e2:
-                                arg_detail["tdesc_error"] = str(e2)
-                        args_info.append(arg_detail)
-                    methods.append({"method": method_name, "args": args_info})
-                    break  # found Add, done
-                typeinfo_result = {"methods": methods}
-            except Exception as e:
-                typeinfo_result = {"error": str(e), "traceback": traceback.format_exc()}
+            def _dump_add_typeinfo(coll_obj):
+                """Return parameter names and vt values for the Add method on a collection."""
+                try:
+                    ti = coll_obj._oleobj_.GetTypeInfo()
+                    ta = ti.GetTypeAttr()
+                    for i in range(ta.cFuncs):
+                        fd = ti.GetFuncDesc(i)
+                        names = ti.GetNames(fd.memid)
+                        method_name = names[0] if names else f"func_{i}"
+                        if method_name != "Add":
+                            continue
+                        args_info = []
+                        for j, arg in enumerate(fd.args):
+                            param_name = names[j + 1] if j + 1 < len(names) else f"p{j}"
+                            arg_detail = {"name": param_name}
+                            if hasattr(arg, "vt"):
+                                arg_detail["vt"] = arg.vt
+                                arg_detail["vt_hex"] = hex(arg.vt)
+                            elif hasattr(arg, "tdesc"):
+                                try:
+                                    arg_detail["tdesc_vt"] = arg.tdesc.vt
+                                    arg_detail["tdesc_vt_hex"] = hex(arg.tdesc.vt)
+                                except Exception as e2:
+                                    arg_detail["tdesc_error"] = str(e2)
+                            args_info.append(arg_detail)
+                        return {"param_count": len(args_info), "params": args_info}
+                    return {"error": "Add method not found"}
+                except Exception as e:
+                    return {"error": str(e), "traceback": traceback.format_exc()}
 
             return {
                 "status": "ok",
                 "top_level_attributes": top_attrs,
                 "feature_collections": collections,
                 "doc_level_apis": doc_level,
-                "extruded_cutouts_typeinfo": typeinfo_result,
+                "extruded_cutouts_typeinfo": _dump_add_typeinfo(
+                    asm_features.AssemblyFeaturesExtrudedCutouts
+                ),
+                "holes_typeinfo": _dump_add_typeinfo(
+                    asm_features.AssemblyFeaturesHoles
+                ),
             }
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
