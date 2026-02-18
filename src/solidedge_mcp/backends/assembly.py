@@ -3281,30 +3281,42 @@ class AssemblyManager:
             try:
                 cutouts = asm_features.AssemblyFeaturesExtrudedCutouts
                 ti = cutouts._oleobj_.GetTypeInfo()
-                attr = ti.GetTypeAttr()
-                for i in range(attr.cFuncs):
+                ta = ti.GetTypeAttr()
+                for i in range(ta.cFuncs):
                     fd = ti.GetFuncDesc(i)
+                    # Dump fd attributes first time so we can see exact field names
+                    fd_attrs = dir(fd)
                     names = ti.GetNames(fd.memid)
                     method_name = names[0] if names else f"func_{i}"
                     params = []
-                    for j in range(fd.cParams):
-                        ed = fd.rgelemdescParam[j]
-                        td = ed.tdesc
+                    # Use len(rgelemdescParam) — cParams field may not exist on all versions
+                    param_descs = fd.rgelemdescParam
+                    for j in range(len(param_descs)):
+                        ed = param_descs[j]
                         param_name = names[j + 1] if j + 1 < len(names) else f"p{j}"
-                        # vt is the VARTYPE constant (e.g. VT_I4=3, VT_DISPATCH=9,
-                        # VT_VARIANT=12, VT_SAFEARRAY=0x2000, VT_ARRAY=0x2000,
-                        # VT_PTR=26, VT_BYREF=0x4000)
-                        vt = td.vt
+                        try:
+                            vt = ed.tdesc.vt
+                        except Exception:
+                            vt = -1
+                        try:
+                            flags = ed.paramdesc.wParamFlags
+                        except Exception:
+                            flags = -1
                         params.append({
                             "name": param_name,
                             "vt": vt,
-                            "vt_hex": hex(vt),
-                            "flags": ed.paramdesc.wParamFlags,
+                            "vt_hex": hex(vt) if vt >= 0 else "unknown",
+                            "flags": flags,
                         })
+                    try:
+                        retval_vt = fd.rettype.vt
+                    except Exception:
+                        retval_vt = -1
                     typeinfo_result[method_name] = {
-                        "param_count": fd.cParams,
+                        "fd_attrs": fd_attrs,
+                        "param_count": len(param_descs),
                         "params": params,
-                        "retval_vt": fd.rettype.vt,
+                        "retval_vt": retval_vt,
                     }
             except Exception as e:
                 typeinfo_result = {"error": str(e), "traceback": traceback.format_exc()}
