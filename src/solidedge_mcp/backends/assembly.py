@@ -3324,9 +3324,10 @@ class AssemblyManager:
             extent = ExtentTypeConstants.igThroughAll if through_all else ExtentTypeConstants.igFinite
 
             cutouts = asm_features.AssemblyFeaturesExtrudedCutouts
+            profiles_variant = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
             _feature = cutouts.Add(
                 1,
-                (profile,),
+                profiles_variant,
                 dir_const,
                 extent,
                 depth,
