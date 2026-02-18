@@ -3677,32 +3677,96 @@ class AssemblyManager:
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
+    def _find_asm_features_by_name(self, doc, feature_names: list[str]) -> list:
+        """
+        Look up assembly feature COM objects by name across all AssemblyFeatures
+        sub-collections.
+
+        Searches: AssemblyFeaturesExtrudedCutouts, AssemblyFeaturesHoles,
+        AssemblyFeaturesRevolvedCutouts, ExtrudedProtrusions,
+        RevolvedProtrusions, AssemblyFeaturesSweptProtrusions,
+        AssemblyFeaturesMirrors, AssemblyFeaturesPatterns.
+
+        Returns list of COM feature objects in the same order as feature_names.
+        Raises RuntimeError if any name is not found.
+        """
+        asm_features = self._get_assembly_features(doc)
+        collections_to_search = [
+            "AssemblyFeaturesExtrudedCutouts",
+            "AssemblyFeaturesHoles",
+            "AssemblyFeaturesRevolvedCutouts",
+            "ExtrudedProtrusions",
+            "RevolvedProtrusions",
+            "AssemblyFeaturesSweptProtrusions",
+            "AssemblyFeaturesMirrors",
+            "AssemblyFeaturesPatterns",
+        ]
+        # Build name→object map
+        name_map = {}
+        for coll_name in collections_to_search:
+            try:
+                coll = getattr(asm_features, coll_name)
+                for i in range(coll.Count):
+                    item = coll.Item(i + 1)
+                    try:
+                        name_map[item.Name] = item
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+
+        result = []
+        missing = []
+        for name in feature_names:
+            if name in name_map:
+                result.append(name_map[name])
+            else:
+                missing.append(name)
+        if missing:
+            available = sorted(name_map.keys())
+            raise RuntimeError(
+                f"Assembly features not found: {missing}. "
+                f"Available: {available}"
+            )
+        return result
+
     def create_assembly_mirror(
         self,
-        component_indices: list[int],
+        feature_names: list[str],
         plane_index: int,
+        mirror_type: int = 0,
     ) -> dict[str, Any]:
         """
-        Create an assembly-level mirror feature for one or more components.
+        Create an assembly-level mirror of one or more assembly features.
 
-        Uses doc.AssemblyFeatures.AssemblyFeaturesMirrors.Add(nOccurrences, occurrences, mirrorPlane)
-        to create a parametric mirror of the selected components.
+        Real COM signature:
+        AssemblyFeaturesMirrors.Add(NumberOfFeatures, ppFeaturesArray,
+                                    pMirrorPlane, MirrorType)
+
+        ppFeaturesArray contains existing assembly features (cutouts, holes,
+        protrusions) — NOT component occurrences.
 
         Args:
-            component_indices: List of 0-based component indices to mirror
+            feature_names: Names of existing assembly features to mirror
+                           (e.g. ["AssemblyFeaturesExtrudedCutout 1"])
             plane_index: 1-based reference plane index to mirror across
+            mirror_type: Mirror type enum value (default 0)
 
         Returns:
             Dict with status
         """
         try:
             doc = self.doc_manager.get_active_document()
-            if not hasattr(doc, "Occurrences"):
-                return {"error": "Active document is not an assembly"}
-
             asm_features = self._get_assembly_features(doc)
-            occurrences = doc.Occurrences
-            ref_planes = doc.RefPlanes
+
+            features = self._find_asm_features_by_name(doc, feature_names)
+
+            # Assembly docs use AsmRefPlanes, not RefPlanes
+            try:
+                ref_planes = doc.RefPlanes
+                _ = ref_planes.Count
+            except Exception:
+                ref_planes = doc.AsmRefPlanes
 
             if plane_index < 1 or plane_index > ref_planes.Count:
                 return {
@@ -3711,25 +3775,20 @@ class AssemblyManager:
                 }
 
             mirror_plane = ref_planes.Item(plane_index)
-            occ_list = []
-            for idx in component_indices:
-                if idx < 0 or idx >= occurrences.Count:
-                    return {
-                        "error": f"Invalid component index {idx}. "
-                        f"Assembly has {occurrences.Count} components."
-                    }
-                occ_list.append(occurrences.Item(idx + 1))
-
-            v_occurrences = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, occ_list)
             mirrors = asm_features.AssemblyFeaturesMirrors
-            _feature = mirrors.Add(len(occ_list), v_occurrences, mirror_plane)
+            _feature = mirrors.Add(
+                len(features),      # NumberOfFeatures
+                tuple(features),    # ppFeaturesArray
+                mirror_plane,       # pMirrorPlane
+                mirror_type,        # MirrorType
+            )
             if _feature is None:
                 return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
                 "type": "assembly_mirror",
-                "component_indices": component_indices,
+                "feature_names": feature_names,
                 "plane_index": plane_index,
                 "name": _feature.Name if hasattr(_feature, "Name") else None,
             }
@@ -3738,57 +3797,46 @@ class AssemblyManager:
 
     def create_assembly_pattern_rectangular(
         self,
-        component_indices: list[int],
-        x_count: int,
-        x_spacing: float,
-        y_count: int = 1,
-        y_spacing: float = 0.0,
+        feature_names: list[str],
+        pattern_type: int = 0,
     ) -> dict[str, Any]:
         """
-        Create a rectangular pattern of assembly components.
+        Create a rectangular pattern of assembly features.
 
-        Uses doc.AssemblyFeatures.AssemblyFeaturesPatterns.Add to create a rectangular
-        array of selected occurrences.
+        Real COM signature:
+        AssemblyFeaturesPatterns.Add(NumberOfFeatures, ppFeaturesArray,
+                                     Profile, PatternType)
+
+        ppFeaturesArray contains existing assembly features (cutouts, holes,
+        protrusions) — NOT component occurrences. Profile may define the
+        pattern layout sketch; passing None to test if SE infers from PatternType.
 
         Args:
-            component_indices: List of 0-based component indices to pattern
-            x_count: Number of instances in X direction (including original)
-            x_spacing: Spacing between instances in X direction (meters)
-            y_count: Number of instances in Y direction (default 1)
-            y_spacing: Spacing between instances in Y direction (meters)
+            feature_names: Names of existing assembly features to pattern
+            pattern_type: PatternType enum value (default 0, try 1 if 0 fails)
 
         Returns:
             Dict with status
         """
         try:
             doc = self.doc_manager.get_active_document()
-            if not hasattr(doc, "Occurrences"):
-                return {"error": "Active document is not an assembly"}
-
             asm_features = self._get_assembly_features(doc)
-            occurrences = doc.Occurrences
+            features = self._find_asm_features_by_name(doc, feature_names)
 
-            occ_list = []
-            for idx in component_indices:
-                if idx < 0 or idx >= occurrences.Count:
-                    return {
-                        "error": f"Invalid component index {idx}. "
-                        f"Assembly has {occurrences.Count} components."
-                    }
-                occ_list.append(occurrences.Item(idx + 1))
+            # Profile may be a sketch profile for sketch-driven patterns;
+            # try None first to see if SE accepts it without one.
+            profile = None
+            if self.sketch_manager:
+                accumulated = self.sketch_manager.get_accumulated_profiles()
+                if accumulated:
+                    profile = accumulated[-1]
 
-            v_occurrences = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, occ_list)
             patterns = asm_features.AssemblyFeaturesPatterns
-
-            # Pattern type 0 = rectangular (assumption based on typical SE API conventions)
             _feature = patterns.Add(
-                0,               # pattern type: rectangular
-                len(occ_list),   # nOccurrences
-                v_occurrences,   # occurrences array
-                x_count,         # count in X
-                x_spacing,       # spacing in X
-                y_count,         # count in Y
-                y_spacing,       # spacing in Y
+                len(features),      # NumberOfFeatures
+                tuple(features),    # ppFeaturesArray
+                profile,            # Profile (sketch or None)
+                pattern_type,       # PatternType
             )
             if _feature is None:
                 return {"error": "Feature creation failed: COM returned None"}
@@ -3796,11 +3844,8 @@ class AssemblyManager:
             return {
                 "status": "created",
                 "type": "assembly_pattern_rectangular",
-                "component_indices": component_indices,
-                "x_count": x_count,
-                "x_spacing": x_spacing,
-                "y_count": y_count,
-                "y_spacing": y_spacing,
+                "feature_names": feature_names,
+                "pattern_type": pattern_type,
                 "name": _feature.Name if hasattr(_feature, "Name") else None,
             }
         except Exception as e:
@@ -3808,61 +3853,46 @@ class AssemblyManager:
 
     def create_assembly_pattern_circular(
         self,
-        component_indices: list[int],
-        count: int,
-        angle: float,
-        axis_x: float = 0.0,
-        axis_y: float = 0.0,
-        axis_z: float = 1.0,
-        origin_x: float = 0.0,
-        origin_y: float = 0.0,
-        origin_z: float = 0.0,
+        feature_names: list[str],
+        pattern_type: int = 1,
     ) -> dict[str, Any]:
         """
-        Create a circular pattern of assembly components about an axis.
+        Create a circular pattern of assembly features.
 
-        Uses doc.AssemblyFeatures.AssemblyFeaturesPatterns.Add with circular type.
+        Real COM signature:
+        AssemblyFeaturesPatterns.Add(NumberOfFeatures, ppFeaturesArray,
+                                     Profile, PatternType)
+
+        ppFeaturesArray contains existing assembly features (cutouts, holes,
+        protrusions) — NOT component occurrences. Pattern geometry (axis,
+        count, angle) is defined by the Profile sketch. A sketch profile
+        must be active (via create_sketch / draw / close_sketch) to define
+        the circular pattern layout.
 
         Args:
-            component_indices: List of 0-based component indices to pattern
-            count: Total number of instances (including original)
-            angle: Total arc angle in degrees (360 = full circle)
-            axis_x/y/z: Rotation axis direction vector (default Z-axis)
-            origin_x/y/z: Rotation axis origin point (default 0,0,0)
+            feature_names: Names of existing assembly features to pattern
+            pattern_type: PatternType enum value (default 1 for circular)
 
         Returns:
             Dict with status
         """
         try:
             doc = self.doc_manager.get_active_document()
-            if not hasattr(doc, "Occurrences"):
-                return {"error": "Active document is not an assembly"}
-
             asm_features = self._get_assembly_features(doc)
-            occurrences = doc.Occurrences
+            features = self._find_asm_features_by_name(doc, feature_names)
 
-            occ_list = []
-            for idx in component_indices:
-                if idx < 0 or idx >= occurrences.Count:
-                    return {
-                        "error": f"Invalid component index {idx}. "
-                        f"Assembly has {occurrences.Count} components."
-                    }
-                occ_list.append(occurrences.Item(idx + 1))
+            profile = None
+            if self.sketch_manager:
+                accumulated = self.sketch_manager.get_accumulated_profiles()
+                if accumulated:
+                    profile = accumulated[-1]
 
-            v_occurrences = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, occ_list)
-            angle_rad = math.radians(angle)
             patterns = asm_features.AssemblyFeaturesPatterns
-
-            # Pattern type 1 = circular (assumption based on typical SE API conventions)
             _feature = patterns.Add(
-                1,                # pattern type: circular
-                len(occ_list),    # nOccurrences
-                v_occurrences,    # occurrences array
-                count,            # instance count
-                angle_rad,        # total angle
-                axis_x, axis_y, axis_z,          # rotation axis vector
-                origin_x, origin_y, origin_z,    # rotation axis origin
+                len(features),      # NumberOfFeatures
+                tuple(features),    # ppFeaturesArray
+                profile,            # Profile (sketch defining pattern layout)
+                pattern_type,       # PatternType
             )
             if _feature is None:
                 return {"error": "Feature creation failed: COM returned None"}
@@ -3870,11 +3900,8 @@ class AssemblyManager:
             return {
                 "status": "created",
                 "type": "assembly_pattern_circular",
-                "component_indices": component_indices,
-                "count": count,
-                "angle": angle,
-                "axis": [axis_x, axis_y, axis_z],
-                "origin": [origin_x, origin_y, origin_z],
+                "feature_names": feature_names,
+                "pattern_type": pattern_type,
                 "name": _feature.Name if hasattr(_feature, "Name") else None,
             }
         except Exception as e:
