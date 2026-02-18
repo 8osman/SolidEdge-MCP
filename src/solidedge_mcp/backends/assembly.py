@@ -3322,12 +3322,11 @@ class AssemblyManager:
                 dir_const = DirectionConstants.igLeft
 
             extent = ExtentTypeConstants.igThroughAll if through_all else ExtentTypeConstants.igFinite
-            v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
             cutouts = asm_features.AssemblyFeaturesExtrudedCutouts
             _feature = cutouts.Add(
                 1,
-                v_profiles,
+                (profile,),
                 dir_const,
                 extent,
                 depth,
@@ -3377,12 +3376,10 @@ class AssemblyManager:
             if direction == "Reverse":
                 dir_const = DirectionConstants.igLeft
 
-            v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
-
             protrusions = asm_features.ExtrudedProtrusions
             _feature = protrusions.Add(
                 1,
-                v_profiles,
+                (profile,),
                 dir_const,
                 ExtentTypeConstants.igFinite,
                 depth,
@@ -3434,12 +3431,11 @@ class AssemblyManager:
                 dir_const = DirectionConstants.igLeft
 
             extent = ExtentTypeConstants.igThroughAll if through_all else ExtentTypeConstants.igFinite
-            v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
             holes = asm_features.AssemblyFeaturesHoles
             _feature = holes.Add(
                 1,
-                v_profiles,
+                (profile,),
                 dir_const,
                 extent,
                 depth,
@@ -3491,12 +3487,11 @@ class AssemblyManager:
                 dir_const = DirectionConstants.igLeft
 
             angle_rad = math.radians(angle)
-            v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
             cutouts = asm_features.AssemblyFeaturesRevolvedCutouts
             _feature = cutouts.Add(
                 1,
-                v_profiles,
+                (profile,),
                 dir_const,
                 ExtentTypeConstants.igFinite,
                 angle_rad,
@@ -3546,12 +3541,11 @@ class AssemblyManager:
                 dir_const = DirectionConstants.igLeft
 
             angle_rad = math.radians(angle)
-            v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
             protrusions = asm_features.RevolvedProtrusions
             _feature = protrusions.Add(
                 1,
-                v_profiles,
+                (profile,),
                 dir_const,
                 ExtentTypeConstants.igFinite,
                 angle_rad,
