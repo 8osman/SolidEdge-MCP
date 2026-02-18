@@ -3301,7 +3301,7 @@ class AssemblyManager:
         Requires a closed sketch profile already created with create_sketch() /
         draw_*() / close_sketch() on the assembly document.
 
-        Uses doc.AssemblyFeatures.ExtrudedCutouts.Add(nProfiles, profiles,
+        Uses doc.AssemblyFeatures.AssemblyFeaturesExtrudedCutouts.Add(nProfiles, profiles,
         extentSide, extentType, depth).
 
         Args:
@@ -3324,7 +3324,7 @@ class AssemblyManager:
             extent = ExtentTypeConstants.igThroughAll if through_all else ExtentTypeConstants.igFinite
             v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
-            cutouts = asm_features.ExtrudedCutouts
+            cutouts = asm_features.AssemblyFeaturesExtrudedCutouts
             _feature = cutouts.Add(
                 1,
                 v_profiles,
@@ -3359,7 +3359,7 @@ class AssemblyManager:
         Requires a closed sketch profile already on the assembly document.
 
         Uses doc.AssemblyFeatures.ExtrudedProtrusions.Add(nProfiles, profiles,
-        extentSide, extentType, depth).
+        extentSide, extentType, depth).  [ExtrudedProtrusions is unprefixed in SE 2026]
 
         Args:
             depth: Protrusion depth in meters
@@ -3413,7 +3413,7 @@ class AssemblyManager:
 
         Requires a closed circular sketch profile on the assembly document.
 
-        Uses doc.AssemblyFeatures.Holes.Add(nProfiles, profiles,
+        Uses doc.AssemblyFeatures.AssemblyFeaturesHoles.Add(nProfiles, profiles,
         extentSide, extentType, depth).
 
         Args:
@@ -3436,7 +3436,7 @@ class AssemblyManager:
             extent = ExtentTypeConstants.igThroughAll if through_all else ExtentTypeConstants.igFinite
             v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
-            holes = asm_features.Holes
+            holes = asm_features.AssemblyFeaturesHoles
             _feature = holes.Add(
                 1,
                 v_profiles,
@@ -3471,7 +3471,7 @@ class AssemblyManager:
         Requires a closed sketch profile with a revolution axis set
         (via set_axis_of_revolution) on the assembly document.
 
-        Uses doc.AssemblyFeatures.RevolvedCutouts.Add(nProfiles, profiles,
+        Uses doc.AssemblyFeatures.AssemblyFeaturesRevolvedCutouts.Add(nProfiles, profiles,
         extentSide, extentType, angle).
 
         Args:
@@ -3493,7 +3493,7 @@ class AssemblyManager:
             angle_rad = math.radians(angle)
             v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
 
-            cutouts = asm_features.RevolvedCutouts
+            cutouts = asm_features.AssemblyFeaturesRevolvedCutouts
             _feature = cutouts.Add(
                 1,
                 v_profiles,
@@ -3527,7 +3527,7 @@ class AssemblyManager:
         Requires a closed sketch profile with a revolution axis on the assembly doc.
 
         Uses doc.AssemblyFeatures.RevolvedProtrusions.Add(nProfiles, profiles,
-        extentSide, extentType, angle).
+        extentSide, extentType, angle).  [RevolvedProtrusions is unprefixed in SE 2026]
 
         Args:
             angle: Revolution angle in degrees (default 360)
@@ -3579,7 +3579,7 @@ class AssemblyManager:
         """
         Create an assembly-level mirror feature for one or more components.
 
-        Uses doc.AssemblyFeatures.Mirrors.Add(nOccurrences, occurrences, mirrorPlane)
+        Uses doc.AssemblyFeatures.AssemblyFeaturesMirrors.Add(nOccurrences, occurrences, mirrorPlane)
         to create a parametric mirror of the selected components.
 
         Args:
@@ -3615,7 +3615,7 @@ class AssemblyManager:
                 occ_list.append(occurrences.Item(idx + 1))
 
             v_occurrences = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, occ_list)
-            mirrors = asm_features.Mirrors
+            mirrors = asm_features.AssemblyFeaturesMirrors
             _feature = mirrors.Add(len(occ_list), v_occurrences, mirror_plane)
             if _feature is None:
                 return {"error": "Feature creation failed: COM returned None"}
@@ -3641,7 +3641,7 @@ class AssemblyManager:
         """
         Create a rectangular pattern of assembly components.
 
-        Uses doc.AssemblyFeatures.Patterns.Add to create a rectangular
+        Uses doc.AssemblyFeatures.AssemblyFeaturesPatterns.Add to create a rectangular
         array of selected occurrences.
 
         Args:
@@ -3672,7 +3672,7 @@ class AssemblyManager:
                 occ_list.append(occurrences.Item(idx + 1))
 
             v_occurrences = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, occ_list)
-            patterns = asm_features.Patterns
+            patterns = asm_features.AssemblyFeaturesPatterns
 
             # Pattern type 0 = rectangular (assumption based on typical SE API conventions)
             _feature = patterns.Add(
@@ -3715,7 +3715,7 @@ class AssemblyManager:
         """
         Create a circular pattern of assembly components about an axis.
 
-        Uses doc.AssemblyFeatures.Patterns.Add with circular type.
+        Uses doc.AssemblyFeatures.AssemblyFeaturesPatterns.Add with circular type.
 
         Args:
             component_indices: List of 0-based component indices to pattern
@@ -3746,7 +3746,7 @@ class AssemblyManager:
 
             v_occurrences = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, occ_list)
             angle_rad = math.radians(angle)
-            patterns = asm_features.Patterns
+            patterns = asm_features.AssemblyFeaturesPatterns
 
             # Pattern type 1 = circular (assumption based on typical SE API conventions)
             _feature = patterns.Add(
