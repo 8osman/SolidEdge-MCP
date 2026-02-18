@@ -3235,6 +3235,28 @@ class AssemblyManager:
             )
         return profiles[-1]
 
+    def _get_scope_parts(self, doc, component_indices: list[int] | None = None) -> tuple:
+        """
+        Return a tuple of occurrence COM objects to use as pScopeParts.
+
+        If component_indices is None, all occurrences in the assembly are included.
+        Indices are 0-based; COM collection is 1-based.
+        """
+        occurrences = doc.Occurrences
+        count = occurrences.Count
+        if count == 0:
+            raise RuntimeError("Assembly has no components (Occurrences.Count == 0).")
+        if component_indices is None:
+            return tuple(occurrences.Item(i + 1) for i in range(count))
+        result = []
+        for idx in component_indices:
+            if idx < 0 or idx >= count:
+                raise ValueError(
+                    f"component_index {idx} out of range (assembly has {count} components)."
+                )
+            result.append(occurrences.Item(idx + 1))
+        return tuple(result)
+
     def diagnose_assembly_features_api(self) -> dict[str, Any]:
         """
         Discover the AssemblyFeatures COM API on the active assembly document.
@@ -3326,6 +3348,7 @@ class AssemblyManager:
         depth: float,
         direction: str = "Normal",
         through_all: bool = False,
+        component_indices: list[int] | None = None,
     ) -> dict[str, Any]:
         """
         Create an assembly-level extruded cutout that cuts across multiple components.
@@ -3333,13 +3356,19 @@ class AssemblyManager:
         Requires a closed sketch profile already created with create_sketch() /
         draw_*() / close_sketch() on the assembly document.
 
-        Uses doc.AssemblyFeatures.AssemblyFeaturesExtrudedCutouts.Add(nProfiles, profiles,
-        extentSide, extentType, depth).
+        Real COM signature:
+        AssemblyFeaturesExtrudedCutouts.Add(
+            nNumScopeParts, pScopeParts,
+            nNumProfiles, pProfiles,
+            ExtentType, pExtentSide, profileSide, pdDistance,
+            pKeyPoint, pKeyPointFlags, pFromSurfOrPlane, pToSurfOrPlane)
 
         Args:
             depth: Cut depth in meters (ignored when through_all=True)
             direction: 'Normal' (default) or 'Reverse'
             through_all: If True, cut through all components
+            component_indices: 0-based indices of components to cut through.
+                               None (default) cuts through all components.
 
         Returns:
             Dict with status
@@ -3348,6 +3377,7 @@ class AssemblyManager:
             doc = self.doc_manager.get_active_document()
             asm_features = self._get_assembly_features(doc)
             profile = self._get_asm_profile()
+            scope_parts = self._get_scope_parts(doc, component_indices)
 
             dir_const = DirectionConstants.igRight
             if direction == "Reverse":
@@ -3356,13 +3386,19 @@ class AssemblyManager:
             extent = ExtentTypeConstants.igThroughAll if through_all else ExtentTypeConstants.igFinite
 
             cutouts = asm_features.AssemblyFeaturesExtrudedCutouts
-            profiles_variant = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
             _feature = cutouts.Add(
-                1,
-                profiles_variant,
-                dir_const,
-                extent,
-                depth,
+                len(scope_parts),   # nNumScopeParts
+                scope_parts,        # pScopeParts
+                1,                  # nNumProfiles
+                (profile,),         # pProfiles
+                extent,             # ExtentType
+                dir_const,          # pExtentSide
+                dir_const,          # profileSide
+                depth,              # pdDistance
+                None,               # pKeyPoint
+                None,               # pKeyPointFlags
+                None,               # pFromSurfOrPlane
+                None,               # pToSurfOrPlane
             )
             if _feature is None:
                 return {"error": "Feature creation failed: COM returned None"}
@@ -3375,6 +3411,7 @@ class AssemblyManager:
                 "depth": depth,
                 "direction": direction,
                 "through_all": through_all,
+                "scope_parts_count": len(scope_parts),
                 "name": _feature.Name if hasattr(_feature, "Name") else None,
             }
         except Exception as e:
@@ -3437,19 +3474,26 @@ class AssemblyManager:
         depth: float,
         direction: str = "Normal",
         through_all: bool = False,
+        component_indices: list[int] | None = None,
     ) -> dict[str, Any]:
         """
         Create an assembly-level hole through multiple components.
 
         Requires a closed circular sketch profile on the assembly document.
 
-        Uses doc.AssemblyFeatures.AssemblyFeaturesHoles.Add(nProfiles, profiles,
-        extentSide, extentType, depth).
+        Real COM signature:
+        AssemblyFeaturesHoles.Add(
+            nNumScopeParts, pScopeParts,
+            nNumProfiles, pProfiles,
+            ExtentType, pExtentSide, profileSide, pdDistance,
+            pKeyPoint, pKeyPointFlags, pFromSurfOrPlane, pToSurfOrPlane)
 
         Args:
             depth: Hole depth in meters (ignored when through_all=True)
             direction: 'Normal' (default) or 'Reverse'
             through_all: If True, drill through all components
+            component_indices: 0-based indices of components to drill through.
+                               None (default) drills through all components.
 
         Returns:
             Dict with status
@@ -3458,6 +3502,7 @@ class AssemblyManager:
             doc = self.doc_manager.get_active_document()
             asm_features = self._get_assembly_features(doc)
             profile = self._get_asm_profile()
+            scope_parts = self._get_scope_parts(doc, component_indices)
 
             dir_const = DirectionConstants.igRight
             if direction == "Reverse":
@@ -3467,11 +3512,18 @@ class AssemblyManager:
 
             holes = asm_features.AssemblyFeaturesHoles
             _feature = holes.Add(
-                1,
-                (profile,),
-                dir_const,
-                extent,
-                depth,
+                len(scope_parts),   # nNumScopeParts
+                scope_parts,        # pScopeParts
+                1,                  # nNumProfiles
+                (profile,),         # pProfiles
+                extent,             # ExtentType
+                dir_const,          # pExtentSide
+                dir_const,          # profileSide
+                depth,              # pdDistance
+                None,               # pKeyPoint
+                None,               # pKeyPointFlags
+                None,               # pFromSurfOrPlane
+                None,               # pToSurfOrPlane
             )
             if _feature is None:
                 return {"error": "Feature creation failed: COM returned None"}
@@ -3484,6 +3536,7 @@ class AssemblyManager:
                 "depth": depth,
                 "direction": direction,
                 "through_all": through_all,
+                "scope_parts_count": len(scope_parts),
                 "name": _feature.Name if hasattr(_feature, "Name") else None,
             }
         except Exception as e:
@@ -3493,6 +3546,7 @@ class AssemblyManager:
         self,
         angle: float = 360.0,
         direction: str = "Normal",
+        component_indices: list[int] | None = None,
     ) -> dict[str, Any]:
         """
         Create an assembly-level revolved cutout across multiple components.
@@ -3500,12 +3554,18 @@ class AssemblyManager:
         Requires a closed sketch profile with a revolution axis set
         (via set_axis_of_revolution) on the assembly document.
 
-        Uses doc.AssemblyFeatures.AssemblyFeaturesRevolvedCutouts.Add(nProfiles, profiles,
-        extentSide, extentType, angle).
+        Real COM signature (assumed same prefix pattern as extruded):
+        AssemblyFeaturesRevolvedCutouts.Add(
+            nNumScopeParts, pScopeParts,
+            nNumProfiles, pProfiles,
+            ExtentType, pExtentSide, profileSide, pdAngle,
+            pKeyPoint, pKeyPointFlags, pFromSurfOrPlane, pToSurfOrPlane)
 
         Args:
             angle: Revolution angle in degrees (default 360)
             direction: 'Normal' (default) or 'Reverse'
+            component_indices: 0-based indices of components to cut through.
+                               None (default) cuts through all components.
 
         Returns:
             Dict with status
@@ -3514,6 +3574,7 @@ class AssemblyManager:
             doc = self.doc_manager.get_active_document()
             asm_features = self._get_assembly_features(doc)
             profile = self._get_asm_profile()
+            scope_parts = self._get_scope_parts(doc, component_indices)
 
             dir_const = DirectionConstants.igRight
             if direction == "Reverse":
@@ -3523,11 +3584,18 @@ class AssemblyManager:
 
             cutouts = asm_features.AssemblyFeaturesRevolvedCutouts
             _feature = cutouts.Add(
-                1,
-                (profile,),
-                dir_const,
-                ExtentTypeConstants.igFinite,
-                angle_rad,
+                len(scope_parts),           # nNumScopeParts
+                scope_parts,                # pScopeParts
+                1,                          # nNumProfiles
+                (profile,),                 # pProfiles
+                ExtentTypeConstants.igFinite,  # ExtentType
+                dir_const,                  # pExtentSide
+                dir_const,                  # profileSide
+                angle_rad,                  # pdAngle
+                None,                       # pKeyPoint
+                None,                       # pKeyPointFlags
+                None,                       # pFromSurfOrPlane
+                None,                       # pToSurfOrPlane
             )
             if _feature is None:
                 return {"error": "Feature creation failed: COM returned None"}
@@ -3539,6 +3607,7 @@ class AssemblyManager:
                 "type": "assembly_revolved_cutout",
                 "angle": angle,
                 "direction": direction,
+                "scope_parts_count": len(scope_parts),
                 "name": _feature.Name if hasattr(_feature, "Name") else None,
             }
         except Exception as e:
