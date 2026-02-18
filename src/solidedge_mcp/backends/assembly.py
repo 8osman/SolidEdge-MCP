@@ -3509,19 +3509,25 @@ class AssemblyManager:
             extent = ExtentTypeConstants.igThroughAll if through_all else ExtentTypeConstants.igFinite
 
             holes = asm_features.AssemblyFeaturesHoles
+            # Real signature (12 params, differs from ExtrudedCutouts):
+            # Add(nNumScopeParts, pScopeParts, nNumProfiles, pProfiles,
+            #     pExtentSide, pHoledata, ExtentType, pHoleDepth,
+            #     pFromSurfOrPlane, pToSurfOrPlane, pKeyPoint, pKeyPointFlags)
+            # pHoledata is a hole definition object; passing None to test
+            # whether SE accepts a plain circular profile via pProfiles alone.
             _feature = holes.Add(
                 len(scope_parts),   # nNumScopeParts
                 scope_parts,        # pScopeParts
                 1,                  # nNumProfiles
                 (profile,),         # pProfiles
-                extent,             # ExtentType
                 dir_const,          # pExtentSide
-                dir_const,          # profileSide
-                depth,              # pdDistance
-                None,               # pKeyPoint
-                None,               # pKeyPointFlags
+                None,               # pHoledata (None = rely on pProfiles)
+                extent,             # ExtentType
+                depth,              # pHoleDepth
                 None,               # pFromSurfOrPlane
                 None,               # pToSurfOrPlane
+                None,               # pKeyPoint
+                None,               # pKeyPointFlags
             )
             if _feature is None:
                 return {"error": "Feature creation failed: COM returned None"}
