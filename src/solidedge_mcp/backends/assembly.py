@@ -3692,27 +3692,50 @@ class AssemblyManager:
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
+    @staticmethod
+    def _validate_com_object(obj) -> bool:
+        """Return True if the COM object is still alive (not stale)."""
+        try:
+            _ = obj.Name
+            return True
+        except Exception:
+            return False
+
     def _find_asm_features_by_name(self, doc, feature_names: list[str]) -> list:
         """
         Look up assembly feature COM objects by name.
 
-        Checks self._asm_feature_cache first (populated at creation time), then
-        falls back to searching all AssemblyFeatures sub-collections.  This is
-        necessary because some SE 2026 collections (e.g. AssemblyFeaturesHoles)
-        report Count=0 even after a successful Add(), making enumeration unreliable.
+        Strategy:
+        1. Check self._asm_feature_cache first.  Validate each hit — if the COM
+           object is stale (server restarted, RPC gone), prune it from cache and
+           fall through to collection search.
+        2. Search all AssemblyFeatures sub-collections for any still-missing names.
+           Update cache with fresh references discovered here.
+        3. Build ordered result.  For names that are cached-but-stale and also not
+           in any collection, raise a clear "stale reference" error so the user
+           knows to recreate the feature rather than getting a cryptic COM error.
 
         Returns list of COM feature objects in the same order as feature_names.
-        Raises RuntimeError if any name is not found.
+        Raises RuntimeError if any name is not found or only has a stale reference.
         """
-        # --- 1. satisfy as many names as possible from the cache ---
         found: dict[str, Any] = {}
+        stale: set[str] = set()
+
+        # --- 1. cache lookup with liveness validation ---
         for name in feature_names:
             if name in self._asm_feature_cache:
-                found[name] = self._asm_feature_cache[name]
+                obj = self._asm_feature_cache[name]
+                if self._validate_com_object(obj):
+                    found[name] = obj
+                else:
+                    # Dead reference — prune and force collection search
+                    del self._asm_feature_cache[name]
+                    stale.add(name)
 
         still_missing = [n for n in feature_names if n not in found]
 
-        # --- 2. search collections for whatever's not yet in cache ---
+        # --- 2. collection search for anything not yet resolved ---
+        name_map: dict[str, Any] = {}
         if still_missing:
             asm_features = self._get_assembly_features(doc)
             collections_to_search = [
@@ -3725,7 +3748,6 @@ class AssemblyManager:
                 "AssemblyFeaturesMirrors",
                 "AssemblyFeaturesPatterns",
             ]
-            name_map: dict[str, Any] = {}
             for coll_name in collections_to_search:
                 try:
                     coll = getattr(asm_features, coll_name)
@@ -3737,24 +3759,36 @@ class AssemblyManager:
                             pass
                 except Exception:
                     pass
-            # Populate cache with anything discovered via collections
+            # Refresh cache with live collection objects
             self._asm_feature_cache.update(name_map)
             found.update({n: name_map[n] for n in still_missing if n in name_map})
 
-        # --- 3. build ordered result / report missing ---
+        # --- 3. build result / surface clear errors ---
         result = []
-        missing = []
+        not_found = []
         for name in feature_names:
             if name in found:
                 result.append(found[name])
             else:
-                missing.append(name)
-        if missing:
-            available = sorted(found.keys() | self._asm_feature_cache.keys())
-            raise RuntimeError(
-                f"Assembly features not found: {missing}. "
-                f"Available: {available}"
-            )
+                not_found.append(name)
+
+        if not_found:
+            # Distinguish stale-reference failures from never-existed failures
+            truly_stale = [n for n in not_found if n in stale]
+            never_found = [n for n in not_found if n not in stale]
+            available = sorted(found.keys() | name_map.keys())
+            parts = []
+            if truly_stale:
+                parts.append(
+                    f"Feature(s) {truly_stale} COM reference is stale — "
+                    "recreate the feature in this session before patterning/mirroring."
+                )
+            if never_found:
+                parts.append(
+                    f"Feature(s) {never_found} not found. Available: {available}"
+                )
+            raise RuntimeError("  ".join(parts))
+
         return result
 
     def create_assembly_mirror(
@@ -4060,7 +4094,15 @@ class AssemblyManager:
                 except Exception:
                     pass
 
-            # Surface cached features that collections don't enumerate
+            # Surface cached features that collections don't enumerate.
+            # Prune stale entries first so dead COM references don't appear.
+            stale_keys = [
+                n for n, obj in self._asm_feature_cache.items()
+                if not self._validate_com_object(obj)
+            ]
+            for k in stale_keys:
+                del self._asm_feature_cache[k]
+
             unlisted = sorted(
                 n for n in self._asm_feature_cache if n not in listed_names
             )
