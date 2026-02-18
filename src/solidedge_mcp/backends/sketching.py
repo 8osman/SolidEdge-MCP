@@ -40,12 +40,12 @@ class SketchManager:
 
             # Map plane names to indices
             plane_map = {
-                "Top": 1,  # XZ plane (top view)
-                "Front": 2,  # XY plane (front view)
-                "Right": 3,  # YZ plane (right view)
-                "XZ": 1,
-                "XY": 2,
-                "YZ": 3,
+                "Top": 1,  # XY plane (top view)
+                "Right": 2,  # YZ plane (right view)
+                "Front": 3,  # XZ plane (front view)
+                "XY": 1,
+                "YZ": 2,
+                "XZ": 3,
             }
 
             plane_index = plane_map.get(plane)
@@ -1921,10 +1921,10 @@ class SketchManager:
                     # Fallback: infer from standard planes
                     if plane_index == 1:  # Top (XY plane)
                         normal = [0.0, 0.0, 1.0]
-                    elif plane_index == 2:  # Front (XZ plane)
-                        normal = [0.0, 1.0, 0.0]
-                    elif plane_index == 3:  # Right (YZ plane)
+                    elif plane_index == 2:  # Right (YZ plane)
                         normal = [1.0, 0.0, 0.0]
+                    elif plane_index == 3:  # Front (XZ plane)
+                        normal = [0.0, 1.0, 0.0]
                     else:
                         normal = [0.0, 0.0, 1.0]  # Default
             
@@ -1941,8 +1941,8 @@ class SketchManager:
                 if plane_index in [1, 2, 3]:
                     standard_planes = {
                         1: {"origin": [0.0, 0.0, 0.0], "normal": [0.0, 0.0, 1.0], "name": "Top"},
-                        2: {"origin": [0.0, 0.0, 0.0], "normal": [0.0, 1.0, 0.0], "name": "Front"},
-                        3: {"origin": [0.0, 0.0, 0.0], "normal": [1.0, 0.0, 0.0], "name": "Right"}
+                        2: {"origin": [0.0, 0.0, 0.0], "normal": [1.0, 0.0, 0.0], "name": "Right"},
+                        3: {"origin": [0.0, 0.0, 0.0], "normal": [0.0, 1.0, 0.0], "name": "Front"}
                     }
                     result = standard_planes[plane_index]
                     result["status"] = "inferred"
