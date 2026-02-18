@@ -5,17 +5,24 @@ Handles assembly creation and component management.
 """
 
 import contextlib
+import inspect
 import math
 import os
 import traceback
 from typing import Any
 
+import pythoncom
+from win32com.client import VARIANT
+
+from .constants import DirectionConstants, ExtentTypeConstants
+
 
 class AssemblyManager:
     """Manages assembly operations"""
 
-    def __init__(self, document_manager):
+    def __init__(self, document_manager, sketch_manager=None):
         self.doc_manager = document_manager
+        self.sketch_manager = sketch_manager  # Optional; needed for assembly features
 
     def add_component(
         self, file_path: str, x: float = 0, y: float = 0, z: float = 0
@@ -3199,6 +3206,570 @@ class AssemblyManager:
                 "fully_constrained_count": len(fully_constrained),
                 "under_constrained": under_constrained,
                 "under_constrained_count": len(under_constrained),
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    # =================================================================
+    # ASSEMBLY-LEVEL FEATURES
+    # =================================================================
+
+    def _get_assembly_features(self, doc):
+        """Get the AssemblyFeatures object from an assembly document."""
+        if not hasattr(doc, "AssemblyFeatures"):
+            raise AttributeError(
+                "Active document does not have AssemblyFeatures. "
+                "Make sure an assembly document is active."
+            )
+        return doc.AssemblyFeatures
+
+    def _get_asm_profile(self):
+        """Get the most recently accumulated assembly profile."""
+        if self.sketch_manager is None:
+            raise RuntimeError("SketchManager not available on AssemblyManager.")
+        profiles = self.sketch_manager.get_accumulated_profiles()
+        if not profiles:
+            raise RuntimeError(
+                "No closed sketch profile found. "
+                "Call create_sketch(), draw geometry, and close_sketch() first."
+            )
+        return profiles[-1]
+
+    def diagnose_assembly_features_api(self) -> dict[str, Any]:
+        """
+        Discover the AssemblyFeatures COM API on the active assembly document.
+
+        Lists all attributes/collections available on doc.AssemblyFeatures
+        and the Add methods available on each collection. Use this to verify
+        the exact API before calling assembly feature creation methods.
+
+        Returns:
+            Dict with API discovery results
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            asm_features = self._get_assembly_features(doc)
+
+            top_attrs = [a for a in dir(asm_features) if not a.startswith("_")]
+            collections = {}
+            for attr in top_attrs:
+                try:
+                    coll = getattr(asm_features, attr)
+                    if callable(coll):
+                        continue
+                    add_methods = [m for m in dir(coll) if m.startswith("Add") and not m.startswith("_")]
+                    if add_methods:
+                        sigs = {}
+                        for m in add_methods:
+                            try:
+                                sig = str(inspect.signature(getattr(coll, m)))
+                            except Exception:
+                                sig = "unknown"
+                            sigs[m] = sig
+                        collections[attr] = {"add_methods": sigs}
+                except Exception:
+                    pass
+
+            # Also check doc-level pattern/mirror APIs
+            doc_level = {}
+            for candidate in ["AssemblyPatterns", "AssemblyMirrors"]:
+                try:
+                    coll = getattr(doc, candidate)
+                    add_methods = [m for m in dir(coll) if m.startswith("Add") and not m.startswith("_")]
+                    doc_level[candidate] = {"add_methods": add_methods}
+                except Exception:
+                    doc_level[candidate] = {"error": "not available"}
+
+            return {
+                "status": "ok",
+                "top_level_attributes": top_attrs,
+                "feature_collections": collections,
+                "doc_level_apis": doc_level,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def create_assembly_extruded_cutout(
+        self,
+        depth: float,
+        direction: str = "Normal",
+        through_all: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Create an assembly-level extruded cutout that cuts across multiple components.
+
+        Requires a closed sketch profile already created with create_sketch() /
+        draw_*() / close_sketch() on the assembly document.
+
+        Uses doc.AssemblyFeatures.ExtrudedCutouts.Add(nProfiles, profiles,
+        extentSide, extentType, depth).
+
+        Args:
+            depth: Cut depth in meters (ignored when through_all=True)
+            direction: 'Normal' (default) or 'Reverse'
+            through_all: If True, cut through all components
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            asm_features = self._get_assembly_features(doc)
+            profile = self._get_asm_profile()
+
+            dir_const = DirectionConstants.igRight
+            if direction == "Reverse":
+                dir_const = DirectionConstants.igLeft
+
+            extent = ExtentTypeConstants.igThroughAll if through_all else ExtentTypeConstants.igFinite
+            v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
+
+            cutouts = asm_features.ExtrudedCutouts
+            _feature = cutouts.Add(
+                1,
+                v_profiles,
+                dir_const,
+                extent,
+                depth,
+            )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
+
+            self.sketch_manager.clear_accumulated_profiles()
+
+            return {
+                "status": "created",
+                "type": "assembly_extruded_cutout",
+                "depth": depth,
+                "direction": direction,
+                "through_all": through_all,
+                "name": _feature.Name if hasattr(_feature, "Name") else None,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def create_assembly_extruded_protrusion(
+        self,
+        depth: float,
+        direction: str = "Normal",
+    ) -> dict[str, Any]:
+        """
+        Create an assembly-level extruded protrusion (adds material across assembly).
+
+        Requires a closed sketch profile already on the assembly document.
+
+        Uses doc.AssemblyFeatures.ExtrudedProtrusions.Add(nProfiles, profiles,
+        extentSide, extentType, depth).
+
+        Args:
+            depth: Protrusion depth in meters
+            direction: 'Normal' (default) or 'Reverse'
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            asm_features = self._get_assembly_features(doc)
+            profile = self._get_asm_profile()
+
+            dir_const = DirectionConstants.igRight
+            if direction == "Reverse":
+                dir_const = DirectionConstants.igLeft
+
+            v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
+
+            protrusions = asm_features.ExtrudedProtrusions
+            _feature = protrusions.Add(
+                1,
+                v_profiles,
+                dir_const,
+                ExtentTypeConstants.igFinite,
+                depth,
+            )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
+
+            self.sketch_manager.clear_accumulated_profiles()
+
+            return {
+                "status": "created",
+                "type": "assembly_extruded_protrusion",
+                "depth": depth,
+                "direction": direction,
+                "name": _feature.Name if hasattr(_feature, "Name") else None,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def create_assembly_hole(
+        self,
+        depth: float,
+        direction: str = "Normal",
+        through_all: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Create an assembly-level hole through multiple components.
+
+        Requires a closed circular sketch profile on the assembly document.
+
+        Uses doc.AssemblyFeatures.Holes.Add(nProfiles, profiles,
+        extentSide, extentType, depth).
+
+        Args:
+            depth: Hole depth in meters (ignored when through_all=True)
+            direction: 'Normal' (default) or 'Reverse'
+            through_all: If True, drill through all components
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            asm_features = self._get_assembly_features(doc)
+            profile = self._get_asm_profile()
+
+            dir_const = DirectionConstants.igRight
+            if direction == "Reverse":
+                dir_const = DirectionConstants.igLeft
+
+            extent = ExtentTypeConstants.igThroughAll if through_all else ExtentTypeConstants.igFinite
+            v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
+
+            holes = asm_features.Holes
+            _feature = holes.Add(
+                1,
+                v_profiles,
+                dir_const,
+                extent,
+                depth,
+            )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
+
+            self.sketch_manager.clear_accumulated_profiles()
+
+            return {
+                "status": "created",
+                "type": "assembly_hole",
+                "depth": depth,
+                "direction": direction,
+                "through_all": through_all,
+                "name": _feature.Name if hasattr(_feature, "Name") else None,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def create_assembly_revolved_cutout(
+        self,
+        angle: float = 360.0,
+        direction: str = "Normal",
+    ) -> dict[str, Any]:
+        """
+        Create an assembly-level revolved cutout across multiple components.
+
+        Requires a closed sketch profile with a revolution axis set
+        (via set_axis_of_revolution) on the assembly document.
+
+        Uses doc.AssemblyFeatures.RevolvedCutouts.Add(nProfiles, profiles,
+        extentSide, extentType, angle).
+
+        Args:
+            angle: Revolution angle in degrees (default 360)
+            direction: 'Normal' (default) or 'Reverse'
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            asm_features = self._get_assembly_features(doc)
+            profile = self._get_asm_profile()
+
+            dir_const = DirectionConstants.igRight
+            if direction == "Reverse":
+                dir_const = DirectionConstants.igLeft
+
+            angle_rad = math.radians(angle)
+            v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
+
+            cutouts = asm_features.RevolvedCutouts
+            _feature = cutouts.Add(
+                1,
+                v_profiles,
+                dir_const,
+                ExtentTypeConstants.igFinite,
+                angle_rad,
+            )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
+
+            self.sketch_manager.clear_accumulated_profiles()
+
+            return {
+                "status": "created",
+                "type": "assembly_revolved_cutout",
+                "angle": angle,
+                "direction": direction,
+                "name": _feature.Name if hasattr(_feature, "Name") else None,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def create_assembly_revolved_protrusion(
+        self,
+        angle: float = 360.0,
+        direction: str = "Normal",
+    ) -> dict[str, Any]:
+        """
+        Create an assembly-level revolved protrusion.
+
+        Requires a closed sketch profile with a revolution axis on the assembly doc.
+
+        Uses doc.AssemblyFeatures.RevolvedProtrusions.Add(nProfiles, profiles,
+        extentSide, extentType, angle).
+
+        Args:
+            angle: Revolution angle in degrees (default 360)
+            direction: 'Normal' (default) or 'Reverse'
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            asm_features = self._get_assembly_features(doc)
+            profile = self._get_asm_profile()
+
+            dir_const = DirectionConstants.igRight
+            if direction == "Reverse":
+                dir_const = DirectionConstants.igLeft
+
+            angle_rad = math.radians(angle)
+            v_profiles = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [profile])
+
+            protrusions = asm_features.RevolvedProtrusions
+            _feature = protrusions.Add(
+                1,
+                v_profiles,
+                dir_const,
+                ExtentTypeConstants.igFinite,
+                angle_rad,
+            )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
+
+            self.sketch_manager.clear_accumulated_profiles()
+
+            return {
+                "status": "created",
+                "type": "assembly_revolved_protrusion",
+                "angle": angle,
+                "direction": direction,
+                "name": _feature.Name if hasattr(_feature, "Name") else None,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def create_assembly_mirror(
+        self,
+        component_indices: list[int],
+        plane_index: int,
+    ) -> dict[str, Any]:
+        """
+        Create an assembly-level mirror feature for one or more components.
+
+        Uses doc.AssemblyFeatures.Mirrors.Add(nOccurrences, occurrences, mirrorPlane)
+        to create a parametric mirror of the selected components.
+
+        Args:
+            component_indices: List of 0-based component indices to mirror
+            plane_index: 1-based reference plane index to mirror across
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            if not hasattr(doc, "Occurrences"):
+                return {"error": "Active document is not an assembly"}
+
+            asm_features = self._get_assembly_features(doc)
+            occurrences = doc.Occurrences
+            ref_planes = doc.RefPlanes
+
+            if plane_index < 1 or plane_index > ref_planes.Count:
+                return {
+                    "error": f"Invalid plane_index {plane_index}. "
+                    f"Assembly has {ref_planes.Count} reference planes."
+                }
+
+            mirror_plane = ref_planes.Item(plane_index)
+            occ_list = []
+            for idx in component_indices:
+                if idx < 0 or idx >= occurrences.Count:
+                    return {
+                        "error": f"Invalid component index {idx}. "
+                        f"Assembly has {occurrences.Count} components."
+                    }
+                occ_list.append(occurrences.Item(idx + 1))
+
+            v_occurrences = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, occ_list)
+            mirrors = asm_features.Mirrors
+            _feature = mirrors.Add(len(occ_list), v_occurrences, mirror_plane)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
+
+            return {
+                "status": "created",
+                "type": "assembly_mirror",
+                "component_indices": component_indices,
+                "plane_index": plane_index,
+                "name": _feature.Name if hasattr(_feature, "Name") else None,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def create_assembly_pattern_rectangular(
+        self,
+        component_indices: list[int],
+        x_count: int,
+        x_spacing: float,
+        y_count: int = 1,
+        y_spacing: float = 0.0,
+    ) -> dict[str, Any]:
+        """
+        Create a rectangular pattern of assembly components.
+
+        Uses doc.AssemblyFeatures.Patterns.Add to create a rectangular
+        array of selected occurrences.
+
+        Args:
+            component_indices: List of 0-based component indices to pattern
+            x_count: Number of instances in X direction (including original)
+            x_spacing: Spacing between instances in X direction (meters)
+            y_count: Number of instances in Y direction (default 1)
+            y_spacing: Spacing between instances in Y direction (meters)
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            if not hasattr(doc, "Occurrences"):
+                return {"error": "Active document is not an assembly"}
+
+            asm_features = self._get_assembly_features(doc)
+            occurrences = doc.Occurrences
+
+            occ_list = []
+            for idx in component_indices:
+                if idx < 0 or idx >= occurrences.Count:
+                    return {
+                        "error": f"Invalid component index {idx}. "
+                        f"Assembly has {occurrences.Count} components."
+                    }
+                occ_list.append(occurrences.Item(idx + 1))
+
+            v_occurrences = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, occ_list)
+            patterns = asm_features.Patterns
+
+            # Pattern type 0 = rectangular (assumption based on typical SE API conventions)
+            _feature = patterns.Add(
+                0,               # pattern type: rectangular
+                len(occ_list),   # nOccurrences
+                v_occurrences,   # occurrences array
+                x_count,         # count in X
+                x_spacing,       # spacing in X
+                y_count,         # count in Y
+                y_spacing,       # spacing in Y
+            )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
+
+            return {
+                "status": "created",
+                "type": "assembly_pattern_rectangular",
+                "component_indices": component_indices,
+                "x_count": x_count,
+                "x_spacing": x_spacing,
+                "y_count": y_count,
+                "y_spacing": y_spacing,
+                "name": _feature.Name if hasattr(_feature, "Name") else None,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def create_assembly_pattern_circular(
+        self,
+        component_indices: list[int],
+        count: int,
+        angle: float,
+        axis_x: float = 0.0,
+        axis_y: float = 0.0,
+        axis_z: float = 1.0,
+        origin_x: float = 0.0,
+        origin_y: float = 0.0,
+        origin_z: float = 0.0,
+    ) -> dict[str, Any]:
+        """
+        Create a circular pattern of assembly components about an axis.
+
+        Uses doc.AssemblyFeatures.Patterns.Add with circular type.
+
+        Args:
+            component_indices: List of 0-based component indices to pattern
+            count: Total number of instances (including original)
+            angle: Total arc angle in degrees (360 = full circle)
+            axis_x/y/z: Rotation axis direction vector (default Z-axis)
+            origin_x/y/z: Rotation axis origin point (default 0,0,0)
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            if not hasattr(doc, "Occurrences"):
+                return {"error": "Active document is not an assembly"}
+
+            asm_features = self._get_assembly_features(doc)
+            occurrences = doc.Occurrences
+
+            occ_list = []
+            for idx in component_indices:
+                if idx < 0 or idx >= occurrences.Count:
+                    return {
+                        "error": f"Invalid component index {idx}. "
+                        f"Assembly has {occurrences.Count} components."
+                    }
+                occ_list.append(occurrences.Item(idx + 1))
+
+            v_occurrences = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, occ_list)
+            angle_rad = math.radians(angle)
+            patterns = asm_features.Patterns
+
+            # Pattern type 1 = circular (assumption based on typical SE API conventions)
+            _feature = patterns.Add(
+                1,                # pattern type: circular
+                len(occ_list),    # nOccurrences
+                v_occurrences,    # occurrences array
+                count,            # instance count
+                angle_rad,        # total angle
+                axis_x, axis_y, axis_z,          # rotation axis vector
+                origin_x, origin_y, origin_z,    # rotation axis origin
+            )
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
+
+            return {
+                "status": "created",
+                "type": "assembly_pattern_circular",
+                "component_indices": component_indices,
+                "count": count,
+                "angle": angle,
+                "axis": [axis_x, axis_y, axis_z],
+                "origin": [origin_x, origin_y, origin_z],
+                "name": _feature.Name if hasattr(_feature, "Name") else None,
             }
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}

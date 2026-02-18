@@ -484,6 +484,176 @@ def assembly_detect_under_constrained() -> dict:
     return assembly_manager.detect_under_constrained()
 
 
+# === Assembly-Level Features ===
+
+
+def assembly_diagnose_features_api() -> dict:
+    """
+    Discover the AssemblyFeatures COM API on the active assembly document.
+
+    Lists all attributes and Add methods available on doc.AssemblyFeatures
+    and doc-level pattern/mirror APIs. Run this first to verify the exact
+    API before calling assembly feature creation methods.
+    """
+    return assembly_manager.diagnose_assembly_features_api()
+
+
+def assembly_create_extruded_cutout(
+    depth: float,
+    direction: str = "Normal",
+    through_all: bool = False,
+) -> dict:
+    """
+    Create an assembly-level extruded cutout through multiple components.
+
+    Requires a closed sketch profile on the assembly document (created via
+    create_sketch / draw_* / close_sketch with an assembly doc active).
+
+    Args:
+        depth: Cut depth in meters (ignored when through_all=True)
+        direction: 'Normal' (default) or 'Reverse'
+        through_all: If True, cut through all components
+    """
+    return assembly_manager.create_assembly_extruded_cutout(depth, direction, through_all)
+
+
+def assembly_create_extruded_protrusion(
+    depth: float,
+    direction: str = "Normal",
+) -> dict:
+    """
+    Create an assembly-level extruded protrusion across multiple components.
+
+    Requires a closed sketch profile on the assembly document.
+
+    Args:
+        depth: Protrusion depth in meters
+        direction: 'Normal' (default) or 'Reverse'
+    """
+    return assembly_manager.create_assembly_extruded_protrusion(depth, direction)
+
+
+def assembly_create_hole(
+    depth: float,
+    direction: str = "Normal",
+    through_all: bool = False,
+) -> dict:
+    """
+    Create an assembly-level hole through multiple components.
+
+    Requires a closed circular sketch profile on the assembly document.
+
+    Args:
+        depth: Hole depth in meters (ignored when through_all=True)
+        direction: 'Normal' (default) or 'Reverse'
+        through_all: If True, drill through all components
+    """
+    return assembly_manager.create_assembly_hole(depth, direction, through_all)
+
+
+def assembly_create_revolved_cutout(
+    angle: float = 360.0,
+    direction: str = "Normal",
+) -> dict:
+    """
+    Create an assembly-level revolved cutout across multiple components.
+
+    Requires a closed sketch profile with a revolution axis set on the
+    assembly document (use set_axis_of_revolution first).
+
+    Args:
+        angle: Revolution angle in degrees (default 360)
+        direction: 'Normal' (default) or 'Reverse'
+    """
+    return assembly_manager.create_assembly_revolved_cutout(angle, direction)
+
+
+def assembly_create_revolved_protrusion(
+    angle: float = 360.0,
+    direction: str = "Normal",
+) -> dict:
+    """
+    Create an assembly-level revolved protrusion.
+
+    Requires a closed sketch profile with a revolution axis on the assembly doc.
+
+    Args:
+        angle: Revolution angle in degrees (default 360)
+        direction: 'Normal' (default) or 'Reverse'
+    """
+    return assembly_manager.create_assembly_revolved_protrusion(angle, direction)
+
+
+def assembly_create_mirror(
+    component_indices: list[int],
+    plane_index: int,
+) -> dict:
+    """
+    Create an assembly-level mirror of one or more components.
+
+    Uses doc.AssemblyFeatures.Mirrors.Add to create a parametric mirror
+    feature (distinct from Occurrence.Mirror which repositions a single component).
+
+    Args:
+        component_indices: List of 0-based indices of components to mirror
+        plane_index: 1-based reference plane index to mirror across
+    """
+    return assembly_manager.create_assembly_mirror(component_indices, plane_index)
+
+
+def assembly_create_pattern_rectangular(
+    component_indices: list[int],
+    x_count: int,
+    x_spacing: float,
+    y_count: int = 1,
+    y_spacing: float = 0.0,
+) -> dict:
+    """
+    Create a rectangular pattern of assembly components.
+
+    Uses doc.AssemblyFeatures.Patterns.Add to create a parametric
+    rectangular array of the selected components.
+
+    Args:
+        component_indices: List of 0-based indices of components to pattern
+        x_count: Number of instances in X direction (including original)
+        x_spacing: Spacing between instances in X direction (meters)
+        y_count: Number of instances in Y direction (default 1)
+        y_spacing: Spacing between instances in Y direction (meters)
+    """
+    return assembly_manager.create_assembly_pattern_rectangular(
+        component_indices, x_count, x_spacing, y_count, y_spacing
+    )
+
+
+def assembly_create_pattern_circular(
+    component_indices: list[int],
+    count: int,
+    angle: float = 360.0,
+    axis_x: float = 0.0,
+    axis_y: float = 0.0,
+    axis_z: float = 1.0,
+    origin_x: float = 0.0,
+    origin_y: float = 0.0,
+    origin_z: float = 0.0,
+) -> dict:
+    """
+    Create a circular pattern of assembly components about an axis.
+
+    Uses doc.AssemblyFeatures.Patterns.Add with circular type.
+
+    Args:
+        component_indices: List of 0-based indices of components to pattern
+        count: Total number of instances (including original)
+        angle: Total arc angle in degrees (default 360 = full circle)
+        axis_x/y/z: Rotation axis direction vector (default Z-axis: 0,0,1)
+        origin_x/y/z: Rotation axis origin point (default 0,0,0)
+    """
+    return assembly_manager.create_assembly_pattern_circular(
+        component_indices, count, angle, axis_x, axis_y, axis_z, origin_x, origin_y, origin_z
+    )
+
+
 def register(mcp):
     """Register assembly tools with the MCP server."""
     mcp.tool()(assembly_add_component)
@@ -561,3 +731,13 @@ def register(mcp):
     mcp.tool()(assembly_apply_configuration)
     mcp.tool()(assembly_delete_configuration)
     mcp.tool()(assembly_detect_under_constrained)
+    # Batch 10: Assembly-level features (9)
+    mcp.tool()(assembly_diagnose_features_api)
+    mcp.tool()(assembly_create_extruded_cutout)
+    mcp.tool()(assembly_create_extruded_protrusion)
+    mcp.tool()(assembly_create_hole)
+    mcp.tool()(assembly_create_revolved_cutout)
+    mcp.tool()(assembly_create_revolved_protrusion)
+    mcp.tool()(assembly_create_mirror)
+    mcp.tool()(assembly_create_pattern_rectangular)
+    mcp.tool()(assembly_create_pattern_circular)
