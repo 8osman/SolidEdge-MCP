@@ -1552,6 +1552,121 @@ def create_slot_sync_multi_body(width: float, depth: float, direction: str = "No
     return feature_manager.create_slot_sync_multi_body(width, depth, direction)
 
 
+# === Pattern Variants ===
+
+
+def create_pattern_by_curve(
+    feature_name: str,
+    curve_edge_index: int,
+    count: int,
+    spacing: float,
+    rotation_type: int = 0,
+) -> dict:
+    """
+    Create a pattern along a curve using Patterns.AddByCurve.
+
+    Args:
+        feature_name: Name of the feature to pattern
+        curve_edge_index: 0-based body edge index defining the curve path
+        count: Number of pattern occurrences
+        spacing: Spacing between occurrences in meters
+        rotation_type: 0=fixed orientation, 1=follow curve tangent
+    """
+    return feature_manager.create_pattern_by_curve(
+        feature_name, curve_edge_index, count, spacing, rotation_type
+    )
+
+
+def create_pattern_by_curve_sync(
+    feature_name: str,
+    curve_edge_index: int,
+    count: int,
+    spacing: float,
+    rotation_type: int = 0,
+) -> dict:
+    """
+    Create a synchronous pattern along a curve using Patterns.AddByCurveSync.
+
+    Args:
+        feature_name: Name of the feature to pattern
+        curve_edge_index: 0-based body edge index defining the curve path
+        count: Number of pattern occurrences
+        spacing: Spacing between occurrences in meters
+        rotation_type: 0=fixed orientation, 1=follow curve tangent
+    """
+    return feature_manager.create_pattern_by_curve_sync(
+        feature_name, curve_edge_index, count, spacing, rotation_type
+    )
+
+
+def recognize_and_create_patterns(tolerance: float = 0.001) -> dict:
+    """
+    Auto-recognize and create patterns from existing geometry.
+
+    Detects geometric repetition in the model and converts it into
+    patterned features automatically.
+
+    Args:
+        tolerance: Geometric tolerance for recognition (meters, default 0.001)
+    """
+    return feature_manager.recognize_and_create_patterns(tolerance)
+
+
+def create_loft_with_guide_curves(
+    guide_edge_indices: list[int],
+    profile_indices: list[int] = None,
+) -> dict:
+    """
+    Create a loft feature guided by curve edges.
+
+    Requires 2+ profiles accumulated via close_sketch() plus body edges
+    that connect the profile planes to act as guide curves.
+
+    Args:
+        guide_edge_indices: List of 0-based body edge indices for guide curves
+        profile_indices: Optional indices into accumulated profiles (uses all if None)
+    """
+    return feature_manager.create_loft_with_guide_curves(guide_edge_indices, profile_indices)
+
+
+# === Part Configurations ===
+
+
+def list_part_configurations() -> dict:
+    """List all part configurations in the active part document."""
+    return feature_manager.list_part_configurations()
+
+
+def add_part_configuration(name: str) -> dict:
+    """
+    Add a new part configuration.
+
+    Args:
+        name: Name for the new configuration
+    """
+    return feature_manager.add_part_configuration(name)
+
+
+def apply_part_configuration(name: str) -> dict:
+    """
+    Activate a named part configuration.
+
+    Args:
+        name: Name of the configuration to activate
+    """
+    return feature_manager.apply_part_configuration(name)
+
+
+def delete_part_configuration(name: str) -> dict:
+    """
+    Delete a named part configuration.
+
+    Args:
+        name: Name of the configuration to delete
+    """
+    return feature_manager.delete_part_configuration(name)
+
+
 # === Diagnostics ===
 
 
@@ -1813,5 +1928,15 @@ def register(mcp):
     mcp.tool()(create_pattern_by_curve_ex)
     mcp.tool()(create_slot_multi_body)
     mcp.tool()(create_slot_sync_multi_body)
+    # Group 8: New pattern variants + loft guide curves (4)
+    mcp.tool()(create_pattern_by_curve)
+    mcp.tool()(create_pattern_by_curve_sync)
+    mcp.tool()(recognize_and_create_patterns)
+    mcp.tool()(create_loft_with_guide_curves)
+    # Group 9: Part configurations (4)
+    mcp.tool()(list_part_configurations)
+    mcp.tool()(add_part_configuration)
+    mcp.tool()(apply_part_configuration)
+    mcp.tool()(delete_part_configuration)
     # Diagnostics
     mcp.tool(name="diagnose_feature")(diagnose_feature_tool)

@@ -2970,3 +2970,235 @@ class AssemblyManager:
             return info
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
+
+    # =================================================================
+    # ASSEMBLY CONFIGURATIONS
+    # =================================================================
+
+    def list_configurations(self) -> dict[str, Any]:
+        """
+        List all configurations in the active assembly document.
+
+        Uses AssemblyDocument.Configurations collection.
+
+        Returns:
+            Dict with list of configurations and the active one
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            if not hasattr(doc, "Configurations"):
+                return {"error": "Active document does not support configurations"}
+
+            configs = doc.Configurations
+            result = []
+            active_name = None
+            for i in range(1, configs.Count + 1):
+                cfg = configs.Item(i)
+                name = cfg.Name if hasattr(cfg, "Name") else f"Config {i}"
+                cfg_type = None
+                try:
+                    cfg_type = cfg.Type if hasattr(cfg, "Type") else None
+                except Exception:
+                    pass
+                is_active = False
+                try:
+                    is_active = bool(cfg.Active) if hasattr(cfg, "Active") else False
+                except Exception:
+                    pass
+                if is_active:
+                    active_name = name
+                result.append({
+                    "index": i - 1,
+                    "name": name,
+                    "type": cfg_type,
+                    "active": is_active,
+                })
+
+            return {
+                "status": "ok",
+                "count": configs.Count,
+                "active": active_name,
+                "configurations": result,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def add_configuration(
+        self, name: str, config_type: int = 0
+    ) -> dict[str, Any]:
+        """
+        Add a new assembly configuration.
+
+        Uses Configurations.Add(type, name).
+        Configuration types: 0=Display (default), 1=Explode.
+
+        Args:
+            name: Name for the new configuration
+            config_type: 0=Display (default), 1=Explode
+
+        Returns:
+            Dict with status and name
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            if not hasattr(doc, "Configurations"):
+                return {"error": "Active document does not support configurations"}
+
+            configs = doc.Configurations
+            _cfg = configs.Add(config_type, name)
+            if _cfg is None:
+                return {"error": "Configuration creation failed: COM returned None"}
+
+            return {
+                "status": "created",
+                "name": name,
+                "config_type": config_type,
+                "total_configurations": configs.Count,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def apply_configuration(self, name: str) -> dict[str, Any]:
+        """
+        Activate a named assembly configuration.
+
+        Args:
+            name: Name of the configuration to activate
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            if not hasattr(doc, "Configurations"):
+                return {"error": "Active document does not support configurations"}
+
+            configs = doc.Configurations
+            for i in range(1, configs.Count + 1):
+                cfg = configs.Item(i)
+                cfg_name = cfg.Name if hasattr(cfg, "Name") else ""
+                if cfg_name == name:
+                    cfg.Activate()
+                    return {"status": "activated", "name": name}
+
+            return {
+                "error": f"Configuration '{name}' not found",
+                "available": [
+                    configs.Item(i).Name
+                    for i in range(1, configs.Count + 1)
+                    if hasattr(configs.Item(i), "Name")
+                ],
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def delete_configuration(self, name: str) -> dict[str, Any]:
+        """
+        Delete a named assembly configuration.
+
+        Args:
+            name: Name of the configuration to delete
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            if not hasattr(doc, "Configurations"):
+                return {"error": "Active document does not support configurations"}
+
+            configs = doc.Configurations
+            for i in range(1, configs.Count + 1):
+                cfg = configs.Item(i)
+                cfg_name = cfg.Name if hasattr(cfg, "Name") else ""
+                if cfg_name == name:
+                    cfg.Delete()
+                    return {
+                        "status": "deleted",
+                        "name": name,
+                        "remaining": configs.Count,
+                    }
+
+            return {"error": f"Configuration '{name}' not found"}
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def detect_under_constrained(self) -> dict[str, Any]:
+        """
+        Detect which assembly components are under-constrained.
+
+        Iterates occurrences and checks grounded status and relation count
+        to identify components with no positioning constraints.
+
+        Returns:
+            Dict with lists of grounded, constrained, and under-constrained components
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            if not hasattr(doc, "Occurrences"):
+                return {"error": "Active document is not an assembly"}
+
+            occurrences = doc.Occurrences
+            under_constrained = []
+            grounded = []
+            fully_constrained = []
+
+            for i in range(1, occurrences.Count + 1):
+                occ = occurrences.Item(i)
+                name = occ.Name if hasattr(occ, "Name") else f"Component {i}"
+                is_grounded = False
+                is_suppressed = False
+                try:
+                    is_grounded = bool(occ.IsGrounded) if hasattr(occ, "IsGrounded") else False
+                except Exception:
+                    pass
+                try:
+                    is_suppressed = bool(occ.Suppressed) if hasattr(occ, "Suppressed") else False
+                except Exception:
+                    pass
+
+                if is_suppressed:
+                    continue
+                if is_grounded:
+                    grounded.append({"index": i - 1, "name": name})
+                    continue
+
+                relations_count = 0
+                try:
+                    relations = doc.Relations3d
+                    for j in range(1, relations.Count + 1):
+                        rel = relations.Item(j)
+                        try:
+                            geom1 = rel.GetGeometry1()
+                            occ1 = geom1.Occurrence if hasattr(geom1, "Occurrence") else None
+                            if occ1 is not None and occ1 == occ:
+                                relations_count += 1
+                                continue
+                        except Exception:
+                            pass
+                        try:
+                            geom2 = rel.GetGeometry2()
+                            occ2 = geom2.Occurrence if hasattr(geom2, "Occurrence") else None
+                            if occ2 is not None and occ2 == occ:
+                                relations_count += 1
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+
+                entry = {"index": i - 1, "name": name, "relations_count": relations_count}
+                if relations_count == 0:
+                    under_constrained.append(entry)
+                else:
+                    fully_constrained.append(entry)
+
+            return {
+                "status": "ok",
+                "total_components": occurrences.Count,
+                "grounded": grounded,
+                "fully_constrained_count": len(fully_constrained),
+                "under_constrained": under_constrained,
+                "under_constrained_count": len(under_constrained),
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}

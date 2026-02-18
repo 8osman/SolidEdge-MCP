@@ -12114,3 +12114,416 @@ class FeatureManager:
             }
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
+
+    # =================================================================
+    # PATTERN VARIANTS
+    # =================================================================
+
+    def create_pattern_by_curve(
+        self,
+        feature_name: str,
+        curve_edge_index: int,
+        count: int,
+        spacing: float,
+        rotation_type: int = 0,
+    ) -> dict[str, Any]:
+        """
+        Create a pattern along a curve using Patterns.AddByCurve.
+
+        Args:
+            feature_name: Name of the feature to pattern
+            curve_edge_index: 0-based edge index defining the curve path
+            count: Number of pattern occurrences
+            spacing: Spacing between occurrences in meters
+            rotation_type: 0=fixed orientation, 1=follow curve tangent
+
+        Returns:
+            Dict with status and pattern info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+            if models.Count == 0:
+                return {"error": "No base feature exists."}
+
+            model = models.Item(1)
+
+            target_feature, error = self._find_feature_by_name(feature_name)
+            if error:
+                return error
+
+            body = model.Body
+            edges = body.Edges(FaceQueryConstants.igQueryAll)
+            if curve_edge_index < 0 or curve_edge_index >= edges.Count:
+                return {
+                    "error": f"Invalid curve_edge_index: {curve_edge_index}. "
+                    f"Body has {edges.Count} edges."
+                }
+
+            edge = edges.Item(curve_edge_index + 1)
+            feature_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [target_feature])
+            curve_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [edge])
+
+            patterns = model.Patterns
+            _pattern = patterns.AddByCurve(
+                1,
+                feature_arr,
+                rotation_type,
+                1,
+                curve_arr,
+                count,
+                spacing,
+            )
+            if _pattern is None:
+                return {"error": "Feature creation failed: COM returned None"}
+
+            return {
+                "status": "created",
+                "type": "pattern_by_curve",
+                "feature": feature_name,
+                "curve_edge_index": curve_edge_index,
+                "count": count,
+                "spacing": spacing,
+                "rotation_type": rotation_type,
+                "name": _pattern.Name if hasattr(_pattern, "Name") else None,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def create_pattern_by_curve_sync(
+        self,
+        feature_name: str,
+        curve_edge_index: int,
+        count: int,
+        spacing: float,
+        rotation_type: int = 0,
+    ) -> dict[str, Any]:
+        """
+        Create a synchronous pattern along a curve using Patterns.AddByCurveSync.
+
+        Args:
+            feature_name: Name of the feature to pattern
+            curve_edge_index: 0-based edge index defining the curve path
+            count: Number of pattern occurrences
+            spacing: Spacing between occurrences in meters
+            rotation_type: 0=fixed orientation, 1=follow curve tangent
+
+        Returns:
+            Dict with status and pattern info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+            if models.Count == 0:
+                return {"error": "No base feature exists."}
+
+            model = models.Item(1)
+
+            target_feature, error = self._find_feature_by_name(feature_name)
+            if error:
+                return error
+
+            body = model.Body
+            edges = body.Edges(FaceQueryConstants.igQueryAll)
+            if curve_edge_index < 0 or curve_edge_index >= edges.Count:
+                return {
+                    "error": f"Invalid curve_edge_index: {curve_edge_index}. "
+                    f"Body has {edges.Count} edges."
+                }
+
+            edge = edges.Item(curve_edge_index + 1)
+            feature_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [target_feature])
+            curve_arr = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, [edge])
+
+            patterns = model.Patterns
+            _pattern = patterns.AddByCurveSync(
+                1,
+                feature_arr,
+                rotation_type,
+                1,
+                curve_arr,
+                count,
+                spacing,
+            )
+            if _pattern is None:
+                return {"error": "Feature creation failed: COM returned None"}
+
+            return {
+                "status": "created",
+                "type": "pattern_by_curve_sync",
+                "feature": feature_name,
+                "curve_edge_index": curve_edge_index,
+                "count": count,
+                "spacing": spacing,
+                "rotation_type": rotation_type,
+                "name": _pattern.Name if hasattr(_pattern, "Name") else None,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def recognize_and_create_patterns(
+        self, tolerance: float = 0.001
+    ) -> dict[str, Any]:
+        """
+        Auto-recognize and create patterns from existing geometry.
+
+        Uses Patterns.RecognizeAndCreatePatterns to detect geometric
+        repetition in the model and convert it into patterned features.
+
+        Args:
+            tolerance: Geometric tolerance for pattern recognition (meters)
+
+        Returns:
+            Dict with status and count of recognized patterns
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+            if models.Count == 0:
+                return {"error": "No base feature exists."}
+
+            model = models.Item(1)
+            patterns = model.Patterns
+            count_before = patterns.Count
+
+            patterns.RecognizeAndCreatePatterns(tolerance)
+
+            count_after = patterns.Count
+            recognized = count_after - count_before
+
+            return {
+                "status": "completed",
+                "patterns_recognized": recognized,
+                "total_patterns": count_after,
+                "tolerance": tolerance,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def create_loft_with_guide_curves(
+        self,
+        guide_edge_indices: list[int],
+        profile_indices: list = None,
+    ) -> dict[str, Any]:
+        """
+        Create a loft feature with guide curves.
+
+        Uses LoftedProtrusions.Add (full param version) which accepts
+        guide curves to control the shape of the loft between profiles.
+        Profiles are taken from accumulated sketches.
+
+        Args:
+            guide_edge_indices: List of 0-based edge indices to use as
+                guide curves. Edges must span from first to last profile plane.
+            profile_indices: Optional indices into accumulated profiles.
+                If None, uses all accumulated profiles.
+
+        Returns:
+            Dict with status and loft info
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            models = doc.Models
+
+            all_profiles = self.sketch_manager.get_accumulated_profiles()
+            if profile_indices is not None:
+                profiles = [all_profiles[i] for i in profile_indices]
+            else:
+                profiles = all_profiles
+
+            if len(profiles) < 2:
+                return {
+                    "error": f"Loft requires at least 2 profiles, got {len(profiles)}."
+                }
+
+            v_profiles, v_types, v_origins = self._make_loft_variant_arrays(profiles)
+
+            model = models.Item(1)
+            body = model.Body
+            edges = body.Edges(FaceQueryConstants.igQueryAll)
+            guide_edges = []
+            for idx in guide_edge_indices:
+                if idx < 0 or idx >= edges.Count:
+                    return {
+                        "error": f"Invalid guide_edge_index {idx}. "
+                        f"Body has {edges.Count} edges."
+                    }
+                guide_edges.append(edges.Item(idx + 1))
+
+            v_guides = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_DISPATCH, guide_edges)
+            v_guide_types = VARIANT(
+                pythoncom.VT_ARRAY | pythoncom.VT_I4,
+                [LoftSweepConstants.igProfileBasedCrossSection] * len(guide_edges),
+            )
+            v_seg = VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_VARIANT, [])
+
+            lp = model.LoftedProtrusions
+            _feature, err = self._perform_feature_call(
+                lambda: lp.Add(
+                    len(profiles),
+                    v_profiles,
+                    v_types,
+                    v_origins,
+                    v_seg,
+                    len(guide_edges),
+                    v_guides,
+                    v_guide_types,
+                    DirectionConstants.igRight,
+                    ExtentTypeConstants.igNone,
+                    0.0,
+                    None,
+                    ExtentTypeConstants.igNone,
+                    0.0,
+                    None,
+                ),
+                consumes_profiles=True,
+            )
+            if err:
+                return err
+
+            return {
+                "status": "created",
+                "type": "loft_with_guide_curves",
+                "num_profiles": len(profiles),
+                "num_guide_curves": len(guide_edges),
+                "guide_edge_indices": guide_edge_indices,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    # =================================================================
+    # PART CONFIGURATIONS
+    # =================================================================
+
+    def list_part_configurations(self) -> dict[str, Any]:
+        """
+        List all part configurations in the active part document.
+
+        Uses PartDocument.Configurations (PartConfigurations collection).
+
+        Returns:
+            Dict with list of configuration names and current active one
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            if not hasattr(doc, "Configurations"):
+                return {"error": "Active document does not support configurations"}
+
+            configs = doc.Configurations
+            result = []
+            active_name = None
+            for i in range(1, configs.Count + 1):
+                cfg = configs.Item(i)
+                name = cfg.Name if hasattr(cfg, "Name") else f"Config {i}"
+                is_active = False
+                try:
+                    is_active = bool(cfg.Active) if hasattr(cfg, "Active") else False
+                except Exception:
+                    pass
+                if is_active:
+                    active_name = name
+                result.append({"index": i - 1, "name": name, "active": is_active})
+
+            return {
+                "status": "ok",
+                "count": configs.Count,
+                "active": active_name,
+                "configurations": result,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def add_part_configuration(self, name: str) -> dict[str, Any]:
+        """
+        Add a new part configuration.
+
+        Uses PartConfigurations.Add(name).
+
+        Args:
+            name: Name for the new configuration
+
+        Returns:
+            Dict with status and new configuration name
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            if not hasattr(doc, "Configurations"):
+                return {"error": "Active document does not support configurations"}
+
+            configs = doc.Configurations
+            _cfg = configs.Add(name)
+            if _cfg is None:
+                return {"error": "Feature creation failed: COM returned None"}
+
+            return {
+                "status": "created",
+                "name": name,
+                "total_configurations": configs.Count,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def apply_part_configuration(self, name: str) -> dict[str, Any]:
+        """
+        Apply (activate) a named part configuration.
+
+        Args:
+            name: Name of the configuration to activate
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            if not hasattr(doc, "Configurations"):
+                return {"error": "Active document does not support configurations"}
+
+            configs = doc.Configurations
+            for i in range(1, configs.Count + 1):
+                cfg = configs.Item(i)
+                cfg_name = cfg.Name if hasattr(cfg, "Name") else ""
+                if cfg_name == name:
+                    cfg.Activate()
+                    return {"status": "activated", "name": name}
+
+            return {
+                "error": f"Configuration '{name}' not found",
+                "available": [
+                    configs.Item(i).Name
+                    for i in range(1, configs.Count + 1)
+                    if hasattr(configs.Item(i), "Name")
+                ],
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def delete_part_configuration(self, name: str) -> dict[str, Any]:
+        """
+        Delete a named part configuration.
+
+        Args:
+            name: Name of the configuration to delete
+
+        Returns:
+            Dict with status
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            if not hasattr(doc, "Configurations"):
+                return {"error": "Active document does not support configurations"}
+
+            configs = doc.Configurations
+            for i in range(1, configs.Count + 1):
+                cfg = configs.Item(i)
+                cfg_name = cfg.Name if hasattr(cfg, "Name") else ""
+                if cfg_name == name:
+                    cfg.Delete()
+                    return {
+                        "status": "deleted",
+                        "name": name,
+                        "remaining": configs.Count,
+                    }
+
+            return {"error": f"Configuration '{name}' not found"}
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}

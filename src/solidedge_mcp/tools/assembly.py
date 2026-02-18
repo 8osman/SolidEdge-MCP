@@ -435,6 +435,55 @@ def assembly_get_occurrence(internal_id: int) -> dict:
     return assembly_manager.get_occurrence(internal_id)
 
 
+# === Assembly Configurations ===
+
+
+def assembly_list_configurations() -> dict:
+    """List all configurations in the active assembly document."""
+    return assembly_manager.list_configurations()
+
+
+def assembly_add_configuration(name: str, config_type: int = 0) -> dict:
+    """
+    Add a new assembly configuration.
+
+    Args:
+        name: Name for the new configuration
+        config_type: 0=Display (default), 1=Explode
+    """
+    return assembly_manager.add_configuration(name, config_type)
+
+
+def assembly_apply_configuration(name: str) -> dict:
+    """
+    Activate a named assembly configuration.
+
+    Args:
+        name: Name of the configuration to activate
+    """
+    return assembly_manager.apply_configuration(name)
+
+
+def assembly_delete_configuration(name: str) -> dict:
+    """
+    Delete a named assembly configuration.
+
+    Args:
+        name: Name of the configuration to delete
+    """
+    return assembly_manager.delete_configuration(name)
+
+
+def assembly_detect_under_constrained() -> dict:
+    """
+    Detect which assembly components are under-constrained.
+
+    Returns a list of components that have no positioning relations
+    (and are not grounded), indicating they are free to move.
+    """
+    return assembly_manager.detect_under_constrained()
+
+
 def register(mcp):
     """Register assembly tools with the MCP server."""
     mcp.tool()(assembly_add_component)
@@ -506,3 +555,9 @@ def register(mcp):
     mcp.tool()(assembly_get_face_style)
     mcp.tool()(assembly_add_family_with_matrix)
     mcp.tool()(assembly_get_occurrence)
+    # Batch 9: Configurations + constraint detection (5)
+    mcp.tool()(assembly_list_configurations)
+    mcp.tool()(assembly_add_configuration)
+    mcp.tool()(assembly_apply_configuration)
+    mcp.tool()(assembly_delete_configuration)
+    mcp.tool()(assembly_detect_under_constrained)
