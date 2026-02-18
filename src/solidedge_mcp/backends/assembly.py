@@ -3274,11 +3274,47 @@ class AssemblyManager:
                 except Exception:
                     doc_level[candidate] = {"error": "not available"}
 
+            # Deep type inspection: get VARTYPE of every parameter of Add()
+            # on AssemblyFeaturesExtrudedCutouts so we know exactly how to
+            # marshal the profiles argument.
+            typeinfo_result = {}
+            try:
+                cutouts = asm_features.AssemblyFeaturesExtrudedCutouts
+                ti = cutouts._oleobj_.GetTypeInfo()
+                attr = ti.GetTypeAttr()
+                for i in range(attr.cFuncs):
+                    fd = ti.GetFuncDesc(i)
+                    names = ti.GetNames(fd.memid)
+                    method_name = names[0] if names else f"func_{i}"
+                    params = []
+                    for j in range(fd.cParams):
+                        ed = fd.rgelemdescParam[j]
+                        td = ed.tdesc
+                        param_name = names[j + 1] if j + 1 < len(names) else f"p{j}"
+                        # vt is the VARTYPE constant (e.g. VT_I4=3, VT_DISPATCH=9,
+                        # VT_VARIANT=12, VT_SAFEARRAY=0x2000, VT_ARRAY=0x2000,
+                        # VT_PTR=26, VT_BYREF=0x4000)
+                        vt = td.vt
+                        params.append({
+                            "name": param_name,
+                            "vt": vt,
+                            "vt_hex": hex(vt),
+                            "flags": ed.paramdesc.wParamFlags,
+                        })
+                    typeinfo_result[method_name] = {
+                        "param_count": fd.cParams,
+                        "params": params,
+                        "retval_vt": fd.rettype.vt,
+                    }
+            except Exception as e:
+                typeinfo_result = {"error": str(e), "traceback": traceback.format_exc()}
+
             return {
                 "status": "ok",
                 "top_level_attributes": top_attrs,
                 "feature_collections": collections,
                 "doc_level_apis": doc_level,
+                "extruded_cutouts_typeinfo": typeinfo_result,
             }
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
