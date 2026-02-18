@@ -941,7 +941,9 @@ class AssemblyManager:
             if ground:
                 # Add a ground constraint
                 relations = doc.Relations3d
-                relations.AddGround(occurrence)
+                _feature = relations.AddGround(occurrence)
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
                 return {"status": "grounded", "component_index": component_index}
             else:
                 # Find and delete ground relation for this occurrence
@@ -1759,7 +1761,9 @@ class AssemblyManager:
             orient_val = orient_map.get(orientation, 0)
 
             relations = doc.Relations3d
-            relations.AddPlanar(occ1, occ2, offset, orient_val)
+            _feature = relations.AddPlanar(occ1, occ2, offset, orient_val)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -1801,7 +1805,9 @@ class AssemblyManager:
             orient_val = orient_map.get(orientation, 0)
 
             relations = doc.Relations3d
-            relations.AddAxial(occ1, occ2, orient_val)
+            _feature = relations.AddAxial(occ1, occ2, orient_val)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -1841,7 +1847,9 @@ class AssemblyManager:
             angle_rad = math.radians(angle)
 
             relations = doc.Relations3d
-            relations.AddAngular(occ1, occ2, angle_rad)
+            _feature = relations.AddAngular(occ1, occ2, angle_rad)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -1877,7 +1885,9 @@ class AssemblyManager:
                 return err
 
             relations = doc.Relations3d
-            relations.AddPoint(occ1, occ2)
+            _feature = relations.AddPoint(occ1, occ2)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -1912,7 +1922,9 @@ class AssemblyManager:
                 return err
 
             relations = doc.Relations3d
-            relations.AddTangent(occ1, occ2)
+            _feature = relations.AddTangent(occ1, occ2)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -1951,7 +1963,9 @@ class AssemblyManager:
                 return err
 
             relations = doc.Relations3d
-            relations.AddGear(occ1, occ2, ratio1, ratio2)
+            _feature = relations.AddGear(occ1, occ2, ratio1, ratio2)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",

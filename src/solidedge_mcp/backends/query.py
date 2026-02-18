@@ -594,7 +594,9 @@ class QueryManager:
                     continue
 
             # Property doesn't exist, add it
-            custom_ps.Add(name, value)
+            _feature = custom_ps.Add(name, value)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
             return {"status": "created", "name": name, "value": value}
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
@@ -1184,7 +1186,9 @@ class QueryManager:
             if obj is None:
                 return {"error": "Could not resolve object to select"}
 
-            select_set.Add(obj)
+            _feature = select_set.Add(obj)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "added",
@@ -2725,7 +2729,9 @@ class QueryManager:
                 return {"error": "Active document does not support layers"}
 
             layers = doc.Layers
-            layers.Add(name)
+            _feature = layers.Add(name)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {"status": "added", "name": name, "total_layers": layers.Count}
         except Exception as e:

@@ -215,12 +215,16 @@ class ExportManager:
                 x, y = positions[i] if i < len(positions) else (0.15 + i * 0.08, 0.10)
 
                 try:
-                    dvs.AddPartView(model_link, orient, 1.0, x, y, 0)
+                    _feature = dvs.AddPartView(model_link, orient, 1.0, x, y, 0)
+                    if _feature is None:
+                        raise ValueError("AddPartView returned None")
                     views_added.append(view_name)
                 except Exception:
                     # Try the generic Add method as fallback
                     try:
-                        dvs.Add(model_link, orient, 1.0, x, y)
+                        _feature = dvs.Add(model_link, orient, 1.0, x, y)
+                        if _feature is None:
+                            continue
                         views_added.append(view_name)
                     except Exception:
                         pass
@@ -323,10 +327,14 @@ class ExportManager:
 
             # seAssemblyDesignedView = 0
             try:
-                dvs.AddAssemblyView(model_link, orient, scale, x, y, 0)
+                _feature = dvs.AddAssemblyView(model_link, orient, scale, x, y, 0)
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
             except Exception:
                 # Fall back to AddPartView if AddAssemblyView not available
-                dvs.AddPartView(model_link, orient, scale, x, y, 0)
+                _feature = dvs.AddPartView(model_link, orient, scale, x, y, 0)
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "added",
@@ -381,7 +389,9 @@ class ExportManager:
             # Add parts list
             # Parameters: DrawingView, SavedSettings, AutoBalloon, CreatePartsList
             # AutoBalloon: 0=No, 1=Yes; CreatePartsList: 0=No, 1=Yes
-            parts_lists.Add(dv, "", 1 if auto_balloon else 0, 1)
+            _feature = parts_lists.Add(dv, "", 1 if auto_balloon else 0, 1)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -647,7 +657,9 @@ class ExportManager:
                 dim_y = max(y1, y2) + 0.02  # 20mm above
 
             dimensions = sheet.Dimensions
-            dimensions.AddLength(x1, y1, 0, x2, y2, 0, dim_x, dim_y, 0)
+            _feature = dimensions.AddLength(x1, y1, 0, x2, y2, 0, dim_x, dim_y, 0)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "added",
@@ -1042,7 +1054,9 @@ class ExportManager:
                 return {"error": f"Invalid fold_direction: '{fold_direction}'. Valid: {valid}"}
 
             parent_view = dvs.Item(parent_view_index + 1)
-            dvs.AddByFold(parent_view, fold_const, x, y)
+            _feature = dvs.AddByFold(parent_view, fold_const, x, y)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "added",
@@ -1274,7 +1288,9 @@ class ExportManager:
             text_x = dim_x if dim_x is not None else (x1 + x3) / 2
             text_y = dim_y if dim_y is not None else (y1 + y3) / 2 + 0.02
 
-            dims.AddAngular(x1, y1, x2, y2, x3, y3, text_x, text_y)
+            _feature = dims.AddAngular(x1, y1, x2, y2, x3, y3, text_x, text_y)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -1320,7 +1336,9 @@ class ExportManager:
             text_x = dim_x if dim_x is not None else (center_x + point_x) / 2
             text_y = dim_y if dim_y is not None else (center_y + point_y) / 2 + 0.02
 
-            dims.AddRadial(center_x, center_y, point_x, point_y, text_x, text_y)
+            _feature = dims.AddRadial(center_x, center_y, point_x, point_y, text_x, text_y)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -1367,7 +1385,9 @@ class ExportManager:
             text_x = dim_x if dim_x is not None else center_x + (point_x - center_x) * 1.3
             text_y = dim_y if dim_y is not None else center_y + (point_y - center_y) * 1.3 + 0.02
 
-            dims.AddDiameter(center_x, center_y, point_x, point_y, text_x, text_y)
+            _feature = dims.AddDiameter(center_x, center_y, point_x, point_y, text_x, text_y)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -1417,7 +1437,9 @@ class ExportManager:
             text_x = dim_x if dim_x is not None else point_x
             text_y = dim_y if dim_y is not None else point_y + 0.02
 
-            dims.AddOrdinate(origin_x, origin_y, point_x, point_y, text_x, text_y)
+            _feature = dims.AddOrdinate(origin_x, origin_y, point_x, point_y, text_x, text_y)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "created",
@@ -1452,7 +1474,9 @@ class ExportManager:
 
             sheet = doc.ActiveSheet
             center_marks = sheet.CenterMarks
-            center_marks.Add(x, y, 0)
+            _feature = center_marks.Add(x, y, 0)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "added",
@@ -1483,7 +1507,9 @@ class ExportManager:
 
             sheet = doc.ActiveSheet
             centerlines = sheet.Centerlines
-            centerlines.Add(x1, y1, 0, x2, y2, 0)
+            _feature = centerlines.Add(x1, y1, 0, x2, y2, 0)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "added",
@@ -1524,7 +1550,9 @@ class ExportManager:
 
             try:
                 sfs = sheet.SurfaceFinishSymbols
-                sfs.Add(x, y, 0, type_value)
+                _feature = sfs.Add(x, y, 0, type_value)
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
             except Exception:
                 # Fallback: use TextBoxes with standard surface finish text
                 text_boxes = sheet.TextBoxes
@@ -1569,7 +1597,9 @@ class ExportManager:
 
             try:
                 ws = sheet.WeldSymbols
-                ws.Add(x, y, 0, type_value)
+                _feature = ws.Add(x, y, 0, type_value)
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
             except Exception:
                 # Fallback: use a leader with weld designation text
                 leaders = sheet.Leaders
@@ -1672,10 +1702,14 @@ class ExportManager:
             parent_view = dvs.Item(parent_view_index + 1)
 
             try:
-                dvs.AddByDetailEnvelope(parent_view, center_x, center_y, radius, x, y, scale)
+                _feature = dvs.AddByDetailEnvelope(parent_view, center_x, center_y, radius, x, y, scale)
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
             except Exception:
                 # Fallback: try AddDetailView
-                dvs.AddDetailView(parent_view, center_x, center_y, radius, x, y, scale)
+                _feature = dvs.AddDetailView(parent_view, center_x, center_y, radius, x, y, scale)
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "added",
@@ -1735,10 +1769,14 @@ class ExportManager:
             parent_view = dvs.Item(parent_view_index + 1)
 
             try:
-                dvs.AddByAuxiliaryFold(parent_view, fold_const, x, y)
+                _feature = dvs.AddByAuxiliaryFold(parent_view, fold_const, x, y)
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
             except Exception:
                 # Fallback: try AddByFold
-                dvs.AddByFold(parent_view, fold_const, x, y)
+                _feature = dvs.AddByFold(parent_view, fold_const, x, y)
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "added",
@@ -1768,7 +1806,9 @@ class ExportManager:
         try:
             dvs = self._get_drawing_views()
 
-            dvs.AddDraftView(x, y)
+            _feature = dvs.AddDraftView(x, y)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "added",
@@ -2124,7 +2164,7 @@ class ExportManager:
             # Fall back to simple PrintOut
             if hasattr(doc, "PrintOut"):
                 try:
-                    doc.PrintOut(Copies=copies)
+                    doc.PrintOut(copies)
                 except Exception:
                     doc.PrintOut()
                 return {"status": "printed", "copies": copies}
@@ -2345,7 +2385,9 @@ class ExportManager:
             # If config specified, try AddWithConfiguration
             if config is not None:
                 try:
-                    dvs.AddAssemblyViewWithConfiguration(model_link, orient, scale, x, y, 0, config)
+                    _feature = dvs.AddAssemblyViewWithConfiguration(model_link, orient, scale, x, y, 0, config)
+                    if _feature is None:
+                        return {"error": "Feature creation failed: COM returned None"}
                     return {
                         "status": "added",
                         "orientation": orientation,
@@ -2358,9 +2400,13 @@ class ExportManager:
 
             # Standard assembly view
             try:
-                dvs.AddAssemblyView(model_link, orient, scale, x, y, 0)
+                _feature = dvs.AddAssemblyView(model_link, orient, scale, x, y, 0)
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
             except Exception:
-                dvs.AddPartView(model_link, orient, scale, x, y, 0)
+                _feature = dvs.AddPartView(model_link, orient, scale, x, y, 0)
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
 
             result = {
                 "status": "added",
@@ -2434,10 +2480,14 @@ class ExportManager:
             dvs = dyn.Dispatch(dvs_early._oleobj_)
 
             try:
-                dvs.AddPartViewWithConfiguration(model_link, orient, scale, x, y, 0, configuration)
+                _feature = dvs.AddPartViewWithConfiguration(model_link, orient, scale, x, y, 0, configuration)
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
             except Exception:
                 # Fall back to standard AddPartView
-                dvs.AddPartView(model_link, orient, scale, x, y, 0)
+                _feature = dvs.AddPartView(model_link, orient, scale, x, y, 0)
+                if _feature is None:
+                    return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "added",
@@ -2893,7 +2943,9 @@ class ExportManager:
             dim_y = max(y1, y2) + 0.02
 
             # AddDistanceBetweenPoints(x1, y1, z1, x2, y2, z2, dimX, dimY, dimZ)
-            dims.AddDistanceBetweenPoints(x1, y1, 0.0, x2, y2, 0.0, dim_x, dim_y, 0.0)
+            _feature = dims.AddDistanceBetweenPoints(x1, y1, 0.0, x2, y2, 0.0, dim_x, dim_y, 0.0)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "added",
@@ -2938,7 +2990,9 @@ class ExportManager:
             dim_x = (x1 + x2) / 2
             dim_y = max(y1, y2) + 0.02
 
-            dims.AddLength(x1, y1, 0.0, x2, y2, 0.0, dim_x, dim_y, 0.0)
+            _feature = dims.AddLength(x1, y1, 0.0, x2, y2, 0.0, dim_x, dim_y, 0.0)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "added",
@@ -2994,7 +3048,9 @@ class ExportManager:
             dim_x = cx + radius + 0.01
             dim_y = cy + 0.01
 
-            dims.AddRadialDimension(obj, dim_x, dim_y, 0.0)
+            _feature = dims.AddRadialDimension(obj, dim_x, dim_y, 0.0)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "added",
@@ -3042,7 +3098,9 @@ class ExportManager:
             dim_x = x2 + 0.02
             dim_y = y2 + 0.02
 
-            dims.AddAngle(x1, y1, 0.0, x2, y2, 0.0, x3, y3, 0.0, dim_x, dim_y, 0.0)
+            _feature = dims.AddAngle(x1, y1, 0.0, x2, y2, 0.0, x3, y3, 0.0, dim_x, dim_y, 0.0)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "added",
@@ -3083,7 +3141,9 @@ class ExportManager:
             sheet = doc.ActiveSheet
 
             smart_frames = sheet.SmartFrames2d
-            smart_frames.AddBy2Points(style_name, x1, y1, x2, y2)
+            _feature = smart_frames.AddBy2Points(style_name, x1, y1, x2, y2)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "added",
@@ -3130,7 +3190,9 @@ class ExportManager:
             sheet = doc.ActiveSheet
 
             smart_frames = sheet.SmartFrames2d
-            smart_frames.AddByOrigin(style_name, x, y, top, bottom, left, right)
+            _feature = smart_frames.AddByOrigin(style_name, x, y, top, bottom, left, right)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "added",
@@ -3176,7 +3238,9 @@ class ExportManager:
             sheet = doc.ActiveSheet
 
             symbols = sheet.Symbols
-            symbols.Add(insertion_type, file_path, x, y)
+            _feature = symbols.Add(insertion_type, file_path, x, y)
+            if _feature is None:
+                return {"error": "Feature creation failed: COM returned None"}
 
             return {
                 "status": "placed",
