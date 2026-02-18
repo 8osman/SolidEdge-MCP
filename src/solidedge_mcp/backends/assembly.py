@@ -3337,6 +3337,12 @@ class AssemblyManager:
                 "holes_typeinfo": _dump_add_typeinfo(
                     asm_features.AssemblyFeaturesHoles
                 ),
+                "patterns_typeinfo": _dump_add_typeinfo(
+                    asm_features.AssemblyFeaturesPatterns
+                ),
+                "mirrors_typeinfo": _dump_add_typeinfo(
+                    asm_features.AssemblyFeaturesMirrors
+                ),
             }
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
