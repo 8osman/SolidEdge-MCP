@@ -23,6 +23,9 @@ class AssemblyManager:
     def __init__(self, document_manager, sketch_manager=None):
         self.doc_manager = document_manager
         self.sketch_manager = sketch_manager  # Optional; needed for assembly features
+        # Cache of name→COM object for assembly features that are created but
+        # not enumerable via AssemblyFeatures sub-collections (Count stays 0).
+        self._asm_feature_cache: dict[str, Any] = {}
 
     def add_component(
         self, file_path: str, x: float = 0, y: float = 0, z: float = 0
@@ -3409,6 +3412,10 @@ class AssemblyManager:
 
             self.sketch_manager.clear_accumulated_profiles()
 
+            _fname = getattr(_feature, "Name", None)
+            if _fname:
+                self._asm_feature_cache[_fname] = _feature
+
             return {
                 "status": "created",
                 "type": "assembly_extruded_cutout",
@@ -3540,6 +3547,10 @@ class AssemblyManager:
 
             self.sketch_manager.clear_accumulated_profiles()
 
+            _fname = getattr(_feature, "Name", None)
+            if _fname:
+                self._asm_feature_cache[_fname] = _feature
+
             return {
                 "status": "created",
                 "type": "assembly_hole",
@@ -3612,6 +3623,10 @@ class AssemblyManager:
 
             self.sketch_manager.clear_accumulated_profiles()
 
+            _fname = getattr(_feature, "Name", None)
+            if _fname:
+                self._asm_feature_cache[_fname] = _feature
+
             return {
                 "status": "created",
                 "type": "assembly_revolved_cutout",
@@ -3679,51 +3694,63 @@ class AssemblyManager:
 
     def _find_asm_features_by_name(self, doc, feature_names: list[str]) -> list:
         """
-        Look up assembly feature COM objects by name across all AssemblyFeatures
-        sub-collections.
+        Look up assembly feature COM objects by name.
 
-        Searches: AssemblyFeaturesExtrudedCutouts, AssemblyFeaturesHoles,
-        AssemblyFeaturesRevolvedCutouts, ExtrudedProtrusions,
-        RevolvedProtrusions, AssemblyFeaturesSweptProtrusions,
-        AssemblyFeaturesMirrors, AssemblyFeaturesPatterns.
+        Checks self._asm_feature_cache first (populated at creation time), then
+        falls back to searching all AssemblyFeatures sub-collections.  This is
+        necessary because some SE 2026 collections (e.g. AssemblyFeaturesHoles)
+        report Count=0 even after a successful Add(), making enumeration unreliable.
 
         Returns list of COM feature objects in the same order as feature_names.
         Raises RuntimeError if any name is not found.
         """
-        asm_features = self._get_assembly_features(doc)
-        collections_to_search = [
-            "AssemblyFeaturesExtrudedCutouts",
-            "AssemblyFeaturesHoles",
-            "AssemblyFeaturesRevolvedCutouts",
-            "ExtrudedProtrusions",
-            "RevolvedProtrusions",
-            "AssemblyFeaturesSweptProtrusions",
-            "AssemblyFeaturesMirrors",
-            "AssemblyFeaturesPatterns",
-        ]
-        # Build name→object map
-        name_map = {}
-        for coll_name in collections_to_search:
-            try:
-                coll = getattr(asm_features, coll_name)
-                for i in range(coll.Count):
-                    item = coll.Item(i + 1)
-                    try:
-                        name_map[item.Name] = item
-                    except Exception:
-                        pass
-            except Exception:
-                pass
+        # --- 1. satisfy as many names as possible from the cache ---
+        found: dict[str, Any] = {}
+        for name in feature_names:
+            if name in self._asm_feature_cache:
+                found[name] = self._asm_feature_cache[name]
 
+        still_missing = [n for n in feature_names if n not in found]
+
+        # --- 2. search collections for whatever's not yet in cache ---
+        if still_missing:
+            asm_features = self._get_assembly_features(doc)
+            collections_to_search = [
+                "AssemblyFeaturesExtrudedCutouts",
+                "AssemblyFeaturesHoles",
+                "AssemblyFeaturesRevolvedCutouts",
+                "ExtrudedProtrusions",
+                "RevolvedProtrusions",
+                "AssemblyFeaturesSweptProtrusions",
+                "AssemblyFeaturesMirrors",
+                "AssemblyFeaturesPatterns",
+            ]
+            name_map: dict[str, Any] = {}
+            for coll_name in collections_to_search:
+                try:
+                    coll = getattr(asm_features, coll_name)
+                    for i in range(coll.Count):
+                        item = coll.Item(i + 1)
+                        try:
+                            name_map[item.Name] = item
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+            # Populate cache with anything discovered via collections
+            self._asm_feature_cache.update(name_map)
+            found.update({n: name_map[n] for n in still_missing if n in name_map})
+
+        # --- 3. build ordered result / report missing ---
         result = []
         missing = []
         for name in feature_names:
-            if name in name_map:
-                result.append(name_map[name])
+            if name in found:
+                result.append(found[name])
             else:
                 missing.append(name)
         if missing:
-            available = sorted(name_map.keys())
+            available = sorted(found.keys() | self._asm_feature_cache.keys())
             raise RuntimeError(
                 f"Assembly features not found: {missing}. "
                 f"Available: {available}"
@@ -3986,7 +4013,9 @@ class AssemblyManager:
 
         Searches all known AssemblyFeatures sub-collections and returns a dict
         mapping collection name → list of feature names.  Only non-empty
-        collections are included.
+        collections are included.  Features that were created this session but
+        are not enumerable via collections (Count stays 0) appear under the
+        special key '_cached'.
 
         Returns:
             Dict with status and features mapping
@@ -4006,6 +4035,7 @@ class AssemblyManager:
                 "AssemblyFeaturesPatterns",
             ]
             result: dict[str, list[str]] = {}
+            listed_names: set[str] = set()
             for coll_name in collections_to_search:
                 try:
                     coll = getattr(asm_features, coll_name)
@@ -4017,7 +4047,11 @@ class AssemblyManager:
                         try:
                             item = coll.Item(i + 1)
                             try:
-                                names.append(item.Name)
+                                n = item.Name
+                                names.append(n)
+                                listed_names.add(n)
+                                # Keep cache in sync
+                                self._asm_feature_cache[n] = item
                             except Exception:
                                 names.append(f"Item{i + 1}")
                         except Exception:
@@ -4025,6 +4059,13 @@ class AssemblyManager:
                     result[coll_name] = names
                 except Exception:
                     pass
+
+            # Surface cached features that collections don't enumerate
+            unlisted = sorted(
+                n for n in self._asm_feature_cache if n not in listed_names
+            )
+            if unlisted:
+                result["_cached"] = unlisted
 
             return {"status": "success", "features": result}
         except Exception as e:
