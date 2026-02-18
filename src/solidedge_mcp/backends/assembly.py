@@ -3255,20 +3255,14 @@ class AssemblyManager:
             for attr in top_attrs:
                 try:
                     coll = getattr(asm_features, attr)
-                    if callable(coll):
-                        continue
-                    add_methods = [m for m in dir(coll) if m.startswith("Add") and not m.startswith("_")]
-                    if add_methods:
-                        sigs = {}
-                        for m in add_methods:
-                            try:
-                                sig = str(inspect.signature(getattr(coll, m)))
-                            except Exception:
-                                sig = "unknown"
-                            sigs[m] = sig
-                        collections[attr] = {"add_methods": sigs}
-                except Exception:
-                    pass
+                    coll_type = type(coll).__name__
+                    add_methods = [m for m in dir(coll) if m.startswith("Add")]
+                    collections[attr] = {
+                        "type": coll_type,
+                        "add_methods": add_methods,
+                    }
+                except Exception as e:
+                    collections[attr] = {"error": str(e)}
 
             # Also check doc-level pattern/mirror APIs
             doc_level = {}
