@@ -498,6 +498,32 @@ def assembly_diagnose_features_api() -> dict:
     return assembly_manager.diagnose_assembly_features_api()
 
 
+def assembly_test_pattern(feature_names: list[str]) -> dict:
+    """
+    Diagnostic: probe AssemblyFeaturesPatterns.Add with every plausible
+    argument combination to identify which avoids E_ACCESSDENIED.
+
+    Tests (each attempt is isolated — undo on success, catch on failure):
+      1. PatternType 0/1/2 with Profile=None
+      2. PatternType 0 with the active accumulated sketch profile
+      3. Single COM object (not wrapped in tuple) with PatternType=0
+      4. NumberOfFeatures=0 with an empty array (error-change probe)
+      5. PatternType 0/1/2 with a fresh Points2d profile on AsmRefPlanes.Item(1)
+
+    Also returns:
+      - patterns_dir: all public attributes on the Patterns collection
+      - patterns_all_methods_typeinfo: full GetTypeInfo dump (all methods, not
+        just Add) so non-Add methods on the collection are visible
+      - doc_edit_methods: doc attributes matching 'undo'/'begin'/'edit'/'mode'
+      - feature_validated_live: confirms the COM object is alive before testing
+
+    Args:
+        feature_names: Names of existing assembly features to test with
+                       (use assembly_list_features to discover them)
+    """
+    return assembly_manager.test_assembly_pattern(feature_names)
+
+
 def assembly_create_extruded_cutout(
     depth: float,
     direction: str = "Normal",
@@ -747,8 +773,9 @@ def register(mcp):
     mcp.tool()(assembly_apply_configuration)
     mcp.tool()(assembly_delete_configuration)
     mcp.tool()(assembly_detect_under_constrained)
-    # Batch 10: Assembly-level features (10)
+    # Batch 10: Assembly-level features (11)
     mcp.tool()(assembly_diagnose_features_api)
+    mcp.tool()(assembly_test_pattern)
     mcp.tool()(assembly_create_extruded_cutout)
     mcp.tool()(assembly_create_extruded_protrusion)
     mcp.tool()(assembly_create_hole)

@@ -3350,6 +3350,161 @@ class AssemblyManager:
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
+    def test_assembly_pattern(self, feature_names: list[str]) -> dict[str, Any]:
+        """
+        Diagnostic: probe AssemblyFeaturesPatterns.Add with all plausible arg
+        combinations to determine which (if any) avoids E_ACCESSDENIED.
+
+        Tries each attempt in isolation, undoes on success, wraps every attempt
+        in try/except so a single crash doesn't abort the whole test.
+
+        Returns a dict with:
+          - patterns_dir: all public attrs on the patterns collection
+          - patterns_typeinfo: re-runs GetTypeInfo for the Add method
+          - doc_edit_methods: doc attrs containing 'undo'/'begin'/'edit'
+          - attempts: {label: {result|error, ...}}
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+            asm_features = self._get_assembly_features(doc)
+            features = self._find_asm_features_by_name(doc, feature_names)
+            feature = features[0]
+            feature_tuple = tuple(features)
+
+            patterns = asm_features.AssemblyFeaturesPatterns
+
+            # ── collection introspection ──────────────────────────────────────
+            patterns_dir = [a for a in dir(patterns) if not a.startswith("_")]
+
+            # Reuse existing typeinfo helper
+            def _dump_typeinfo(coll_obj):
+                try:
+                    ti = coll_obj._oleobj_.GetTypeInfo()
+                    ta = ti.GetTypeAttr()
+                    info = {}
+                    for i in range(ta.cFuncs):
+                        fd = ti.GetFuncDesc(i)
+                        names = ti.GetNames(fd.memid)
+                        method_name = names[0] if names else f"func_{i}"
+                        params = []
+                        for j, arg in enumerate(fd.args):
+                            p = {"name": names[j + 1] if j + 1 < len(names) else f"p{j}"}
+                            try:
+                                p["vt"] = arg.vt
+                                p["vt_hex"] = hex(arg.vt)
+                            except Exception:
+                                try:
+                                    p["tdesc_vt"] = arg.tdesc.vt
+                                except Exception:
+                                    pass
+                            params.append(p)
+                        info[method_name] = {"cParams": len(params), "params": params}
+                    return info
+                except Exception as e:
+                    return {"error": str(e)}
+
+            patterns_typeinfo = _dump_typeinfo(patterns)
+
+            # ── doc-level inspection ──────────────────────────────────────────
+            doc_edit_methods = sorted(
+                a for a in dir(doc)
+                if any(kw in a.lower() for kw in ("undo", "begin", "edit", "mode"))
+                and not a.startswith("_")
+            )
+
+            # ── attempt helper ────────────────────────────────────────────────
+            def try_add(label, *args):
+                try:
+                    result = patterns.Add(*args)
+                    outcome = {
+                        "result": "success",
+                        "returned_type": type(result).__name__,
+                        "name": None,
+                    }
+                    try:
+                        outcome["name"] = result.Name
+                    except Exception:
+                        pass
+                    # Undo so subsequent attempts start clean
+                    try:
+                        doc.Undo()
+                        outcome["undo"] = "ok"
+                    except Exception as ue:
+                        outcome["undo"] = str(ue)
+                    return outcome
+                except Exception as e:
+                    return {"error": str(e)}
+
+            # ── gather accumulated sketch profile if any ──────────────────────
+            sketch_profile = None
+            if self.sketch_manager:
+                accumulated = self.sketch_manager.get_accumulated_profiles()
+                if accumulated:
+                    sketch_profile = accumulated[-1]
+
+            # ── systematic attempts ───────────────────────────────────────────
+            attempts: dict[str, Any] = {}
+
+            # 1–3: PatternType 0/1/2 with Profile=None
+            for pt in (0, 1, 2):
+                attempts[f"pt{pt}_profile_none"] = try_add(
+                    f"pt{pt}_none", len(features), feature_tuple, None, pt
+                )
+
+            # 4: use the accumulated sketch profile with PatternType=0
+            if sketch_profile is not None:
+                attempts["pt0_profile_sketch"] = try_add(
+                    "pt0_sketch", len(features), feature_tuple, sketch_profile, 0
+                )
+            else:
+                attempts["pt0_profile_sketch"] = {"skipped": "no accumulated sketch profile"}
+
+            # 5: pass single COM object instead of tuple
+            attempts["single_com_no_tuple"] = try_add(
+                "single_no_tuple", 1, feature, None, 0
+            )
+
+            # 6: NumberOfFeatures=0, empty array — does the error change?
+            attempts["num_features_0_empty"] = try_add(
+                "empty", 0, (), None, 0
+            )
+
+            # 7: PatternType 0/1/2 with Points2d profile built on AsmRefPlanes
+            try:
+                plane = doc.AsmRefPlanes.Item(1)
+                ps = doc.ProfileSets.Add()
+                prof = ps.Profiles.Add(plane)
+                pts = prof.Points2d
+                pts.Add(0.0, 0.0)
+                pts.Add(0.05, 0.0)
+                prof.End(0)
+                for pt in (0, 1, 2):
+                    attempts[f"pt{pt}_points2d_profile"] = try_add(
+                        f"pt{pt}_p2d", len(features), feature_tuple, prof, pt
+                    )
+                try:
+                    ps.Delete()
+                except Exception:
+                    try:
+                        doc.ProfileSets.Remove(ps)
+                    except Exception:
+                        pass
+            except Exception as e:
+                attempts["points2d_profile_build"] = {"error": str(e)}
+
+            return {
+                "status": "completed",
+                "feature_names_tested": feature_names,
+                "feature_validated_live": self._validate_com_object(feature),
+                "patterns_dir": patterns_dir,
+                "patterns_all_methods_typeinfo": patterns_typeinfo,
+                "doc_edit_methods": doc_edit_methods,
+                "has_accumulated_sketch_profile": sketch_profile is not None,
+                "attempts": attempts,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
     def create_assembly_extruded_cutout(
         self,
         depth: float,
