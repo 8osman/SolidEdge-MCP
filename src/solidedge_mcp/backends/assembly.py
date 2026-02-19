@@ -3613,6 +3613,120 @@ class AssemblyManager:
             except Exception as e:
                 performance_mode = f"error: {e}"
 
+            # ── doc.AssemblyModel probe ───────────────────────────────────────
+            # AssemblyModel is the body-level model API (separate from
+            # AssemblyFeatures).  It may expose Patterns, Holes,
+            # ExtrudedCutouts, MirrorCopies etc. with a working Add().
+            assembly_model_probe: dict[str, Any] = {}
+            try:
+                am = doc.AssemblyModel
+                assembly_model_probe["am_type"] = type(am).__name__
+                assembly_model_probe["am_dir"] = [
+                    a for a in dir(am) if not a.startswith("_")
+                ]
+
+                # ── check Holes.Count on AssemblyModel ───────────────────────
+                try:
+                    am_holes = am.Holes
+                    assembly_model_probe["am_holes_count"] = am_holes.Count
+                    assembly_model_probe["am_holes_type"] = type(am_holes).__name__
+                except Exception as e:
+                    assembly_model_probe["am_holes_error"] = str(e)
+
+                # ── Patterns ─────────────────────────────────────────────────
+                try:
+                    am_pats = am.Patterns
+                    assembly_model_probe["am_patterns_type"] = type(am_pats).__name__
+                    assembly_model_probe["am_patterns_dir"] = [
+                        a for a in dir(am_pats) if not a.startswith("_")
+                    ]
+                    assembly_model_probe["am_patterns_typeinfo"] = _dump_typeinfo(am_pats)
+                    assembly_model_probe["am_patterns_count"] = am_pats.Count
+
+                    # Try calling Add with the simplest plausible args
+                    if feature is not None:
+                        for pt in (0, 1, 2):
+                            key = f"am_patterns_add_pt{pt}"
+                            try:
+                                r = am_pats.Add(
+                                    len(features), feature_tuple, None, pt
+                                )
+                                name_r = None
+                                try:
+                                    name_r = r.Name
+                                except Exception:
+                                    pass
+                                assembly_model_probe[key] = {
+                                    "result": "success",
+                                    "name": name_r,
+                                }
+                                try:
+                                    doc.Undo()
+                                except Exception:
+                                    pass
+                            except Exception as ae:
+                                assembly_model_probe[key] = {"error": str(ae)}
+                    else:
+                        assembly_model_probe["am_patterns_add"] = {
+                            "skipped": "no live feature"
+                        }
+                except Exception as e:
+                    assembly_model_probe["am_patterns_error"] = str(e)
+
+                # ── MirrorCopies ──────────────────────────────────────────────
+                try:
+                    am_mir = am.MirrorCopies
+                    assembly_model_probe["am_mirrorcopies_type"] = type(am_mir).__name__
+                    assembly_model_probe["am_mirrorcopies_dir"] = [
+                        a for a in dir(am_mir) if not a.startswith("_")
+                    ]
+                    assembly_model_probe["am_mirrorcopies_typeinfo"] = _dump_typeinfo(am_mir)
+
+                    if feature is not None:
+                        try:
+                            ref_planes = doc.AsmRefPlanes
+                        except Exception:
+                            ref_planes = doc.RefPlanes
+                        try:
+                            mirror_plane = ref_planes.Item(1)
+                            r = am_mir.Add(
+                                len(features), feature_tuple, mirror_plane, 0
+                            )
+                            name_r = None
+                            try:
+                                name_r = r.Name
+                            except Exception:
+                                pass
+                            assembly_model_probe["am_mirrorcopies_add"] = {
+                                "result": "success", "name": name_r,
+                            }
+                            try:
+                                doc.Undo()
+                            except Exception:
+                                pass
+                        except Exception as me:
+                            assembly_model_probe["am_mirrorcopies_add"] = {
+                                "error": str(me)
+                            }
+                    else:
+                        assembly_model_probe["am_mirrorcopies_add"] = {
+                            "skipped": "no live feature"
+                        }
+                except Exception as e:
+                    assembly_model_probe["am_mirrorcopies_error"] = str(e)
+
+                # ── cross-check: asm_features Holes count vs am.Holes count ──
+                try:
+                    af_holes_count = (
+                        asm_features.AssemblyFeaturesHoles.Count
+                    )
+                    assembly_model_probe["af_holes_count"] = af_holes_count
+                except Exception as e:
+                    assembly_model_probe["af_holes_count_error"] = str(e)
+
+            except Exception as e:
+                assembly_model_probe["am_access_error"] = str(e)
+
             return {
                 "status": "completed",
                 "feature_names_tested": feature_names,
@@ -3630,6 +3744,7 @@ class AssemblyManager:
                 "attempts": attempts,
                 "edit_mode_attempts": edit_mode_attempts,
                 "doc_performance_mode": performance_mode,
+                "assembly_model_probe": assembly_model_probe,
             }
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
