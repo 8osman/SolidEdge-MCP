@@ -6,15 +6,22 @@ Handles assembly creation and component management.
 
 import contextlib
 import inspect
+import json
 import math
 import os
 import traceback
+from pathlib import Path
 from typing import Any
 
 import pythoncom
 from win32com.client import VARIANT
 
 from .constants import DirectionConstants, ExtentTypeConstants
+
+# Persist feature names across MCP server restarts (stdio = fresh process per session).
+# COM objects can't be serialised, but names let us give a useful "recreate" error
+# instead of a silent "not found" after reconnect.
+_FEATURE_NAMES_FILE = Path.home() / ".solidedge_mcp_feature_cache.json"
 
 
 class AssemblyManager:
@@ -23,9 +30,32 @@ class AssemblyManager:
     def __init__(self, document_manager, sketch_manager=None):
         self.doc_manager = document_manager
         self.sketch_manager = sketch_manager  # Optional; needed for assembly features
-        # Cache of name→COM object for assembly features that are created but
-        # not enumerable via AssemblyFeatures sub-collections (Count stays 0).
+        # name → live COM object (same process only; validated before use)
         self._asm_feature_cache: dict[str, Any] = {}
+        # names that survive process restart (loaded from disk on init)
+        self._persistent_feature_names: set[str] = self._load_persistent_names()
+
+    # ── persistence helpers ──────────────────────────────────────────────────
+
+    @staticmethod
+    def _load_persistent_names() -> set[str]:
+        """Load known feature names from disk; return empty set on any error."""
+        try:
+            data = json.loads(_FEATURE_NAMES_FILE.read_text(encoding="utf-8"))
+            return set(data.get("feature_names", []))
+        except Exception:
+            return set()
+
+    def _save_persistent_names(self) -> None:
+        """Flush current known names (cache + persistent) to disk."""
+        try:
+            all_names = self._persistent_feature_names | set(self._asm_feature_cache.keys())
+            _FEATURE_NAMES_FILE.write_text(
+                json.dumps({"feature_names": sorted(all_names)}, indent=2),
+                encoding="utf-8",
+            )
+        except Exception:
+            pass  # persistence is best-effort; don't break feature creation
 
     def add_component(
         self, file_path: str, x: float = 0, y: float = 0, z: float = 0
@@ -3532,17 +3562,26 @@ class AssemblyManager:
             except Exception as e:
                 performance_mode = f"error: {e}"
 
-            asm_model_dir: Any = None
-            try:
-                am = doc.AssemblyModel
-                asm_model_dir = [a for a in dir(am) if not a.startswith("_")]
-            except Exception as e:
-                asm_model_dir = f"error: {e}"
+            # doc.AssemblyModel crashes SE — do NOT probe it.
+
+            # ── feature type introspection ────────────────────────────────────
+            feature_type_info: dict[str, Any] = {
+                "python_type": type(feature).__name__,
+            }
+            for attr in ("Type", "FeatureType", "Category", "SubType", "Status"):
+                try:
+                    feature_type_info[attr] = getattr(feature, attr)
+                except Exception as e:
+                    feature_type_info[attr] = f"error: {e}"
+            feature_type_info["dir"] = [
+                a for a in dir(feature) if not a.startswith("_")
+            ]
 
             return {
                 "status": "completed",
                 "feature_names_tested": feature_names,
                 "feature_validated_live": self._validate_com_object(feature),
+                "feature_type_info": feature_type_info,
                 "patterns_dir": patterns_dir,
                 "patterns_all_methods_typeinfo": patterns_typeinfo,
                 "doc_edit_methods": doc_edit_methods,
@@ -3550,7 +3589,6 @@ class AssemblyManager:
                 "attempts": attempts,
                 "edit_mode_attempts": edit_mode_attempts,
                 "doc_performance_mode": performance_mode,
-                "doc_assembly_model_dir": asm_model_dir,
             }
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
@@ -3620,6 +3658,8 @@ class AssemblyManager:
             _fname = getattr(_feature, "Name", None)
             if _fname:
                 self._asm_feature_cache[_fname] = _feature
+                self._persistent_feature_names.add(_fname)
+                self._save_persistent_names()
 
             return {
                 "status": "created",
@@ -3755,6 +3795,8 @@ class AssemblyManager:
             _fname = getattr(_feature, "Name", None)
             if _fname:
                 self._asm_feature_cache[_fname] = _feature
+                self._persistent_feature_names.add(_fname)
+                self._save_persistent_names()
 
             return {
                 "status": "created",
@@ -3831,6 +3873,8 @@ class AssemblyManager:
             _fname = getattr(_feature, "Name", None)
             if _fname:
                 self._asm_feature_cache[_fname] = _feature
+                self._persistent_feature_names.add(_fname)
+                self._save_persistent_names()
 
             return {
                 "status": "created",
@@ -3978,15 +4022,32 @@ class AssemblyManager:
                 not_found.append(name)
 
         if not_found:
-            # Distinguish stale-reference failures from never-existed failures
+            # Three failure modes, each with a distinct action message:
+            # 1. stale: was in cache this session but COM proxy died
+            # 2. persistent: known from a previous server session, not yet live
+            # 3. never_found: name has never been seen
             truly_stale = [n for n in not_found if n in stale]
-            never_found = [n for n in not_found if n not in stale]
+            from_prev_session = [
+                n for n in not_found
+                if n not in stale and n in self._persistent_feature_names
+            ]
+            never_found = [
+                n for n in not_found
+                if n not in stale and n not in self._persistent_feature_names
+            ]
             available = sorted(found.keys() | name_map.keys())
             parts = []
             if truly_stale:
                 parts.append(
                     f"Feature(s) {truly_stale} COM reference is stale — "
                     "recreate the feature in this session before patterning/mirroring."
+                )
+            if from_prev_session:
+                parts.append(
+                    f"Feature(s) {from_prev_session} were created in a previous server "
+                    "session. The name is persisted on disk but the COM reference is gone "
+                    "after the process restarted. Recreate the feature to get a fresh "
+                    "COM reference."
                 )
             if never_found:
                 parts.append(
@@ -4299,8 +4360,7 @@ class AssemblyManager:
                 except Exception:
                     pass
 
-            # Surface cached features that collections don't enumerate.
-            # Prune stale entries first so dead COM references don't appear.
+            # Prune stale cache entries before building _cached.
             stale_keys = [
                 n for n, obj in self._asm_feature_cache.items()
                 if not self._validate_com_object(obj)
@@ -4308,11 +4368,21 @@ class AssemblyManager:
             for k in stale_keys:
                 del self._asm_feature_cache[k]
 
+            # Features created this session but not enumerable via collections.
             unlisted = sorted(
                 n for n in self._asm_feature_cache if n not in listed_names
             )
             if unlisted:
                 result["_cached"] = unlisted
+
+            # Features known from a previous server session (name persisted on
+            # disk) but for which we have no live COM reference right now.
+            prev_session = sorted(
+                n for n in self._persistent_feature_names
+                if n not in listed_names and n not in self._asm_feature_cache
+            )
+            if prev_session:
+                result["_persistent_stale"] = prev_session
 
             return {"status": "success", "features": result}
         except Exception as e:
