@@ -3492,6 +3492,53 @@ class AssemblyManager:
             except Exception as e:
                 attempts["points2d_profile_build"] = {"error": str(e)}
 
+            # ── edit-mode attempts ────────────────────────────────────────────
+            # SE may require the doc to be in an explicit modeling/edit mode
+            # before AssemblyFeaturesPatterns.Add is permitted.
+            edit_mode_attempts: dict[str, Any] = {}
+
+            for mode_name in ("EditAssembly", "ModelingInAssembly", "BeginCachedSolve"):
+                mode_result: dict[str, Any] = {}
+                # call the mode-entry method
+                try:
+                    getattr(doc, mode_name)()
+                    mode_result["mode_call"] = "ok"
+                except Exception as me:
+                    mode_result["mode_call"] = str(me)
+
+                # retry the simplest patterns.Add signature
+                mode_result["add_after_mode"] = try_add(
+                    f"after_{mode_name}", len(features), feature_tuple, None, 0
+                )
+
+                # try to leave the mode cleanly (best-effort)
+                for exit_name in ("EndEditAssembly", "EndModelingInAssembly",
+                                  "EndCachedSolve", "EndEdit"):
+                    try:
+                        getattr(doc, exit_name)()
+                        mode_result["mode_exit"] = exit_name
+                        break
+                    except Exception:
+                        pass
+                else:
+                    mode_result["mode_exit"] = "no exit method succeeded"
+
+                edit_mode_attempts[mode_name] = mode_result
+
+            # ── supplemental doc properties ───────────────────────────────────
+            performance_mode: Any = None
+            try:
+                performance_mode = doc.PerformanceMode
+            except Exception as e:
+                performance_mode = f"error: {e}"
+
+            asm_model_dir: Any = None
+            try:
+                am = doc.AssemblyModel
+                asm_model_dir = [a for a in dir(am) if not a.startswith("_")]
+            except Exception as e:
+                asm_model_dir = f"error: {e}"
+
             return {
                 "status": "completed",
                 "feature_names_tested": feature_names,
@@ -3501,6 +3548,9 @@ class AssemblyManager:
                 "doc_edit_methods": doc_edit_methods,
                 "has_accumulated_sketch_profile": sketch_profile is not None,
                 "attempts": attempts,
+                "edit_mode_attempts": edit_mode_attempts,
+                "doc_performance_mode": performance_mode,
+                "doc_assembly_model_dir": asm_model_dir,
             }
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
