@@ -616,17 +616,11 @@ def assembly_create_mirror(
     mirror_type: int = 0,
 ) -> dict:
     """
-    Create an assembly-level mirror of one or more assembly features.
+    NOT SUPPORTED — AssemblyFeaturesMirrors.Add is not accessible via COM automation.
 
-    Uses AssemblyFeaturesMirrors.Add(NumberOfFeatures, ppFeaturesArray,
-    pMirrorPlane, MirrorType).  feature_names must refer to existing assembly
-    features (holes, cutouts, protrusions) — use assembly_list_features to
-    discover available names.
-
-    Args:
-        feature_names: Names of assembly features to mirror (e.g. ["Cutout 1"])
-        plane_index: 1-based AsmRefPlanes index to mirror across
-        mirror_type: MirrorType enum value (default 0)
+    The Solid Edge COM API returns E_ACCESSDENIED for all combinations of arguments
+    to AssemblyFeaturesMirrors.Add. This operation must be performed interactively
+    through the Solid Edge UI.
     """
     return assembly_manager.create_assembly_mirror(feature_names, plane_index, mirror_type)
 
@@ -639,18 +633,14 @@ def assembly_create_pattern_rectangular(
     y_spacing: float = 0.0,
 ) -> dict:
     """
-    Create a rectangular pattern of assembly features.
+    NOT SUPPORTED — AssemblyFeaturesPatterns.Add is not accessible via COM automation.
 
-    Uses AssemblyFeaturesPatterns.Add with a Points2d sketch encoding the
-    grid layout.  feature_names must refer to existing assembly features —
-    use assembly_list_features to discover available names.
+    The Solid Edge COM API returns E_ACCESSDENIED for all combinations of arguments
+    to AssemblyFeaturesPatterns.Add (all PatternType values, all Profile types including
+    None, Points2d, and live profiles).
 
-    Args:
-        feature_names: Names of assembly features to pattern (e.g. ["Cutout 1"])
-        x_count: Number of instances in X direction (>= 1, includes original)
-        x_spacing: Spacing between X instances in meters
-        y_count: Number of instances in Y direction (default 1)
-        y_spacing: Spacing between Y instances in meters (default 0.0)
+    To create a rectangular grid of assembly holes programmatically, use
+    assembly_create_hole_pattern instead.
     """
     return assembly_manager.create_assembly_pattern_rectangular(
         feature_names, x_count, x_spacing, y_count, y_spacing
@@ -665,22 +655,55 @@ def assembly_create_pattern_circular(
     radius: float = 0.05,
 ) -> dict:
     """
-    Create a circular pattern of assembly features.
+    NOT SUPPORTED — AssemblyFeaturesPatterns.Add is not accessible via COM automation.
 
-    Uses AssemblyFeaturesPatterns.Add with a Points2d sketch arranged on a
-    circle.  feature_names must refer to existing assembly features — use
-    assembly_list_features to discover available names.
-
-    Args:
-        feature_names: Names of assembly features to pattern (e.g. ["Cutout 1"])
-        count: Total number of instances (>= 1, includes original)
-        angle: Total arc angle in degrees (default 360 = full circle)
-        axis_plane_index: 1-based AsmRefPlanes index whose normal is the
-                          rotation axis (default 1 = Top/XY plane)
-        radius: Radius of circular pattern in meters (default 0.05 = 50 mm)
+    The Solid Edge COM API returns E_ACCESSDENIED for all combinations of arguments.
+    This operation must be performed interactively through the Solid Edge UI.
     """
     return assembly_manager.create_assembly_pattern_circular(
         feature_names, count, angle, axis_plane_index, radius
+    )
+
+
+def assembly_create_hole_pattern(
+    x_count: int,
+    x_spacing: float,
+    y_count: int,
+    y_spacing: float,
+    depth: float,
+    circle_radius: float,
+    center_x: float = 0.0,
+    center_y: float = 0.0,
+    plane_index: int = 1,
+    direction: str = "Normal",
+    through_all: bool = False,
+) -> dict:
+    """
+    Create a rectangular grid of assembly holes via repeated hole creation.
+
+    Workaround for the unavailable AssemblyFeaturesPatterns.Add COM API.
+    Draws a fresh circular sketch profile at each grid position and calls
+    AssemblyFeaturesHoles.Add for each cell, producing x_count × y_count
+    individual hole features in a single call.
+
+    Args:
+        x_count: Number of holes in X direction (>= 1)
+        x_spacing: Spacing between X holes in meters
+        y_count: Number of holes in Y direction (>= 1)
+        y_spacing: Spacing between Y holes in meters
+        depth: Hole depth in meters (ignored when through_all=True)
+        circle_radius: Radius of each hole circle in meters
+        center_x: X coordinate of the first hole center on the sketch plane (meters)
+        center_y: Y coordinate of the first hole center on the sketch plane (meters)
+        plane_index: 1-based AsmRefPlanes index to sketch on (default 1 = Top/XY)
+        direction: 'Normal' (default) or 'Reverse'
+        through_all: If True, drill through all components
+    """
+    return assembly_manager.create_assembly_hole_pattern(
+        x_count, x_spacing, y_count, y_spacing,
+        depth, circle_radius,
+        center_x, center_y, plane_index,
+        direction, through_all,
     )
 
 
@@ -784,4 +807,5 @@ def register(mcp):
     mcp.tool()(assembly_create_mirror)
     mcp.tool()(assembly_create_pattern_rectangular)
     mcp.tool()(assembly_create_pattern_circular)
+    mcp.tool()(assembly_create_hole_pattern)
     mcp.tool()(assembly_list_features)

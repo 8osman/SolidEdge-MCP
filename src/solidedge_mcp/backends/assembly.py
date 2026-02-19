@@ -35,6 +35,16 @@ class AssemblyManager:
         # names that survive process restart (loaded from disk on init)
         self._persistent_feature_names: set[str] = self._load_persistent_names()
 
+    def clear_doc_caches(self) -> None:
+        """Clear session-only caches when the active document changes.
+
+        Called automatically by DocumentManager whenever open_document or
+        close_document fires.  _persistent_feature_names is intentionally kept
+        so the user still gets a helpful 'recreate in this session' message
+        rather than a generic 'never heard of it' error.
+        """
+        self._asm_feature_cache.clear()
+
     # ── persistence helpers ──────────────────────────────────────────────────
 
     @staticmethod
@@ -3551,6 +3561,7 @@ class AssemblyManager:
                 )
 
                 # 7: PatternType 0/1/2 with Points2d profile built on AsmRefPlanes
+                #    (profile is End()ed / consumed before the call)
                 try:
                     plane = doc.AsmRefPlanes.Item(1)
                     ps = doc.ProfileSets.Add()
@@ -3572,6 +3583,39 @@ class AssemblyManager:
                             pass
                 except Exception as e:
                     attempts["points2d_profile_build"] = {"error": str(e)}
+
+                # 8: Live (un-End()ed) Points2d profile — 2×2 grid at 25 mm spacing.
+                #    The Profile parameter may be mandatory and must be an open/active
+                #    profile, not one that has already been consumed by End().
+                try:
+                    plane8 = doc.AsmRefPlanes.Item(1)
+                    ps8 = doc.ProfileSets.Add()
+                    prof8 = ps8.Profiles.Add(plane8)
+                    pts8 = prof8.Points2d
+                    pts8.Add(0.000, 0.000)
+                    pts8.Add(0.025, 0.000)
+                    pts8.Add(0.000, 0.025)
+                    pts8.Add(0.025, 0.025)
+                    # deliberately NOT calling prof8.End() — leave profile live
+                    attempts["live_points2d_profile_build"] = "ok (4 pts, 25 mm grid, not End()ed)"
+                    for pt in (0, 1, 2):
+                        attempts[f"pt{pt}_live_points2d"] = try_add(
+                            f"pt{pt}_live_p2d", 1, (raw_feature,), prof8, pt
+                        )
+                    # Clean up regardless of result
+                    try:
+                        prof8.End(0)
+                    except Exception:
+                        pass
+                    try:
+                        ps8.Delete()
+                    except Exception:
+                        try:
+                            doc.ProfileSets.Remove(ps8)
+                        except Exception:
+                            pass
+                except Exception as e:
+                    attempts["live_points2d_profile_build"] = {"error": str(e)}
 
             # ── edit-mode attempts (only when we have a live feature) ─────────
             edit_mode_attempts: dict[str, Any] = {}
@@ -3643,32 +3687,69 @@ class AssemblyManager:
                     assembly_model_probe["am_patterns_typeinfo"] = _dump_typeinfo(am_pats)
                     assembly_model_probe["am_patterns_count"] = am_pats.Count
 
-                    # Try calling Add with the simplest plausible args
-                    if feature is not None:
-                        for pt in (0, 1, 2):
-                            key = f"am_patterns_add_pt{pt}"
+                    # Generic Add is E_ACCESSDENIED; test explicit typed methods.
+                    # Use raw_feature so this runs even when COM ref is stale.
+                    if raw_feature is not None:
+                        try:
+                            _rp = doc.AsmRefPlanes.Item(1)
+                        except Exception:
+                            _rp = doc.RefPlanes.Item(1)
+
+                        # AddByRectangular(NumberOfFeatures, FeatureArray,
+                        #   RefPlane, XCount, YCount, XSpacing, YSpacing,
+                        #   Angle, PatternType, Options)
+                        try:
+                            r = am_pats.AddByRectangular(
+                                1, (raw_feature,), _rp,
+                                2, 2, 0.025, 0.025, 0.0, 0, 0,
+                            )
+                            _name = None
                             try:
-                                r = am_pats.Add(
-                                    len(features), feature_tuple, None, pt
-                                )
-                                name_r = None
-                                try:
-                                    name_r = r.Name
-                                except Exception:
-                                    pass
-                                assembly_model_probe[key] = {
-                                    "result": "success",
-                                    "name": name_r,
-                                }
-                                try:
-                                    doc.Undo()
-                                except Exception:
-                                    pass
-                            except Exception as ae:
-                                assembly_model_probe[key] = {"error": str(ae)}
+                                _name = r.Name
+                            except Exception:
+                                pass
+                            assembly_model_probe["am_patterns_add_rectangular"] = {
+                                "result": "success", "name": _name,
+                            }
+                            try:
+                                doc.Undo()
+                            except Exception:
+                                pass
+                        except Exception as ae:
+                            assembly_model_probe["am_patterns_add_rectangular"] = {
+                                "error": str(ae)
+                            }
+
+                        # AddByCircular(NumberOfFeatures, FeatureArray,
+                        #   RefPlane, Count, Angle, AxisPlane,
+                        #   PatternType, Options, Fill)
+                        try:
+                            r = am_pats.AddByCircular(
+                                1, (raw_feature,), _rp,
+                                4, 90.0, None, 0, 0, False,
+                            )
+                            _name = None
+                            try:
+                                _name = r.Name
+                            except Exception:
+                                pass
+                            assembly_model_probe["am_patterns_add_circular"] = {
+                                "result": "success", "name": _name,
+                            }
+                            try:
+                                doc.Undo()
+                            except Exception:
+                                pass
+                        except Exception as ae:
+                            assembly_model_probe["am_patterns_add_circular"] = {
+                                "error": str(ae)
+                            }
                     else:
-                        assembly_model_probe["am_patterns_add"] = {
-                            "skipped": "no live feature"
+                        assembly_model_probe["am_patterns_add_rectangular"] = {
+                            "skipped": "no raw_feature in cache"
+                        }
+                        assembly_model_probe["am_patterns_add_circular"] = {
+                            "skipped": "no raw_feature in cache"
                         }
                 except Exception as e:
                     assembly_model_probe["am_patterns_error"] = str(e)
@@ -3682,16 +3763,16 @@ class AssemblyManager:
                     ]
                     assembly_model_probe["am_mirrorcopies_typeinfo"] = _dump_typeinfo(am_mir)
 
-                    if feature is not None:
+                    # Correct signature: Add(PatternPlane, NumberOfFeatures,
+                    #   FeatureArray) — plane first, 3 args total.
+                    # Use raw_feature so this runs even when COM ref is stale.
+                    if raw_feature is not None:
                         try:
-                            ref_planes = doc.AsmRefPlanes
+                            _mir_rp = doc.AsmRefPlanes.Item(1)
                         except Exception:
-                            ref_planes = doc.RefPlanes
+                            _mir_rp = doc.RefPlanes.Item(1)
                         try:
-                            mirror_plane = ref_planes.Item(1)
-                            r = am_mir.Add(
-                                len(features), feature_tuple, mirror_plane, 0
-                            )
+                            r = am_mir.Add(_mir_rp, 1, (raw_feature,))
                             name_r = None
                             try:
                                 name_r = r.Name
@@ -3710,7 +3791,7 @@ class AssemblyManager:
                             }
                     else:
                         assembly_model_probe["am_mirrorcopies_add"] = {
-                            "skipped": "no live feature"
+                            "skipped": "no raw_feature in cache"
                         }
                 except Exception as e:
                     assembly_model_probe["am_mirrorcopies_error"] = str(e)
@@ -3946,6 +4027,63 @@ class AssemblyManager:
             if _feature is None:
                 return {"error": "Feature creation failed: COM returned None"}
 
+            # ── inline AssemblyModel pattern probe ────────────────────────────
+            # AssemblyModel is only valid during the active modeling context —
+            # i.e., right here, before it closes.  Test AddByRectangular and
+            # MirrorCopies.Add while the window is still open.
+            _live_probe: dict[str, Any] = {}
+            try:
+                _am = doc.AssemblyModel
+                _live_probe["am_accessible"] = True
+                try:
+                    _rp = doc.AsmRefPlanes.Item(1)
+                except Exception:
+                    _rp = doc.RefPlanes.Item(1)
+
+                # AddByRectangular — 2×2 grid at 25 mm spacing
+                try:
+                    _pr = _am.Patterns.AddByRectangular(
+                        1, (_feature,), _rp,
+                        2, 2, 0.025, 0.025, 0.0, 0, 0,
+                    )
+                    _live_probe["AddByRectangular"] = "SUCCESS: " + str(type(_pr))
+                    try:
+                        doc.Undo()
+                    except Exception:
+                        pass
+                except Exception as _pe:
+                    _live_probe["AddByRectangular"] = str(_pe)
+
+                # AddByCircular — 4 instances, 90° each
+                try:
+                    _pc = _am.Patterns.AddByCircular(
+                        1, (_feature,), _rp,
+                        4, 90.0, None, 0, 0, False,
+                    )
+                    _live_probe["AddByCircular"] = "SUCCESS: " + str(type(_pc))
+                    try:
+                        doc.Undo()
+                    except Exception:
+                        pass
+                except Exception as _ce:
+                    _live_probe["AddByCircular"] = str(_ce)
+
+                # MirrorCopies.Add — correct 3-arg signature: plane first
+                try:
+                    _mc = _am.MirrorCopies.Add(_rp, 1, (_feature,))
+                    _live_probe["MirrorCopies_Add"] = "SUCCESS: " + str(type(_mc))
+                    try:
+                        doc.Undo()
+                    except Exception:
+                        pass
+                except Exception as _me:
+                    _live_probe["MirrorCopies_Add"] = str(_me)
+
+            except Exception as _ame:
+                _live_probe["am_accessible"] = False
+                _live_probe["am_error"] = str(_ame)
+            # ── end inline probe ──────────────────────────────────────────────
+
             self.sketch_manager.clear_accumulated_profiles()
 
             _fname = getattr(_feature, "Name", None)
@@ -3962,6 +4100,132 @@ class AssemblyManager:
                 "through_all": through_all,
                 "scope_parts_count": len(scope_parts),
                 "name": _feature.Name if hasattr(_feature, "Name") else None,
+                "live_pattern_probe": _live_probe,
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def create_assembly_hole_pattern(
+        self,
+        x_count: int,
+        x_spacing: float,
+        y_count: int,
+        y_spacing: float,
+        depth: float,
+        circle_radius: float,
+        center_x: float = 0.0,
+        center_y: float = 0.0,
+        plane_index: int = 1,
+        direction: str = "Normal",
+        through_all: bool = False,
+        component_indices: list[int] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Create a rectangular grid of assembly holes via repeated AssemblyFeaturesHoles.Add.
+
+        Workaround for the fact that AssemblyFeaturesPatterns.Add is not accessible
+        via COM automation (E_ACCESSDENIED).  Draws a fresh circular sketch profile
+        at each grid position and calls Add for each, producing x_count × y_count
+        individual hole features.
+
+        Args:
+            x_count: Number of holes in X direction (>= 1)
+            x_spacing: Spacing between X holes in meters
+            y_count: Number of holes in Y direction (>= 1)
+            y_spacing: Spacing between Y holes in meters
+            depth: Hole depth in meters (ignored when through_all=True)
+            circle_radius: Radius of each hole circle in meters
+            center_x: X coordinate of the first hole center on the plane (meters)
+            center_y: Y coordinate of the first hole center on the plane (meters)
+            plane_index: 1-based AsmRefPlanes index to sketch on (default 1 = Top/XY)
+            direction: 'Normal' (default) or 'Reverse'
+            through_all: If True, drill through all components
+            component_indices: 0-based indices of components to drill. None = all.
+
+        Returns:
+            Dict with list of created feature names and any per-hole errors.
+        """
+        try:
+            if x_count < 1:
+                return {"error": "x_count must be >= 1"}
+            if y_count < 1:
+                return {"error": "y_count must be >= 1"}
+
+            doc = self.doc_manager.get_active_document()
+            asm_features = self._get_assembly_features(doc)
+            scope_parts = self._get_scope_parts(doc, component_indices)
+            holes = asm_features.AssemblyFeaturesHoles
+
+            dir_const = DirectionConstants.igRight
+            if direction == "Reverse":
+                dir_const = DirectionConstants.igLeft
+            extent = (
+                ExtentTypeConstants.igThroughAll if through_all
+                else ExtentTypeConstants.igFinite
+            )
+
+            try:
+                plane = doc.AsmRefPlanes.Item(plane_index)
+            except Exception:
+                plane = doc.RefPlanes.Item(plane_index)
+
+            created: list[str] = []
+            errors: list[dict] = []
+
+            for yi in range(y_count):
+                for xi in range(x_count):
+                    cx = center_x + xi * x_spacing
+                    cy = center_y + yi * y_spacing
+                    ps = None
+                    try:
+                        ps = doc.ProfileSets.Add()
+                        prof = ps.Profiles.Add(plane)
+                        prof.Circles2d.AddByCenterRadius(cx, cy, circle_radius)
+                        prof.End(0)
+
+                        _feat = holes.Add(
+                            len(scope_parts), scope_parts,
+                            1, (prof,),
+                            dir_const, None, extent, depth,
+                            None, None, None, None,
+                        )
+                        if _feat is None:
+                            errors.append({
+                                "grid": [xi, yi], "cx": cx, "cy": cy,
+                                "error": "COM returned None",
+                            })
+                        else:
+                            _fname = getattr(_feat, "Name", None)
+                            if _fname:
+                                self._asm_feature_cache[_fname] = _feat
+                                self._persistent_feature_names.add(_fname)
+                                created.append(_fname)
+                            else:
+                                created.append(f"hole_{xi}_{yi}")
+                    except Exception as he:
+                        errors.append({
+                            "grid": [xi, yi], "cx": cx, "cy": cy,
+                            "error": str(he),
+                        })
+                    finally:
+                        if ps is not None:
+                            try:
+                                ps.Delete()
+                            except Exception:
+                                pass
+
+            if created:
+                self._save_persistent_names()
+
+            return {
+                "status": "created" if created else "failed",
+                "type": "assembly_hole_pattern",
+                "x_count": x_count,
+                "y_count": y_count,
+                "total_requested": x_count * y_count,
+                "total_created": len(created),
+                "created": created,
+                "errors": errors,
             }
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
@@ -4224,64 +4488,17 @@ class AssemblyManager:
         plane_index: int,
         mirror_type: int = 0,
     ) -> dict[str, Any]:
-        """
-        Create an assembly-level mirror of one or more assembly features.
-
-        Real COM signature:
-        AssemblyFeaturesMirrors.Add(NumberOfFeatures, ppFeaturesArray,
-                                    pMirrorPlane, MirrorType)
-
-        ppFeaturesArray contains existing assembly features (cutouts, holes,
-        protrusions) — NOT component occurrences.
-
-        Args:
-            feature_names: Names of existing assembly features to mirror
-                           (e.g. ["Cutout 1"])
-            plane_index: 1-based AsmRefPlanes index to mirror across
-            mirror_type: MirrorType enum value (default 0)
-
-        Returns:
-            Dict with status
-        """
-        try:
-            doc = self.doc_manager.get_active_document()
-            asm_features = self._get_assembly_features(doc)
-
-            features = self._find_asm_features_by_name(doc, feature_names)
-
-            # Assembly docs use AsmRefPlanes (try first), fall back to RefPlanes
-            try:
-                ref_planes = doc.AsmRefPlanes
-                _ = ref_planes.Count
-            except Exception:
-                ref_planes = doc.RefPlanes
-
-            if plane_index < 1 or plane_index > ref_planes.Count:
-                return {
-                    "error": f"Invalid plane_index {plane_index}. "
-                    f"Assembly has {ref_planes.Count} reference planes."
-                }
-
-            mirror_plane = ref_planes.Item(plane_index)
-            mirrors = asm_features.AssemblyFeaturesMirrors
-            _feature = mirrors.Add(
-                len(features),      # NumberOfFeatures
-                tuple(features),    # ppFeaturesArray
-                mirror_plane,       # pMirrorPlane
-                mirror_type,        # MirrorType
-            )
-            if _feature is None:
-                return {"error": "Feature creation failed: COM returned None"}
-
-            return {
-                "status": "created",
-                "type": "assembly_mirror",
-                "feature_names": feature_names,
-                "plane_index": plane_index,
-                "name": _feature.Name if hasattr(_feature, "Name") else None,
-            }
-        except Exception as e:
-            return {"error": str(e), "traceback": traceback.format_exc()}
+        """Not supported — AssemblyFeaturesMirrors.Add is not accessible via COM automation."""
+        return {
+            "error": "not_supported",
+            "message": (
+                "Assembly feature mirror is not accessible through the Solid Edge COM "
+                "automation API. AssemblyFeaturesMirrors.Add and "
+                "AssemblyFeaturesPatterns.Add both return E_ACCESSDENIED in all tested "
+                "argument combinations — Siemens has not exposed these operations for "
+                "external automation. Use the Solid Edge UI to create mirrors interactively."
+            ),
+        }
 
     def _build_points_profile(self, doc, plane_index: int, points: list[tuple[float, float]]):
         """
@@ -4314,77 +4531,18 @@ class AssemblyManager:
         y_count: int = 1,
         y_spacing: float = 0.0,
     ) -> dict[str, Any]:
-        """
-        Create a rectangular pattern of assembly features using a Points2d sketch.
-
-        Real COM signature:
-        AssemblyFeaturesPatterns.Add(NumberOfFeatures, ppFeaturesArray,
-                                     Profile, PatternType)
-
-        Builds a temporary ProfileSet on AsmRefPlanes.Item(1) containing one
-        Point2d per grid cell (x_count × y_count), then passes it as Profile.
-
-        Args:
-            feature_names: Names of existing assembly features to pattern
-            x_count: Number of instances in X (must be >= 1)
-            x_spacing: Spacing between X instances in meters
-            y_count: Number of instances in Y (default 1)
-            y_spacing: Spacing between Y instances in meters (default 0.0)
-
-        Returns:
-            Dict with status
-        """
-        try:
-            if x_count < 1:
-                return {"error": "x_count must be >= 1"}
-            if y_count < 1:
-                return {"error": "y_count must be >= 1"}
-
-            doc = self.doc_manager.get_active_document()
-            asm_features = self._get_assembly_features(doc)
-            features = self._find_asm_features_by_name(doc, feature_names)
-
-            # Build grid of Points2d on the Top/XY plane (index 1)
-            grid_points = [
-                (xi * x_spacing, yi * y_spacing)
-                for yi in range(y_count)
-                for xi in range(x_count)
-            ]
-            profile_set, profile = self._build_points_profile(doc, 1, grid_points)
-
-            try:
-                patterns = asm_features.AssemblyFeaturesPatterns
-                _feature = patterns.Add(
-                    len(features),      # NumberOfFeatures
-                    tuple(features),    # ppFeaturesArray
-                    profile,            # Profile (Points2d grid)
-                    0,                  # PatternType: rectangular
-                )
-            finally:
-                # Clean up temporary profile set
-                try:
-                    profile_set.Delete()
-                except Exception:
-                    try:
-                        doc.ProfileSets.Remove(profile_set)
-                    except Exception:
-                        pass
-
-            if _feature is None:
-                return {"error": "Feature creation failed: COM returned None"}
-
-            return {
-                "status": "created",
-                "type": "assembly_pattern_rectangular",
-                "feature_names": feature_names,
-                "x_count": x_count,
-                "x_spacing": x_spacing,
-                "y_count": y_count,
-                "y_spacing": y_spacing,
-                "name": _feature.Name if hasattr(_feature, "Name") else None,
-            }
-        except Exception as e:
-            return {"error": str(e), "traceback": traceback.format_exc()}
+        """Not supported — AssemblyFeaturesPatterns.Add is not accessible via COM automation."""
+        return {
+            "error": "not_supported",
+            "message": (
+                "Assembly feature patterning is not accessible through the Solid Edge COM "
+                "automation API. AssemblyFeaturesPatterns.Add returns E_ACCESSDENIED for "
+                "all argument combinations (Profile=None, Points2d profile, live profile, "
+                "all PatternType values, all edit modes). "
+                "Use assembly_create_hole_pattern to create multiple holes in a grid layout "
+                "via repeated hole creation, or use the Solid Edge UI for interactive patterning."
+            ),
+        }
 
     def create_assembly_pattern_circular(
         self,
@@ -4394,79 +4552,16 @@ class AssemblyManager:
         axis_plane_index: int = 1,
         radius: float = 0.05,
     ) -> dict[str, Any]:
-        """
-        Create a circular pattern of assembly features using a Points2d sketch.
-
-        Real COM signature:
-        AssemblyFeaturesPatterns.Add(NumberOfFeatures, ppFeaturesArray,
-                                     Profile, PatternType)
-
-        Builds a temporary ProfileSet on AsmRefPlanes.Item(axis_plane_index)
-        with Points2d arranged on a circle of the given radius, then passes it
-        as Profile.
-
-        Args:
-            feature_names: Names of existing assembly features to pattern
-            count: Total number of instances (including original)
-            angle: Total arc angle in degrees (360 = full circle)
-            axis_plane_index: 1-based AsmRefPlanes index whose normal is the
-                              rotation axis (default 1 = Top/XY)
-            radius: Radius of the circular pattern in meters (default 0.05)
-
-        Returns:
-            Dict with status
-        """
-        try:
-            if count < 1:
-                return {"error": "count must be >= 1"}
-
-            doc = self.doc_manager.get_active_document()
-            asm_features = self._get_assembly_features(doc)
-            features = self._find_asm_features_by_name(doc, feature_names)
-
-            # Build circle of Points2d; step angle = total_angle / count
-            total_rad = math.radians(angle)
-            step = total_rad / count
-            circle_points = [
-                (radius * math.cos(step * i), radius * math.sin(step * i))
-                for i in range(count)
-            ]
-            profile_set, profile = self._build_points_profile(
-                doc, axis_plane_index, circle_points
-            )
-
-            try:
-                patterns = asm_features.AssemblyFeaturesPatterns
-                _feature = patterns.Add(
-                    len(features),      # NumberOfFeatures
-                    tuple(features),    # ppFeaturesArray
-                    profile,            # Profile (Points2d circle)
-                    1,                  # PatternType: circular
-                )
-            finally:
-                try:
-                    profile_set.Delete()
-                except Exception:
-                    try:
-                        doc.ProfileSets.Remove(profile_set)
-                    except Exception:
-                        pass
-
-            if _feature is None:
-                return {"error": "Feature creation failed: COM returned None"}
-
-            return {
-                "status": "created",
-                "type": "assembly_pattern_circular",
-                "feature_names": feature_names,
-                "count": count,
-                "angle": angle,
-                "axis_plane_index": axis_plane_index,
-                "radius": radius,
-                "name": _feature.Name if hasattr(_feature, "Name") else None,
-            }
-        except Exception as e:
-            return {"error": str(e), "traceback": traceback.format_exc()}
+        """Not supported — AssemblyFeaturesPatterns.Add is not accessible via COM automation."""
+        return {
+            "error": "not_supported",
+            "message": (
+                "Assembly feature patterning is not accessible through the Solid Edge COM "
+                "automation API. AssemblyFeaturesPatterns.Add returns E_ACCESSDENIED for "
+                "all argument combinations. "
+                "Use the Solid Edge UI for interactive circular patterning of assembly features."
+            ),
+        }
 
     def list_assembly_features(self) -> dict[str, Any]:
         """

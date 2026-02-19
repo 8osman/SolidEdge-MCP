@@ -17,12 +17,18 @@ def get_available_methods(obj, filter_prefix=None):
     Returns:
         Dictionary with methods and properties
     """
+    # Properties known to cause modal dialogs or deadlocks when accessed
+    # via COM automation (empirically discovered via SolidEdgeSpy source).
+    _DEADLOCK_PROPS = frozenset({"MailSession"})
+
     methods = []
     properties = []
 
     try:
         # Get all attributes
         for attr_name in dir(obj):
+            if attr_name in _DEADLOCK_PROPS:
+                continue
             if filter_prefix and not attr_name.startswith(filter_prefix):
                 continue
 

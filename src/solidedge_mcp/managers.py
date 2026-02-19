@@ -19,6 +19,10 @@ query_manager = QueryManager(doc_manager)
 export_manager = ExportManager(doc_manager)
 view_manager = ViewModel(doc_manager)
 
+# Clear stale per-document caches whenever open_document / close_document fires
+doc_manager.register_doc_change_callback(sketch_manager.clear_accumulated_profiles)
+doc_manager.register_doc_change_callback(assembly_manager.clear_doc_caches)
+
 # Re-export diagnostics functions if needed by tools directly
 __all__ = [
     "connection",

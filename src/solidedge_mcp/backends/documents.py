@@ -18,6 +18,18 @@ class DocumentManager:
     def __init__(self, connection):
         self.connection = connection
         self.active_document: Any | None = None
+        self._doc_change_callbacks: list = []
+
+    def register_doc_change_callback(self, callback) -> None:
+        """Register a callable invoked whenever the active document changes."""
+        self._doc_change_callbacks.append(callback)
+
+    def _notify_doc_change(self) -> None:
+        for cb in self._doc_change_callbacks:
+            try:
+                cb()
+            except Exception:
+                pass
 
     def create_part(self, template: str | None = None) -> dict[str, Any]:
         """Create a new part document"""
@@ -112,6 +124,7 @@ class DocumentManager:
             app = self.connection.get_application()
             doc = app.Documents.Open(file_path)
             self.active_document = doc
+            self._notify_doc_change()
 
             return {
                 "status": "opened",
@@ -165,6 +178,7 @@ class DocumentManager:
 
             self.active_document.Close()
             self.active_document = None
+            self._notify_doc_change()
 
             # Re-enable alerts
             if not save:
