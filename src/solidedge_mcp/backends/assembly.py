@@ -3397,9 +3397,55 @@ class AssemblyManager:
         try:
             doc = self.doc_manager.get_active_document()
             asm_features = self._get_assembly_features(doc)
-            features = self._find_asm_features_by_name(doc, feature_names)
-            feature = features[0]
-            feature_tuple = tuple(features)
+
+            # ── cache snapshot (before any lookup that might raise) ───────────
+            # Grab raw cached objects for introspection even if they're stale.
+            cache_contents = list(self._asm_feature_cache.keys())
+
+            def _cache_detail(obj):
+                valid = self._validate_com_object(obj)
+                try:
+                    n = obj.Name
+                except Exception as ce:
+                    n = f"ERR:{type(ce).__name__}:{ce}"
+                return f"valid={valid} / Name={n!r}"
+
+            cache_validation_detail = {
+                k: _cache_detail(v)
+                for k, v in self._asm_feature_cache.items()
+            }
+
+            # Raw object for type introspection — works even when stale.
+            raw_feature = self._asm_feature_cache.get(feature_names[0]) if feature_names else None
+
+            # ── feature type introspection (runs regardless of liveness) ─────
+            feature_type_info: dict[str, Any] = {}
+            if raw_feature is not None:
+                feature_type_info["python_type"] = type(raw_feature).__name__
+                for attr in ("Type", "FeatureType", "Category", "SubType", "Status", "Name"):
+                    try:
+                        feature_type_info[attr] = getattr(raw_feature, attr)
+                    except Exception as e:
+                        feature_type_info[attr] = f"error:{type(e).__name__}:{e}"
+                feature_type_info["dir"] = [
+                    a for a in dir(raw_feature) if not a.startswith("_")
+                ]
+            else:
+                feature_type_info["note"] = (
+                    f"Feature '{feature_names[0] if feature_names else '?'}' "
+                    "not in cache — create it first in this session."
+                )
+
+            # ── try to get a live COM reference ──────────────────────────────
+            feature_lookup_error = None
+            features = None
+            feature = None
+            try:
+                features = self._find_asm_features_by_name(doc, feature_names)
+                feature = features[0]
+            except RuntimeError as rte:
+                feature_lookup_error = str(rte)
+            feature_tuple = tuple(features) if features else ()
 
             patterns = asm_features.AssemblyFeaturesPatterns
 
@@ -3472,88 +3518,93 @@ class AssemblyManager:
                 if accumulated:
                     sketch_profile = accumulated[-1]
 
-            # ── systematic attempts ───────────────────────────────────────────
+            # ── systematic attempts (only when we have a live feature) ─────────
             attempts: dict[str, Any] = {}
 
-            # 1–3: PatternType 0/1/2 with Profile=None
-            for pt in (0, 1, 2):
-                attempts[f"pt{pt}_profile_none"] = try_add(
-                    f"pt{pt}_none", len(features), feature_tuple, None, pt
-                )
-
-            # 4: use the accumulated sketch profile with PatternType=0
-            if sketch_profile is not None:
-                attempts["pt0_profile_sketch"] = try_add(
-                    "pt0_sketch", len(features), feature_tuple, sketch_profile, 0
+            if feature is None:
+                attempts["_skipped"] = (
+                    f"No live feature COM reference: {feature_lookup_error}"
                 )
             else:
-                attempts["pt0_profile_sketch"] = {"skipped": "no accumulated sketch profile"}
-
-            # 5: pass single COM object instead of tuple
-            attempts["single_com_no_tuple"] = try_add(
-                "single_no_tuple", 1, feature, None, 0
-            )
-
-            # 6: NumberOfFeatures=0, empty array — does the error change?
-            attempts["num_features_0_empty"] = try_add(
-                "empty", 0, (), None, 0
-            )
-
-            # 7: PatternType 0/1/2 with Points2d profile built on AsmRefPlanes
-            try:
-                plane = doc.AsmRefPlanes.Item(1)
-                ps = doc.ProfileSets.Add()
-                prof = ps.Profiles.Add(plane)
-                pts = prof.Points2d
-                pts.Add(0.0, 0.0)
-                pts.Add(0.05, 0.0)
-                prof.End(0)
+                # 1–3: PatternType 0/1/2 with Profile=None
                 for pt in (0, 1, 2):
-                    attempts[f"pt{pt}_points2d_profile"] = try_add(
-                        f"pt{pt}_p2d", len(features), feature_tuple, prof, pt
+                    attempts[f"pt{pt}_profile_none"] = try_add(
+                        f"pt{pt}_none", len(features), feature_tuple, None, pt
                     )
-                try:
-                    ps.Delete()
-                except Exception:
-                    try:
-                        doc.ProfileSets.Remove(ps)
-                    except Exception:
-                        pass
-            except Exception as e:
-                attempts["points2d_profile_build"] = {"error": str(e)}
 
-            # ── edit-mode attempts ────────────────────────────────────────────
-            # SE may require the doc to be in an explicit modeling/edit mode
-            # before AssemblyFeaturesPatterns.Add is permitted.
-            edit_mode_attempts: dict[str, Any] = {}
+                # 4: use the accumulated sketch profile with PatternType=0
+                if sketch_profile is not None:
+                    attempts["pt0_profile_sketch"] = try_add(
+                        "pt0_sketch", len(features), feature_tuple, sketch_profile, 0
+                    )
+                else:
+                    attempts["pt0_profile_sketch"] = {"skipped": "no accumulated sketch profile"}
 
-            for mode_name in ("EditAssembly", "ModelingInAssembly", "BeginCachedSolve"):
-                mode_result: dict[str, Any] = {}
-                # call the mode-entry method
-                try:
-                    getattr(doc, mode_name)()
-                    mode_result["mode_call"] = "ok"
-                except Exception as me:
-                    mode_result["mode_call"] = str(me)
-
-                # retry the simplest patterns.Add signature
-                mode_result["add_after_mode"] = try_add(
-                    f"after_{mode_name}", len(features), feature_tuple, None, 0
+                # 5: pass single COM object instead of tuple
+                attempts["single_com_no_tuple"] = try_add(
+                    "single_no_tuple", 1, feature, None, 0
                 )
 
-                # try to leave the mode cleanly (best-effort)
-                for exit_name in ("EndEditAssembly", "EndModelingInAssembly",
-                                  "EndCachedSolve", "EndEdit"):
-                    try:
-                        getattr(doc, exit_name)()
-                        mode_result["mode_exit"] = exit_name
-                        break
-                    except Exception:
-                        pass
-                else:
-                    mode_result["mode_exit"] = "no exit method succeeded"
+                # 6: NumberOfFeatures=0, empty array — does the error change?
+                attempts["num_features_0_empty"] = try_add(
+                    "empty", 0, (), None, 0
+                )
 
-                edit_mode_attempts[mode_name] = mode_result
+                # 7: PatternType 0/1/2 with Points2d profile built on AsmRefPlanes
+                try:
+                    plane = doc.AsmRefPlanes.Item(1)
+                    ps = doc.ProfileSets.Add()
+                    prof = ps.Profiles.Add(plane)
+                    pts = prof.Points2d
+                    pts.Add(0.0, 0.0)
+                    pts.Add(0.05, 0.0)
+                    prof.End(0)
+                    for pt in (0, 1, 2):
+                        attempts[f"pt{pt}_points2d_profile"] = try_add(
+                            f"pt{pt}_p2d", len(features), feature_tuple, prof, pt
+                        )
+                    try:
+                        ps.Delete()
+                    except Exception:
+                        try:
+                            doc.ProfileSets.Remove(ps)
+                        except Exception:
+                            pass
+                except Exception as e:
+                    attempts["points2d_profile_build"] = {"error": str(e)}
+
+            # ── edit-mode attempts (only when we have a live feature) ─────────
+            edit_mode_attempts: dict[str, Any] = {}
+
+            if feature is None:
+                edit_mode_attempts["_skipped"] = (
+                    f"No live feature: {feature_lookup_error}"
+                )
+            else:
+                for mode_name in ("EditAssembly", "ModelingInAssembly", "BeginCachedSolve"):
+                    mode_result: dict[str, Any] = {}
+                    try:
+                        getattr(doc, mode_name)()
+                        mode_result["mode_call"] = "ok"
+                    except Exception as me:
+                        mode_result["mode_call"] = str(me)
+
+                    mode_result["add_after_mode"] = try_add(
+                        f"after_{mode_name}", len(features), feature_tuple, None, 0
+                    )
+
+                    for exit_name in ("EndEditAssembly", "EndModelingInAssembly",
+                                      "EndCachedSolve", "EndEdit"):
+                        try:
+                            getattr(doc, exit_name)()
+                            mode_result["mode_exit"] = exit_name
+                            break
+                        except Exception:
+                            pass
+                    else:
+                        mode_result["mode_exit"] = "no exit method succeeded"
+
+                    edit_mode_attempts[mode_name] = mode_result
 
             # ── supplemental doc properties ───────────────────────────────────
             performance_mode: Any = None
@@ -3562,25 +3613,15 @@ class AssemblyManager:
             except Exception as e:
                 performance_mode = f"error: {e}"
 
-            # doc.AssemblyModel crashes SE — do NOT probe it.
-
-            # ── feature type introspection ────────────────────────────────────
-            feature_type_info: dict[str, Any] = {
-                "python_type": type(feature).__name__,
-            }
-            for attr in ("Type", "FeatureType", "Category", "SubType", "Status"):
-                try:
-                    feature_type_info[attr] = getattr(feature, attr)
-                except Exception as e:
-                    feature_type_info[attr] = f"error: {e}"
-            feature_type_info["dir"] = [
-                a for a in dir(feature) if not a.startswith("_")
-            ]
-
             return {
                 "status": "completed",
                 "feature_names_tested": feature_names,
-                "feature_validated_live": self._validate_com_object(feature),
+                "feature_lookup_error": feature_lookup_error,
+                "feature_validated_live": (
+                    self._validate_com_object(feature) if feature is not None else False
+                ),
+                "cache_contents": cache_contents,
+                "cache_validation_detail": cache_validation_detail,
                 "feature_type_info": feature_type_info,
                 "patterns_dir": patterns_dir,
                 "patterns_all_methods_typeinfo": patterns_typeinfo,
@@ -3944,10 +3985,15 @@ class AssemblyManager:
     @staticmethod
     def _validate_com_object(obj) -> bool:
         """Return True if the COM object is still alive (not stale)."""
+        import logging as _logging
         try:
             _ = obj.Name
             return True
-        except Exception:
+        except Exception as e:
+            _logging.warning(
+                "COM validation failed: %s: %s  (obj type=%s)",
+                type(e).__name__, e, type(obj).__name__,
+            )
             return False
 
     def _find_asm_features_by_name(self, doc, feature_names: list[str]) -> list:
