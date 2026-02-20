@@ -6,6 +6,12 @@ from solidedge_mcp.managers import sketch_manager
 def create_sketch(plane: str = "Top") -> dict:
     """Create a new 2D sketch on a reference plane.
 
+    IMPORTANT: Call get_spatial_context() before this tool if any geometry already
+    exists. Sketch coordinates are LOCAL to the plane — they are NOT world coordinates.
+    Use the plane_axis_map from get_spatial_context() to convert. Example: on the
+    Right plane, sketch (0, -0.014) places geometry at world Z=-0.014, which may be
+    outside the body. Verify against body_bbox before proceeding.
+
     Plane: 'Top', 'Front', 'Right', 'XY', 'XZ', 'YZ'.
     """
     return sketch_manager.create_sketch(plane)
@@ -111,7 +117,14 @@ def set_axis_of_revolution(x1: float, y1: float, x2: float, y2: float) -> dict:
 
 
 def create_sketch_on_plane(plane_index: int) -> dict:
-    """Create a new 2D sketch on a reference plane by index (1-based)."""
+    """Create a new 2D sketch on a reference plane by index (1-based).
+
+    IMPORTANT: Call get_spatial_context() before this tool if any geometry already
+    exists. Sketch coordinates are LOCAL to the plane — they are NOT world coordinates.
+    Use the plane_axis_map from get_spatial_context() to convert. Example: on the
+    Right plane, sketch (0, -0.014) places geometry at world Z=-0.014, which may be
+    outside the body. Verify against body_bbox before proceeding.
+    """
     return sketch_manager.create_sketch_on_plane_index(plane_index)
 
 

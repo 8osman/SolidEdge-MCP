@@ -21,6 +21,7 @@ class SketchManager:
         self.active_sketch = None
         self.active_profile = None
         self.active_refaxis = None  # Reference axis for revolve operations
+        self.active_plane_index = None  # Plane index of the most recently opened sketch
         self.accumulated_profiles = []  # For loft/sweep multi-profile operations
 
     def create_sketch(self, plane: str = "Top") -> dict[str, Any]:
@@ -75,6 +76,8 @@ class SketchManager:
                 self.active_refaxis = None
                 sketch_id = profile_set.Name if hasattr(profile_set, "Name") else "sketch"
 
+            self.active_plane_index = plane_index
+
             response = {
                 "status": "created",
                 "plane": plane,
@@ -97,14 +100,11 @@ class SketchManager:
             return {"error": str(e), "traceback": traceback.format_exc()}
     
     def create_sketch_on_plane_index(self, plane_index: int) -> dict:
-        """Create sketch on reference plane by 1-based index."""
-        ref_planes = self.doc.RefPlanes
-        if plane_index < 1 or plane_index > ref_planes.Count:
-            raise ValueError(f"plane_index {plane_index} out of range (1–{ref_planes.Count})")
-            ref_plane = ref_planes.Item(plane_index)
-            sketch = self.doc.Sketches.AddByPlane(ref_plane)
-            self._enter_sketch_mode(sketch)
-        return {"status": "ok", "plane_index": plane_index}
+        """Create sketch on reference plane by 1-based index (1=Top, 2=Right, 3=Front)."""
+        plane_name = {1: "Top", 2: "Right", 3: "Front"}.get(plane_index)
+        if plane_name is None:
+            return {"error": f"plane_index {plane_index} out of range (1–3)"}
+        return self.create_sketch(plane_name)
     
     def _enter_sketch_mode(self, profile, doc=None) -> dict:
         """
@@ -853,6 +853,45 @@ class SketchManager:
             else:
                 # Standard profile (extrude, etc.)
                 end_flags = ProfileValidationConstants.igProfileDefault  # 0
+
+            # Level 2 phase 1: read sketch geometry BEFORE End() — elements are
+            # inaccessible once the profile is committed.  Store extents as a tuple
+            # so phase 2 (overlap check) can run after End() without re-querying.
+            _sketch_local_bbox = None  # (lx0, lx1, ly0, ly1) or None if unreadable
+            try:
+                _local_x, _local_y = [], []
+                _p = self.active_profile
+                for _i in range(1, _p.Lines2d.Count + 1):
+                    try:
+                        _ln = _p.Lines2d.Item(_i)
+                        _local_x += [_ln.StartPoint.X, _ln.EndPoint.X]
+                        _local_y += [_ln.StartPoint.Y, _ln.EndPoint.Y]
+                    except Exception:
+                        pass
+                for _i in range(1, _p.Circles2d.Count + 1):
+                    try:
+                        _c = _p.Circles2d.Item(_i)
+                        _r = _c.Radius
+                        _local_x += [_c.CenterPoint.X - _r, _c.CenterPoint.X + _r]
+                        _local_y += [_c.CenterPoint.Y - _r, _c.CenterPoint.Y + _r]
+                    except Exception:
+                        pass
+                for _i in range(1, _p.Arcs2d.Count + 1):
+                    try:
+                        _a = _p.Arcs2d.Item(_i)
+                        _r = _a.Radius
+                        _local_x += [_a.CenterPoint.X - _r, _a.CenterPoint.X + _r]
+                        _local_y += [_a.CenterPoint.Y - _r, _a.CenterPoint.Y + _r]
+                    except Exception:
+                        pass
+                if _local_x:
+                    _sketch_local_bbox = (
+                        min(_local_x), max(_local_x),
+                        min(_local_y), max(_local_y),
+                    )
+            except Exception:
+                pass  # never block End() if geometry reading fails
+
             # Commit the profile.  End() must succeed — if it raises, the
             # geometry is not valid and any subsequent feature call will fail.
             # Do NOT suppress: surface the error so the caller knows the sketch
@@ -867,7 +906,53 @@ class SketchManager:
                 }
             # Add to accumulated profiles for loft/sweep operations
             self.accumulated_profiles.append(self.active_profile)
-            return {
+
+            # Level 2 phase 2: body bbox query + overlap check (runs after End() so
+            # the body is in its current state; uses the extents captured in phase 1).
+            _placement_warning = None
+            if _sketch_local_bbox is not None:
+                try:
+                    from .query import QueryManager
+                    _bbox = QueryManager(self.doc_manager).get_bounding_box()
+                    if "error" not in _bbox:
+                        _lx0, _lx1, _ly0, _ly1 = _sketch_local_bbox
+                        _bmin, _bmax = _bbox["min"], _bbox["max"]
+                        _pi = self.active_plane_index or 1
+                        # Map local sketch bbox to world bbox and check 2D overlap
+                        # per PLANE_AXIS_MAP in constants.py
+                        if _pi == 1:    # Top: local X→world X, local Y→world Y
+                            _swmin = [_lx0, _ly0, _bmin[2]]
+                            _swmax = [_lx1, _ly1, _bmax[2]]
+                            _overlaps = (
+                                _lx0 <= _bmax[0] and _bmin[0] <= _lx1
+                                and _ly0 <= _bmax[1] and _bmin[1] <= _ly1
+                            )
+                        elif _pi == 2:  # Right: local X→world Y, local Y→world Z
+                            _swmin = [_bmin[0], _lx0, _ly0]
+                            _swmax = [_bmax[0], _lx1, _ly1]
+                            _overlaps = (
+                                _lx0 <= _bmax[1] and _bmin[1] <= _lx1
+                                and _ly0 <= _bmax[2] and _bmin[2] <= _ly1
+                            )
+                        else:           # Front: local X→world X, local Y→world Z
+                            _swmin = [_lx0, _bmin[1], _ly0]
+                            _swmax = [_lx1, _bmax[1], _ly1]
+                            _overlaps = (
+                                _lx0 <= _bmax[0] and _bmin[0] <= _lx1
+                                and _ly0 <= _bmax[2] and _bmin[2] <= _ly1
+                            )
+                        if not _overlaps:
+                            _placement_warning = (
+                                "Sketch profiles may not intersect the existing body. "
+                                f"Body bbox: min={_bmin} max={_bmax}. "
+                                f"Sketch world bbox (estimated): min={_swmin} max={_swmax}. "
+                                "A cutout will likely fail with 'no material removal'. "
+                                "Verify sketch coordinates are within body bounds before proceeding."
+                            )
+                except Exception:
+                    pass  # never fail sketch close if placement validation errors
+
+            response = {
                 "status": "closed",
                 "sketch_id": (
                     self.active_sketch.Name if hasattr(self.active_sketch, "Name") else "sketch"
@@ -875,6 +960,9 @@ class SketchManager:
                 "has_revolution_axis": self.active_refaxis is not None,
                 "accumulated_profiles": len(self.accumulated_profiles),
             }
+            if _placement_warning:
+                response["placement_warning"] = _placement_warning
+            return response
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
@@ -923,6 +1011,10 @@ class SketchManager:
     def get_active_sketch(self):
         """Get the active sketch object"""
         return self.active_profile
+
+    def get_active_plane_index(self) -> int | None:
+        """Get the plane index (1=Top, 2=Right, 3=Front) of the active sketch."""
+        return self.active_plane_index
 
     def get_active_refaxis(self):
         """Get the active reference axis for revolve operations"""

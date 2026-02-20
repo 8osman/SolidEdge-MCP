@@ -64,17 +64,53 @@ def create_revolve_thin_wall(angle: float, wall_thickness: float) -> dict:
 
 
 def create_extruded_cutout(distance: float, direction: str = "Normal") -> dict:
-    """Create an extruded cutout (removes material)."""
+    """Create an extruded cutout (removes material) to a finite depth.
+
+    direction: 'Normal' cuts in the sketch plane's outward-normal direction.
+               'Reverse' cuts in the opposite direction.
+    WARNING: On the Front plane (plane_index=3), 'Normal' cuts toward world -Y
+    and 'Reverse' cuts toward world +Y — the opposite of create_extrude behaviour.
+    Cutout tools do not auto-swap direction. Call twice with both directions to
+    remove material from both sides. Response includes a 'warning' key when a
+    Front plane sketch is active.
+    """
     return feature_manager.create_extruded_cutout(distance, direction)
 
 
-def create_extruded_cutout_through_all(direction: str = "Normal") -> dict:
-    """Create an extruded cutout through all material."""
+def create_extruded_cutout_through_all(direction: str = "Symmetric") -> dict:
+    """Create an extruded cutout through all material.
+
+    Default is 'Symmetric' — cuts both directions, guaranteeing a full
+    through-cut regardless of which plane the sketch is on.
+
+    direction: 'Symmetric' (default) cuts both directions; appears as two
+               pathfinder features because SE has no native symmetric API.
+               'Normal' cuts in the sketch plane's outward-normal direction only.
+               'Reverse' cuts in the opposite direction only.
+    WARNING: On the Front plane (plane_index=3), 'Normal' cuts toward world -Y
+    and 'Reverse' cuts toward world +Y — the opposite of create_extrude behaviour.
+    Cutout tools do not auto-swap direction. Response includes a 'warning' key
+    when direction='Normal' or 'Reverse' is used on a Front plane sketch.
+    NOTE: SE2026 does not support multiple disjoint closed profiles in a single
+    cutout. If you need multiple holes, create a separate sketch and cutout for
+    each one.
+    """
     return feature_manager.create_extruded_cutout_through_all(direction)
 
 
 def create_extruded_cutout_through_next(direction: str = "Normal") -> dict:
-    """Create an extruded cutout through the next face."""
+    """Create an extruded cutout to the next face encountered.
+
+    direction: 'Normal' cuts to the next face in the sketch plane's outward-normal
+               direction. 'Reverse' cuts to the next face in the opposite direction.
+               'Symmetric' cuts to the next face in both directions; appears as two
+               pathfinder features because SE has no native symmetric API.
+    WARNING: On the Front plane (plane_index=3), 'Normal' cuts toward world -Y
+    and 'Reverse' cuts toward world +Y — the opposite of create_extrude behaviour.
+    Cutout tools do not auto-swap direction. Use 'Symmetric' to guarantee a full
+    through-cut on any plane. Response includes a 'warning' key when direction=
+    'Normal' or 'Reverse' is used on a Front plane sketch.
+    """
     return feature_manager.create_extruded_cutout_through_next(direction)
 
 

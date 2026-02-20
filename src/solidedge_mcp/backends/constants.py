@@ -14,6 +14,29 @@ class RefPlaneConstants:
     seRefPlaneRight = 3  # Right/YZ plane
 
 
+# Standard Solid Edge 2026 reference-plane local→world axis mappings.
+# Verified by inspecting the sketch transform matrices at runtime.
+#
+#   plane_index  Name    local X     local Y     extrude normal (igRight)
+#   -----------  ------  ----------  ----------  ------------------------
+#   1            Top     world +X    world +Y    world +Z
+#   2            Right   world +Y    world +Z    world +X
+#   3            Front   world +X    world +Z    world -Y  ⚠️
+#
+# The Front plane's outward normal is world -Y (toward the viewer in SE's
+# default ISO orientation).  igRight therefore extrudes in the -Y direction,
+# which is the opposite of what users expect from direction="Normal".
+# create_extrude (and related methods) swap igRight ↔ igLeft automatically
+# when the active sketch is on plane_index 3 so that "Normal" always extrudes
+# in the user-expected +Y direction.
+PLANE_AXIS_MAP = {
+    # plane_index: (local_x_world, local_y_world, normal_world)
+    1: ("world +X", "world +Y", "world +Z"),   # Top
+    2: ("world +Y", "world +Z", "world +X"),   # Right
+    3: ("world +X", "world +Z", "world -Y"),   # Front (normal is -Y)
+}
+
+
 class DocumentTypeConstants:
     """Document type constants (from type library)"""
 

@@ -18,8 +18,9 @@ from .constants import FaceQueryConstants, ModelingModeConstants
 class QueryManager:
     """Manages query and inspection operations"""
 
-    def __init__(self, document_manager):
+    def __init__(self, document_manager, sketch_manager=None):
         self.doc_manager = document_manager
+        self.sketch_manager = sketch_manager
 
     def _get_first_model(self):
         """Get the first model from the active document."""
@@ -117,6 +118,118 @@ class QueryManager:
                     "z": max_pt[2] - min_pt[2],
                 },
                 "units": "meters",
+            }
+        except Exception as e:
+            return {"error": str(e), "traceback": traceback.format_exc()}
+
+    def get_spatial_context(self) -> dict[str, Any]:
+        """
+        Return comprehensive spatial context for AI-assisted geometry creation.
+
+        Aggregates: body count, body bounding box and centring status, active sketch
+        plane info, plane-to-world axis mappings, and workflow guidance.  Call this
+        before sketching or creating cutout features when geometry already exists.
+
+        Returns:
+            Dict with active_bodies, body_bbox, body_centred_on_origin,
+            active_sketch_plane, plane_axis_map, workflow_guidance.
+        """
+        try:
+            doc = self.doc_manager.get_active_document()
+
+            # Active body count
+            try:
+                active_bodies = doc.Models.Count
+            except Exception:
+                active_bodies = 0
+
+            # Body bounding box (None if no bodies)
+            body_bbox = None
+            body_centred_on_origin = None
+            if active_bodies > 0:
+                try:
+                    _bbox = self.get_bounding_box()
+                    if "error" not in _bbox:
+                        mn, mx = _bbox["min"], _bbox["max"]
+                        centre = [
+                            (mn[0] + mx[0]) / 2,
+                            (mn[1] + mx[1]) / 2,
+                            (mn[2] + mx[2]) / 2,
+                        ]
+                        body_bbox = {
+                            "min": mn,
+                            "max": mx,
+                            "centre": centre,
+                            "dimensions": _bbox["dimensions"],
+                        }
+                        body_centred_on_origin = all(abs(c) < 0.001 for c in centre)
+                except Exception:
+                    pass
+
+            # Active sketch plane (None if no sketch open)
+            active_sketch_plane = None
+            if self.sketch_manager is not None:
+                try:
+                    _pi = self.sketch_manager.get_active_plane_index()
+                    if _pi is not None:
+                        active_sketch_plane = {
+                            "plane_index": _pi,
+                            "name": {1: "Top", 2: "Right", 3: "Front"}.get(
+                                _pi, f"Unknown({_pi})"
+                            ),
+                        }
+                except Exception:
+                    pass
+
+            return {
+                "active_bodies": active_bodies,
+                "body_bbox": body_bbox,
+                "body_centred_on_origin": body_centred_on_origin,
+                "active_sketch_plane": active_sketch_plane,
+                "plane_axis_map": {
+                    "Top_plane_1": {
+                        "local_x": "world_X",
+                        "local_y": "world_Y",
+                        "extrude_normal": "+Z",
+                        "note": "Identity mapping — sketch coords = world XY coords directly",
+                    },
+                    "Right_plane_2": {
+                        "local_x": "world_Y",
+                        "local_y": "world_Z",
+                        "extrude_normal": "+X",
+                        "note": "Sketch (x,y) maps to world (Y,Z)",
+                    },
+                    "Front_plane_3": {
+                        "local_x": "world_X",
+                        "local_y": "world_Z",
+                        "extrude_normal": "-Y",
+                        "note": (
+                            "Sketch (x,y) maps to world (X,Z). "
+                            "Use direction=Reverse for +Y extrude, Symmetric for cutouts"
+                        ),
+                    },
+                },
+                "workflow_guidance": {
+                    "before_sketching": (
+                        "Check body_bbox to ensure sketch coordinates will land inside the body. "
+                        "Remember sketch coords are LOCAL to the plane — use plane_axis_map "
+                        "to convert to world coords."
+                    ),
+                    "centring_geometry": (
+                        "To create geometry centred on the world origin, use "
+                        "create_extrude_symmetric rather than create_extrude, or offset "
+                        "your sketch profiles by the body centre."
+                    ),
+                    "cutout_placement": (
+                        "For cutouts, all sketch profiles must intersect the body. "
+                        "A profile outside the body will produce 'no material removal' "
+                        "error with no geometry created."
+                    ),
+                    "multi_profile_cutouts": (
+                        "SE2026 does not support multiple disjoint closed profiles in a "
+                        "single cutout sketch. Create one cutout per profile instead."
+                    ),
+                },
             }
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}

@@ -66,6 +66,25 @@ def get_bounding_box() -> dict:
     return query_manager.get_bounding_box()
 
 
+def get_spatial_context() -> dict:
+    """Get comprehensive spatial context for AI-assisted geometry creation.
+
+    CALL THIS before create_sketch / create_sketch_on_plane when geometry already
+    exists. Returns:
+      - body_bbox: world-space bounding box and centre of the current solid body
+      - body_centred_on_origin: True if body centre is within 1 mm of origin
+      - active_sketch_plane: current sketch plane index and name (if a sketch is open)
+      - plane_axis_map: how sketch local (x,y) coordinates map to world (X,Y,Z) for
+        each reference plane — critical for placing cutout profiles correctly
+      - workflow_guidance: plain-language rules for centring, cutout placement, and
+        multi-profile limitations
+
+    Use body_bbox + plane_axis_map together to verify that sketch coordinates will
+    land inside the existing body before committing a sketch for a cutout.
+    """
+    return query_manager.get_spatial_context()
+
+
 def get_body_faces() -> dict:
     """Get all faces on the body with geometry info."""
     return query_manager.get_body_faces()
@@ -620,6 +639,7 @@ def register(mcp):
     mcp.tool()(set_material_density)
     # Geometry / Topology
     mcp.tool()(get_bounding_box)
+    mcp.tool()(get_spatial_context)
     mcp.tool()(get_body_faces)
     mcp.tool()(get_body_edges)
     mcp.tool()(get_face_info)

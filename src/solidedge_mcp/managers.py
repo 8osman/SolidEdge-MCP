@@ -15,7 +15,7 @@ doc_manager = DocumentManager(connection)
 sketch_manager = SketchManager(doc_manager)
 feature_manager = FeatureManager(doc_manager, sketch_manager)
 assembly_manager = AssemblyManager(doc_manager, sketch_manager)
-query_manager = QueryManager(doc_manager)
+query_manager = QueryManager(doc_manager, sketch_manager)
 export_manager = ExportManager(doc_manager)
 view_manager = ViewModel(doc_manager)
 

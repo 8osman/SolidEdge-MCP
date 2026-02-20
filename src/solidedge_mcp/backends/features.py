@@ -103,6 +103,33 @@ class FeatureManager:
                     pass
             return None, {"error": str(e), "traceback": traceback.format_exc()}
 
+    def _append_bbox(self, response: dict) -> None:
+        """Append body bounding-box spatial info to a feature response (in-place, silent on error).
+
+        Adds: body_bbox, body_centred_on_origin, and (if off-centre) spatial_warning.
+        """
+        try:
+            from .query import QueryManager
+            bbox_data = QueryManager(self.doc_manager).get_bounding_box()
+            if "error" in bbox_data:
+                return
+            mn, mx = bbox_data["min"], bbox_data["max"]
+            centre = [
+                (mn[0] + mx[0]) / 2,
+                (mn[1] + mx[1]) / 2,
+                (mn[2] + mx[2]) / 2,
+            ]
+            centred = all(abs(c) < 0.001 for c in centre)
+            response["body_bbox"] = {"min": mn, "max": mx, "centre": centre}
+            response["body_centred_on_origin"] = centred
+            if not centred:
+                response["spatial_warning"] = (
+                    f"Body is not centred on origin. Centre is at {centre}. "
+                    "Use create_extrude_symmetric if centred geometry is intended."
+                )
+        except Exception:
+            pass  # never fail the feature creation if bbox query fails
+
     def create_extrude(
         self, distance: float, operation: str = "Add", direction: str = "Normal"
     ) -> dict[str, Any]:
@@ -130,6 +157,21 @@ class FeatureManager:
                 "Symmetric": DirectionConstants.igSymmetric,
             }
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
+            # The Front plane (plane_index=3) has its outward normal in the world -Y
+            # direction — see PLANE_AXIS_MAP in constants.py for the full table.
+            # igRight therefore extrudes toward -Y, which is opposite to user expectation
+            # for direction="Normal".  Swap igRight ↔ igLeft on the Front plane so that
+            # "Normal" → igLeft (+Y) and "Reverse" → igRight (-Y).
+            # igSymmetric is left unchanged (symmetric extrudes are unaffected by plane).
+            if (
+                self.sketch_manager.get_active_plane_index() == 3
+                and dir_const in (DirectionConstants.igRight, DirectionConstants.igLeft)
+            ):
+                dir_const = (
+                    DirectionConstants.igLeft
+                    if dir_const == DirectionConstants.igRight
+                    else DirectionConstants.igRight
+                )
             # Execute and validate the COM call
             if operation == "Add":
                 if models.Count >= 1:
@@ -177,13 +219,15 @@ class FeatureManager:
                 )
             if err:
                 return err
-            return {
+            response = {
                 "status": "created",
                 "type": "extrude",
                 "distance": distance,
                 "operation": operation,
                 "direction": direction,
             }
+            self._append_bbox(response)
+            return response
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
@@ -377,12 +421,17 @@ class FeatureManager:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
     def create_extrude_symmetric(self, distance: float) -> dict[str, Any]:
-        half = distance / 2.0
         """
         Create a symmetric extrusion (extends equally in both directions).
 
+        SE's igSymmetric COM call treats its distance argument as the *total*
+        span and halves it internally.  This wrapper multiplies distance by 2
+        before calling SE so the feature extends exactly ±distance from the
+        sketch plane (total bounding-box depth = 2 × distance).
+
         Args:
-            distance: Total extrusion distance in meters (half on each side)
+            distance: Half-distance in meters; feature spans ±distance from the
+                      sketch plane (total bounding-box depth = 2 × distance).
 
         Returns:
             Dict with status and feature info
@@ -396,32 +445,38 @@ class FeatureManager:
 
             models = doc.Models
 
+            # SE's igSymmetric call treats the distance parameter as the *total* span
+            # and halves it internally to get each side.  Multiply by 2 so the COM
+            # call receives the full span and SE produces ±distance on each side.
+            total_span = distance * 2
             if models.Count >= 1:
                 # SE 2026+: use collection-level API (same fix as create_extrude)
                 model = models.Item(1)
                 protrusions = model.ExtrudedProtrusions
                 result, err = self._perform_feature_call(
                     lambda: protrusions.AddFiniteMulti(
-                        1, (profile,), DirectionConstants.igSymmetric, distance
+                        1, (profile,), DirectionConstants.igSymmetric, total_span
                     ),
                     consumes_profiles=True,
                 )
             else:
                 result, err = self._perform_feature_call(
                     lambda: models.AddFiniteExtrudedProtrusion(
-                        1, (profile,), DirectionConstants.igSymmetric, distance
+                        1, (profile,), DirectionConstants.igSymmetric, total_span
                     ),
                     consumes_profiles=True,
                 )
             if err:
                 return err
 
-            return {
+            response = {
                 "status": "created",
                 "type": "extrude_symmetric",
                 "distance": distance,
                 "direction": "Symmetric",
             }
+            self._append_bbox(response)
+            return response
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
@@ -653,52 +708,54 @@ class FeatureManager:
         plane_index: int = 1,
     ) -> dict[str, Any]:
         """
-        Create a box primitive by center point and dimensions.
+        Create a box by center point and dimensions via sketch→extrude.
+
+        Draws a rectangle centred at (center_x, center_y) on the given plane and
+        extrudes by height in the plane-normal direction.  center_z is recorded in
+        the return value but is not applied as a plane offset (future work).
 
         Args:
             center_x, center_y, center_z: Center point coordinates (meters)
-            length: Length in meters (X direction)
-            width: Width in meters (Y direction)
-            height: Height in meters (Z direction)
-            plane_index: Reference plane (1=Top/XZ, 2=Front/XY, 3=Right/YZ)
+            length: Length in meters (sketch X direction)
+            width: Width in meters (sketch Y direction)
+            height: Extrusion depth in meters (plane normal direction)
+            plane_index: Reference plane (1=Top, 2=Right, 3=Front)
 
         Returns:
             Dict with status and box info
         """
         try:
-            doc = self.doc_manager.get_active_document()
-            models = doc.Models
-            top_plane = self._get_ref_plane(doc, plane_index)
+            plane_name = {1: "Top", 2: "Right", 3: "Front"}.get(plane_index, "Top")
 
-            # AddBoxByCenter: x, y, z, dWidth, dHeight, dAngle, dDepth, pPlane,
-            #                  ExtentSide, vbKeyPointExtent, pKeyPointObj, pKeyPointFlags
-            result, err = self._perform_feature_call(
-                lambda: models.AddBoxByCenter(
-                    center_x,
-                    center_y,
-                    center_z,
-                    length,  # dWidth
-                    width,  # dHeight
-                    0,  # dAngle (rotation)
-                    height,  # dDepth
-                    top_plane,  # pPlane
-                    DirectionConstants.igRight,  # ExtentSide
-                    False,  # vbKeyPointExtent
-                    None,  # pKeyPointObj
-                    0,  # pKeyPointFlags
-                ),
-                consumes_profiles=False,
-            )
-            if err:
-                return err
+            r = self.sketch_manager.create_sketch(plane_name)
+            if "error" in r:
+                return r
 
-            return {
+            x1 = center_x - length / 2.0
+            y1 = center_y - width / 2.0
+            x2 = center_x + length / 2.0
+            y2 = center_y + width / 2.0
+            r = self.sketch_manager.draw_rectangle(x1, y1, x2, y2)
+            if "error" in r:
+                return r
+
+            r = self.sketch_manager.close_sketch()
+            if "error" in r:
+                return r
+
+            r = self.create_extrude(height, operation="Add", direction="Normal")
+            if "error" in r:
+                return r
+
+            response = {
                 "status": "created",
                 "type": "box",
                 "method": "by_center",
                 "center": [center_x, center_y, center_z],
                 "dimensions": {"length": length, "width": width, "height": height},
             }
+            self._append_bbox(response)
+            return response
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
@@ -706,46 +763,41 @@ class FeatureManager:
         self, x1: float, y1: float, z1: float, x2: float, y2: float, z2: float, plane_index: int = 1
     ) -> dict[str, Any]:
         """
-        Create a box primitive by two opposite corners.
+        Create a box by two opposite corners via sketch→extrude.
+
+        Draws a rectangle from (x1, y1) to (x2, y2) on the sketch plane and
+        extrudes by abs(z2 - z1).  Falls back to abs(y2 - y1) when z coords match.
 
         Args:
             x1, y1, z1: First corner coordinates (meters)
             x2, y2, z2: Opposite corner coordinates (meters)
-            plane_index: Reference plane (1=Top/XZ, 2=Front/XY, 3=Right/YZ)
+            plane_index: Reference plane (1=Top, 2=Right, 3=Front)
 
         Returns:
             Dict with status and box info
         """
         try:
-            doc = self.doc_manager.get_active_document()
-            models = doc.Models
-            top_plane = self._get_ref_plane(doc, plane_index)
+            depth = abs(z2 - z1) if abs(z2 - z1) > 1e-9 else abs(y2 - y1)
+            if depth < 1e-9:
+                depth = 0.01
 
-            # Compute depth from z difference
-            depth = abs(z2 - z1) if abs(z2 - z1) > 0 else abs(y2 - y1)
+            plane_name = {1: "Top", 2: "Right", 3: "Front"}.get(plane_index, "Top")
 
-            # AddBoxByTwoPoints: x1, y1, z1, x2, y2, z2, dAngle, dDepth, pPlane,
-            #                     ExtentSide, vbKeyPointExtent, pKeyPointObj, pKeyPointFlags
-            result, err = self._perform_feature_call(
-                lambda: models.AddBoxByTwoPoints(
-                    x1,
-                    y1,
-                    z1,
-                    x2,
-                    y2,
-                    z2,
-                    0,  # dAngle
-                    depth,  # dDepth
-                    top_plane,  # pPlane
-                    DirectionConstants.igRight,  # ExtentSide
-                    False,  # vbKeyPointExtent
-                    None,  # pKeyPointObj
-                    0,  # pKeyPointFlags
-                ),
-                consumes_profiles=False,
-            )
-            if err:
-                return err
+            r = self.sketch_manager.create_sketch(plane_name)
+            if "error" in r:
+                return r
+
+            r = self.sketch_manager.draw_rectangle(x1, y1, x2, y2)
+            if "error" in r:
+                return r
+
+            r = self.sketch_manager.close_sketch()
+            if "error" in r:
+                return r
+
+            r = self.create_extrude(depth, operation="Add", direction="Normal")
+            if "error" in r:
+                return r
 
             return {
                 "status": "created",
@@ -771,53 +823,49 @@ class FeatureManager:
         plane_index: int = 1,
     ) -> dict[str, Any]:
         """
-        Create a box primitive by three points.
+        Create a box by three points via sketch→extrude (axis-aligned approximation).
+
+        Derives the sketch rectangle from the 2D bounding box of the three points and
+        the extrusion depth from abs(z3 - z1).  A proper oriented-box implementation
+        requires computing the local coordinate frame from the three points (see TODO.md).
 
         Args:
             x1, y1, z1: First corner point (meters)
-            x2, y2, z2: Second point defining width (meters)
-            x3, y3, z3: Third point defining height (meters)
-            plane_index: Reference plane (1=Top/XZ, 2=Front/XY, 3=Right/YZ)
+            x2, y2, z2: Second point defining one dimension (meters)
+            x3, y3, z3: Third point defining depth / other dimension (meters)
+            plane_index: Reference plane (1=Top, 2=Right, 3=Front)
 
         Returns:
             Dict with status and box info
         """
         try:
-            doc = self.doc_manager.get_active_document()
-            models = doc.Models
-            top_plane = self._get_ref_plane(doc, plane_index)
+            # Axis-aligned bounding rectangle in the sketch plane
+            rx1 = min(x1, x2, x3)
+            ry1 = min(y1, y2, y3)
+            rx2 = max(x1, x2, x3)
+            ry2 = max(y1, y2, y3)
 
-            import math
+            depth = abs(z3 - z1) if abs(z3 - z1) > 1e-9 else abs(z2 - z1)
+            if depth < 1e-9:
+                depth = 0.01
 
-            # Calculate depth (height) from z-coordinates of the points
-            depth = abs(z3 - z1)
-            if depth == 0:
-                depth = 0.01  # fallback
+            plane_name = {1: "Top", 2: "Right", 3: "Front"}.get(plane_index, "Top")
 
-            # AddBoxByThreePoints: x1,y1,z1, x2,y2,z2, x3,y3,z3, dDepth, pPlane,
-            #                       ExtentSide, vbKeyPointExtent, pKeyPointObj, pKeyPointFlags
-            result, err = self._perform_feature_call(
-                lambda: models.AddBoxByThreePoints(
-                    x1,
-                    y1,
-                    z1,
-                    x2,
-                    y2,
-                    z2,
-                    x3,
-                    y3,
-                    z3,
-                    depth,  # dDepth
-                    top_plane,  # pPlane
-                    DirectionConstants.igRight,  # ExtentSide
-                    False,  # vbKeyPointExtent
-                    None,  # pKeyPointObj
-                    0,  # pKeyPointFlags
-                ),
-                consumes_profiles=False,
-            )
-            if err:
-                return err
+            r = self.sketch_manager.create_sketch(plane_name)
+            if "error" in r:
+                return r
+
+            r = self.sketch_manager.draw_rectangle(rx1, ry1, rx2, ry2)
+            if "error" in r:
+                return r
+
+            r = self.sketch_manager.close_sketch()
+            if "error" in r:
+                return r
+
+            r = self.create_extrude(depth, operation="Add", direction="Normal")
+            if "error" in r:
+                return r
 
             return {
                 "status": "created",
@@ -826,6 +874,7 @@ class FeatureManager:
                 "point1": [x1, y1, z1],
                 "point2": [x2, y2, z2],
                 "point3": [x3, y3, z3],
+                "note": "Axis-aligned approximation; see TODO.md for oriented-box improvement.",
             }
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
@@ -840,50 +889,49 @@ class FeatureManager:
         plane_index: int = 1,
     ) -> dict[str, Any]:
         """
-        Create a cylinder primitive.
+        Create a cylinder via sketch→extrude.
+
+        Draws a circle at (base_center_x, base_center_y) with the given radius on the
+        sketch plane and extrudes it by height.  base_center_z is recorded in the return
+        value but is not applied as a plane offset (future work).
 
         Args:
             base_center_x, base_center_y, base_center_z: Base circle center (meters)
             radius: Cylinder radius (meters)
-            height: Cylinder height (meters)
-            plane_index: Reference plane (1=Top/XZ, 2=Front/XY, 3=Right/YZ)
+            height: Cylinder height / extrusion depth (meters)
+            plane_index: Reference plane (1=Top, 2=Right, 3=Front)
 
         Returns:
             Dict with status and cylinder info
         """
         try:
-            doc = self.doc_manager.get_active_document()
-            models = doc.Models
-            top_plane = self._get_ref_plane(doc, plane_index)
+            plane_name = {1: "Top", 2: "Right", 3: "Front"}.get(plane_index, "Top")
 
-            # AddCylinderByCenterAndRadius: x, y, z, dRadius,
-            # dDepth, pPlane, ExtentSide, vbKeyPointExtent,
-            # pKeyPointObj, pKeyPointFlags
-            result, err = self._perform_feature_call(
-                lambda: models.AddCylinderByCenterAndRadius(
-                    base_center_x,
-                    base_center_y,
-                    base_center_z,
-                    radius,
-                    height,  # dDepth
-                    top_plane,  # pPlane
-                    DirectionConstants.igRight,  # ExtentSide
-                    False,  # vbKeyPointExtent
-                    None,  # pKeyPointObj
-                    0,  # pKeyPointFlags
-                ),
-                consumes_profiles=False,
-            )
-            if err:
-                return err
+            r = self.sketch_manager.create_sketch(plane_name)
+            if "error" in r:
+                return r
 
-            return {
+            r = self.sketch_manager.draw_circle(base_center_x, base_center_y, radius)
+            if "error" in r:
+                return r
+
+            r = self.sketch_manager.close_sketch()
+            if "error" in r:
+                return r
+
+            r = self.create_extrude(height, operation="Add", direction="Normal")
+            if "error" in r:
+                return r
+
+            response = {
                 "status": "created",
                 "type": "cylinder",
                 "base_center": [base_center_x, base_center_y, base_center_z],
                 "radius": radius,
                 "height": height,
             }
+            self._append_bbox(response)
+            return response
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
@@ -891,48 +939,65 @@ class FeatureManager:
         self, center_x: float, center_y: float, center_z: float, radius: float, plane_index: int = 1
     ) -> dict[str, Any]:
         """
-        Create a sphere primitive.
+        Create a sphere via sketch→revolve.
+
+        Draws a right-hand semicircle (arc from 270° to 90° through 0°) plus a closing
+        diameter line at center_x, sets the diameter as the axis of revolution, then
+        revolves 360°.  center_z is recorded in the return value but is not applied as
+        a plane offset (future work).
 
         Args:
             center_x, center_y, center_z: Sphere center coordinates (meters)
             radius: Sphere radius (meters)
-            plane_index: Reference plane (1=Top/XZ, 2=Front/XY, 3=Right/YZ)
+            plane_index: Reference plane (1=Top, 2=Right, 3=Front)
 
         Returns:
             Dict with status and sphere info
         """
         try:
-            doc = self.doc_manager.get_active_document()
-            models = doc.Models
-            top_plane = self._get_ref_plane(doc, plane_index)
+            plane_name = {1: "Top", 2: "Right", 3: "Front"}.get(plane_index, "Top")
 
-            # AddSphereByCenterAndRadius: x, y, z, dRadius,
-            # pPlane, ExtentSide, vbKeyPointExtent,
-            # vbCreateLiveSection, pKeyPointObj, pKeyPointFlags
-            result, err = self._perform_feature_call(
-                lambda: models.AddSphereByCenterAndRadius(
-                    center_x,
-                    center_y,
-                    center_z,
-                    radius,
-                    top_plane,  # pPlane
-                    DirectionConstants.igRight,  # ExtentSide
-                    False,  # vbKeyPointExtent
-                    False,  # vbCreateLiveSection
-                    None,  # pKeyPointObj
-                    0,  # pKeyPointFlags
-                ),
-                consumes_profiles=False,
+            r = self.sketch_manager.create_sketch(plane_name)
+            if "error" in r:
+                return r
+
+            # Semicircle: bottom (cx, cy-r) → right (cx+r, cy) → top (cx, cy+r)
+            r = self.sketch_manager.draw_arc(center_x, center_y, radius, 270, 90)
+            if "error" in r:
+                return r
+
+            # Closing diameter line (top → bottom along the axis side)
+            r = self.sketch_manager.draw_line(
+                center_x, center_y + radius,
+                center_x, center_y - radius,
             )
-            if err:
-                return err
+            if "error" in r:
+                return r
 
-            return {
+            # Construction axis along the diameter (bottom → top)
+            r = self.sketch_manager.set_axis_of_revolution(
+                center_x, center_y - radius,
+                center_x, center_y + radius,
+            )
+            if "error" in r:
+                return r
+
+            r = self.sketch_manager.close_sketch()
+            if "error" in r:
+                return r
+
+            r = self.create_revolve(angle=360, operation="Add")
+            if "error" in r:
+                return r
+
+            response = {
                 "status": "created",
                 "type": "sphere",
                 "center": [center_x, center_y, center_z],
                 "radius": radius,
             }
+            self._append_bbox(response)
+            return response
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
@@ -2229,6 +2294,14 @@ class FeatureManager:
         Uses model.ExtrudedCutouts.AddFiniteMulti(NumProfiles, ProfileArray, PlaneSide, Depth).
         Requires an existing base feature and a closed sketch profile.
 
+        Direction semantics
+        -------------------
+        "Normal"  — cuts in the sketch plane's outward-normal direction (igRight).
+                    On the Front plane SE's internal normal is -Y, so "Normal"
+                    cuts toward world -Y.
+        "Reverse" — cuts in the opposite direction (igLeft).  On the Front plane
+                    this cuts toward world +Y.
+
         Args:
             distance: Cutout depth in meters
             direction: 'Normal' or 'Reverse'
@@ -2254,6 +2327,25 @@ class FeatureManager:
                 "Reverse": DirectionConstants.igLeft,
             }
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
+            # DELIBERATE DESIGN DECISION — do not "fix" without reading this.
+            #
+            # create_extrude applies an auto-swap (igRight ↔ igLeft) for Front plane
+            # sketches (plane_index == 3) so that direction="Normal" reliably extrudes
+            # toward world +Y, matching user expectation.
+            #
+            # Cutout tools intentionally do NOT apply this swap. Reasons:
+            #   1. Transparency over cleverness — callers get raw SE direction behaviour,
+            #      which is documented in PLANE_AXIS_MAP (constants.py).
+            #   2. Applying the swap would silently break callers using direction="Reverse"
+            #      to cut toward world -Y on the Front plane.
+            #   3. The safe option for Front plane cutouts is direction="Symmetric", which
+            #      cuts both ways and is immune to this axis quirk entirely.
+            #
+            # If you want to apply the auto-swap to cutouts for consistency with extrude,
+            # add the same three-line swap block from create_extrude here. Document it as
+            # a breaking change and bump the minor version.
+            #
+            # See also: TODO.md "Known Limitations" section.
 
             cutouts = model.ExtrudedCutouts
             result, err = self._perform_feature_call(
@@ -2263,24 +2355,48 @@ class FeatureManager:
             if err:
                 return err
 
-            return {
+            response = {
                 "status": "created",
                 "type": "extruded_cutout",
                 "distance": distance,
                 "direction": direction,
             }
+            if self.sketch_manager.get_active_plane_index() == 3:
+                _world_dir = "world -Y" if direction == "Normal" else "world +Y"
+                response["warning"] = (
+                    f"Front plane cutout used direction='{direction}' ({_world_dir} only). "
+                    "Unlike create_extrude, cutout tools do not auto-swap direction on the "
+                    "Front plane. Use direction='Reverse' to cut the other side."
+                )
+            self._append_bbox(response)
+            return response
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
-    def create_extruded_cutout_through_all(self, direction: str = "Normal") -> dict[str, Any]:
+    def create_extruded_cutout_through_all(self, direction: str = "Symmetric") -> dict[str, Any]:
         """
         Create an extruded cutout that goes through the entire part.
 
         Uses model.ExtrudedCutouts.AddThroughAllMulti(NumProfiles, ProfileArray, PlaneSide).
         Requires an existing base feature and a closed sketch profile.
 
+        Direction semantics
+        -------------------
+        "Normal"   — cuts in the sketch plane's outward-normal direction only
+                     (igRight).  On the Front plane SE's internal normal is -Y,
+                     so "Normal" cuts toward -Y, leaving the +Y side uncut.
+        "Reverse"  — cuts in the opposite direction only (igLeft).  On the
+                     Front plane this cuts toward +Y.
+        "Symmetric" — cuts through all in *both* directions.  Implemented as
+                     two sequential through-all cuts (one igRight, one igLeft)
+                     because SE has no native symmetric through-all COM API.
+                     The feature therefore appears as two items in the
+                     pathfinder tree rather than one (see TODO.md).
+
+        For the safest result on any plane use direction="Symmetric".
+
         Args:
-            direction: 'Normal' or 'Reverse'
+            direction: 'Normal', 'Reverse', or 'Symmetric' (default 'Symmetric')
 
         Returns:
             Dict with status and cutout info
@@ -2297,26 +2413,69 @@ class FeatureManager:
                 return {"error": "No base feature exists. Create a base feature first."}
 
             model = models.Item(1)
-
-            direction_map = {
-                "Normal": DirectionConstants.igRight,
-                "Reverse": DirectionConstants.igLeft,
-            }
-            dir_const = direction_map.get(direction, DirectionConstants.igRight)
-
             cutouts = model.ExtrudedCutouts
-            result, err = self._perform_feature_call(
-                lambda: cutouts.AddThroughAllMulti(1, (profile,), dir_const),
-                consumes_profiles=True,
-            )
-            if err:
-                return err
 
-            return {
+            if direction == "Symmetric":
+                # Two sequential through-all cuts — one per direction.
+                # consumes_profiles=False on the first pass keeps active_profile
+                # live so the same COM object can be reused for the second pass.
+                result, err = self._perform_feature_call(
+                    lambda: cutouts.AddThroughAllMulti(1, (profile,), DirectionConstants.igRight),
+                    consumes_profiles=False,
+                )
+                if err:
+                    return err
+                result, err = self._perform_feature_call(
+                    lambda: cutouts.AddThroughAllMulti(1, (profile,), DirectionConstants.igLeft),
+                    consumes_profiles=True,
+                )
+                if err:
+                    return err
+            else:
+                direction_map = {
+                    "Normal": DirectionConstants.igRight,
+                    "Reverse": DirectionConstants.igLeft,
+                }
+                dir_const = direction_map.get(direction, DirectionConstants.igRight)
+                # DELIBERATE DESIGN DECISION — do not "fix" without reading this.
+                #
+                # create_extrude applies an auto-swap (igRight ↔ igLeft) for Front plane
+                # sketches (plane_index == 3) so that direction="Normal" reliably extrudes
+                # toward world +Y, matching user expectation.
+                #
+                # Cutout tools intentionally do NOT apply this swap. Reasons:
+                #   1. Transparency over cleverness — callers get raw SE direction behaviour,
+                #      which is documented in PLANE_AXIS_MAP (constants.py).
+                #   2. Applying the swap would silently break callers using direction="Reverse"
+                #      to cut toward world -Y on the Front plane.
+                #   3. The safe option for Front plane cutouts is direction="Symmetric", which
+                #      cuts both ways and is immune to this axis quirk entirely.
+                #
+                # If you want to apply the auto-swap to cutouts for consistency with extrude,
+                # add the same three-line swap block from create_extrude here. Document it as
+                # a breaking change and bump the minor version.
+                #
+                # See also: TODO.md "Known Limitations" section.
+                result, err = self._perform_feature_call(
+                    lambda: cutouts.AddThroughAllMulti(1, (profile,), dir_const),
+                    consumes_profiles=True,
+                )
+                if err:
+                    return err
+
+            response = {
                 "status": "created",
                 "type": "extruded_cutout_through_all",
                 "direction": direction,
             }
+            if direction in ("Normal", "Reverse") and self.sketch_manager.get_active_plane_index() == 3:
+                _world_dir = "world -Y" if direction == "Normal" else "world +Y"
+                response["warning"] = (
+                    f"Front plane cutout used direction='{direction}' ({_world_dir} only). "
+                    "If you need a full through-cut, use direction='Symmetric'."
+                )
+            self._append_bbox(response)
+            return response
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
@@ -5193,18 +5352,17 @@ class FeatureManager:
         plane_index: int = 1,
     ) -> dict[str, Any]:
         """
-        Create a cylindrical cutout (boolean subtract) primitive.
+        Create a cylindrical cutout via sketch→extruded cutout.
 
-        Uses CylinderFeatures.AddCutoutByCenterAndRadius.
+        Draws a circle at (center_x, center_y) with the given radius on the sketch
+        plane and removes material by extruding the profile into the existing body.
         Requires an existing base feature to cut from.
-        Type library: AddCutoutByCenterAndRadius(x, y, z, dRadius, dDepth, pPlane,
-        ProfileSide, ExtentSide, vbKeyPointExtent, pKeyPointObj, pKeyPointFlags).
 
         Args:
             center_x, center_y, center_z: Center coordinates (meters)
             radius: Cylinder radius (meters)
-            height: Cylinder/cut depth (meters)
-            plane_index: Reference plane (1=Top/XZ, 2=Front/XY, 3=Right/YZ)
+            height: Cut depth (meters)
+            plane_index: Reference plane (1=Top, 2=Right, 3=Front)
 
         Returns:
             Dict with status and cutout info
@@ -5216,34 +5374,23 @@ class FeatureManager:
             if models.Count == 0:
                 return {"error": "No base feature exists. Create a base feature first."}
 
-            top_plane = self._get_ref_plane(doc, plane_index)
+            plane_name = {1: "Top", 2: "Right", 3: "Front"}.get(plane_index, "Top")
 
-            # CylinderFeatures collection - try on Models first, then model
-            cyl_features = models.CylinderFeatures if hasattr(models, "CylinderFeatures") else None
-            if cyl_features is None:
-                model = models.Item(1)
-                cyl_features = (
-                    model.CylinderFeatures if hasattr(model, "CylinderFeatures") else None
-                )
+            r = self.sketch_manager.create_sketch(plane_name)
+            if "error" in r:
+                return r
 
-            if cyl_features is None:
-                return {"error": "CylinderFeatures collection not accessible"}
+            r = self.sketch_manager.draw_circle(center_x, center_y, radius)
+            if "error" in r:
+                return r
 
-            _feature = cyl_features.AddCutoutByCenterAndRadius(
-                center_x,
-                center_y,
-                center_z,
-                radius,
-                height,  # dDepth
-                top_plane,  # pPlane
-                DirectionConstants.igLeft,  # ProfileSide (igLeft = inside profile = hole)
-                DirectionConstants.igRight,  # ExtentSide
-                False,  # vbKeyPointExtent
-                None,  # pKeyPointObj
-                0,  # pKeyPointFlags
-            )
-            if _feature is None:
-                return {"error": "Feature creation failed: COM returned None"}
+            r = self.sketch_manager.close_sketch()
+            if "error" in r:
+                return r
+
+            r = self.create_extruded_cutout(height, direction="Normal")
+            if "error" in r:
+                return r
 
             return {
                 "status": "created",
@@ -5263,18 +5410,16 @@ class FeatureManager:
         self, center_x: float, center_y: float, center_z: float, radius: float, plane_index: int = 1
     ) -> dict[str, Any]:
         """
-        Create a spherical cutout (boolean subtract) primitive.
+        Create a spherical cutout via sketch→revolved cutout.
 
-        Uses SphereFeatures.AddCutoutByCenterAndRadius.
+        Draws a right-hand semicircle profile (arc 270°→90° + closing diameter line)
+        with an axis of revolution along the diameter, then revolves 360° as a cutout.
         Requires an existing base feature to cut from.
-        Type library: AddCutoutByCenterAndRadius(x, y, z, dRadius, pPlane,
-        ProfileSide, ExtentSide, vbKeyPointExtent, vbCreateLiveSection,
-        pKeyPointObj, pKeyPointFlags).
 
         Args:
             center_x, center_y, center_z: Sphere center coordinates (meters)
             radius: Sphere radius (meters)
-            plane_index: Reference plane (1=Top/XZ, 2=Front/XY, 3=Right/YZ)
+            plane_index: Reference plane (1=Top, 2=Right, 3=Front)
 
         Returns:
             Dict with status and cutout info
@@ -5286,32 +5431,40 @@ class FeatureManager:
             if models.Count == 0:
                 return {"error": "No base feature exists. Create a base feature first."}
 
-            top_plane = self._get_ref_plane(doc, plane_index)
+            plane_name = {1: "Top", 2: "Right", 3: "Front"}.get(plane_index, "Top")
 
-            # SphereFeatures collection
-            sph_features = models.SphereFeatures if hasattr(models, "SphereFeatures") else None
-            if sph_features is None:
-                model = models.Item(1)
-                sph_features = model.SphereFeatures if hasattr(model, "SphereFeatures") else None
+            r = self.sketch_manager.create_sketch(plane_name)
+            if "error" in r:
+                return r
 
-            if sph_features is None:
-                return {"error": "SphereFeatures collection not accessible"}
+            # Semicircle: bottom (cx, cy-r) → right (cx+r, cy) → top (cx, cy+r)
+            r = self.sketch_manager.draw_arc(center_x, center_y, radius, 270, 90)
+            if "error" in r:
+                return r
 
-            _feature = sph_features.AddCutoutByCenterAndRadius(
-                center_x,
-                center_y,
-                center_z,
-                radius,
-                top_plane,  # pPlane
-                DirectionConstants.igLeft,  # ProfileSide (igLeft = inside profile = hole)
-                DirectionConstants.igRight,  # ExtentSide
-                False,  # vbKeyPointExtent
-                False,  # vbCreateLiveSection
-                None,  # pKeyPointObj
-                0,  # pKeyPointFlags
+            # Closing diameter line (top → bottom along the axis side)
+            r = self.sketch_manager.draw_line(
+                center_x, center_y + radius,
+                center_x, center_y - radius,
             )
-            if _feature is None:
-                return {"error": "Feature creation failed: COM returned None"}
+            if "error" in r:
+                return r
+
+            # Construction axis along the diameter (bottom → top)
+            r = self.sketch_manager.set_axis_of_revolution(
+                center_x, center_y - radius,
+                center_x, center_y + radius,
+            )
+            if "error" in r:
+                return r
+
+            r = self.sketch_manager.close_sketch()
+            if "error" in r:
+                return r
+
+            r = self.create_revolved_cutout(angle=360)
+            if "error" in r:
+                return r
 
             return {
                 "status": "created",
@@ -5331,10 +5484,25 @@ class FeatureManager:
         Create an extruded cutout that cuts to the next face encountered.
 
         Uses model.ExtrudedCutouts.AddThroughNextMulti(NumProfiles, ProfileArray, PlaneSide).
-        Cuts from the sketch plane to the first face it meets.
+        Cuts from the sketch plane to the first face it meets in each direction.
+
+        Direction semantics
+        -------------------
+        "Normal"    — cuts toward the sketch plane's outward-normal direction only
+                      (igRight).  On the Front plane SE's internal normal is -Y,
+                      so "Normal" cuts toward -Y, leaving the +Y side uncut.
+        "Reverse"   — cuts in the opposite direction only (igLeft).  On the
+                      Front plane this cuts toward +Y.
+        "Symmetric" — cuts to the next face in *both* directions.  Implemented
+                      as two sequential through-next cuts (one igRight, one igLeft)
+                      because SE has no native symmetric through-next COM API.
+                      The feature therefore appears as two items in the
+                      pathfinder tree rather than one (see TODO.md).
+
+        For the safest result on any plane use direction="Symmetric".
 
         Args:
-            direction: 'Normal' or 'Reverse'
+            direction: 'Normal', 'Reverse', or 'Symmetric' (default 'Normal')
 
         Returns:
             Dict with status and cutout info
@@ -5351,25 +5519,69 @@ class FeatureManager:
                 return {"error": "No base feature exists. Create a base feature first."}
 
             model = models.Item(1)
-
-            direction_map = {
-                "Normal": DirectionConstants.igRight,
-                "Reverse": DirectionConstants.igLeft,
-            }
-            dir_const = direction_map.get(direction, DirectionConstants.igRight)
-
             cutouts = model.ExtrudedCutouts
-            _feature = cutouts.AddThroughNextMulti(1, (profile,), dir_const)
-            if _feature is None:
-                return {"error": "Feature creation failed: COM returned None"}
 
-            self.sketch_manager.clear_accumulated_profiles()
+            if direction == "Symmetric":
+                # Two sequential through-next cuts — one per direction.
+                # consumes_profiles=False on the first pass keeps active_profile
+                # live so the same COM object can be reused for the second pass.
+                result, err = self._perform_feature_call(
+                    lambda: cutouts.AddThroughNextMulti(1, (profile,), DirectionConstants.igRight),
+                    consumes_profiles=False,
+                )
+                if err:
+                    return err
+                result, err = self._perform_feature_call(
+                    lambda: cutouts.AddThroughNextMulti(1, (profile,), DirectionConstants.igLeft),
+                    consumes_profiles=True,
+                )
+                if err:
+                    return err
+            else:
+                direction_map = {
+                    "Normal": DirectionConstants.igRight,
+                    "Reverse": DirectionConstants.igLeft,
+                }
+                dir_const = direction_map.get(direction, DirectionConstants.igRight)
+                # DELIBERATE DESIGN DECISION — do not "fix" without reading this.
+                #
+                # create_extrude applies an auto-swap (igRight ↔ igLeft) for Front plane
+                # sketches (plane_index == 3) so that direction="Normal" reliably extrudes
+                # toward world +Y, matching user expectation.
+                #
+                # Cutout tools intentionally do NOT apply this swap. Reasons:
+                #   1. Transparency over cleverness — callers get raw SE direction behaviour,
+                #      which is documented in PLANE_AXIS_MAP (constants.py).
+                #   2. Applying the swap would silently break callers using direction="Reverse"
+                #      to cut toward world -Y on the Front plane.
+                #   3. The safe option for Front plane cutouts is direction="Symmetric", which
+                #      cuts both ways and is immune to this axis quirk entirely.
+                #
+                # If you want to apply the auto-swap to cutouts for consistency with extrude,
+                # add the same three-line swap block from create_extrude here. Document it as
+                # a breaking change and bump the minor version.
+                #
+                # See also: TODO.md "Known Limitations" section.
+                result, err = self._perform_feature_call(
+                    lambda: cutouts.AddThroughNextMulti(1, (profile,), dir_const),
+                    consumes_profiles=True,
+                )
+                if err:
+                    return err
 
-            return {
+            response = {
                 "status": "created",
                 "type": "extruded_cutout_through_next",
                 "direction": direction,
             }
+            if direction in ("Normal", "Reverse") and self.sketch_manager.get_active_plane_index() == 3:
+                _world_dir = "world -Y" if direction == "Normal" else "world +Y"
+                response["warning"] = (
+                    f"Front plane cutout used direction='{direction}' ({_world_dir} only). "
+                    "If you need a full through-cut, use direction='Symmetric'."
+                )
+            self._append_bbox(response)
+            return response
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
