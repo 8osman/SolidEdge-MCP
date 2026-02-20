@@ -107,34 +107,22 @@ class FeatureManager:
         self, distance: float, operation: str = "Add", direction: str = "Normal"
     ) -> dict[str, Any]:
         """
-        Create an extrusion feature from the active sketch profile.
-
+            Create an extrusion feature from the active sketch profile.
         Args:
             distance: Extrusion distance in meters
             operation: 'Add', 'Cut', or 'Intersect'
             direction: 'Normal', 'Reverse', or 'Symmetric'
-
-        Returns:
+         Returns:
             Dict with status and feature info
         """
         try:
             doc = self.doc_manager.get_active_document()
             profile = self.sketch_manager.get_active_sketch()
-
+            
             if not profile:
                 return {"error": "No active sketch profile. Create and close a sketch first"}
-
             # Get the models collection
             models = doc.Models
-
-            # Map operation string to constant
-            operation_map = {
-                "Add": FeatureOperationConstants.igFeatureAdd,
-                "Cut": FeatureOperationConstants.igFeatureCut,
-                "Intersect": FeatureOperationConstants.igFeatureIntersect,
-            }
-            operation_const = operation_map.get(operation, FeatureOperationConstants.igFeatureAdd)
-
             # Map direction string to constant
             direction_map = {
                 "Normal": DirectionConstants.igRight,
@@ -142,17 +130,45 @@ class FeatureManager:
                 "Symmetric": DirectionConstants.igSymmetric,
             }
             dir_const = direction_map.get(direction, DirectionConstants.igRight)
-
             # Execute and validate the COM call
             if operation == "Add":
-                result, err = self._perform_feature_call(
-                    lambda: models.AddFiniteExtrudedProtrusion(1, (profile,), dir_const, distance),
-                    consumes_profiles=True,
-                )
+                if models.Count >= 1:
+                    # SE 2026 with pre-existing body
+                    model = models.Item(1)
+                    protrusions = model.ExtrudedProtrusions
+                    result, err = self._perform_feature_call(
+                        lambda: protrusions.AddFiniteMulti(1, (profile,), dir_const, distance),
+                        consumes_profiles=True,
+                    )
+                else:
+                    # Try legacy first (SE 2024)
+                    result, err = self._perform_feature_call(
+                        lambda: models.AddFiniteExtrudedProtrusion(1, (profile,), dir_const, distance),
+                        consumes_profiles=True,
+                    )
+                    # If legacy failed, try SE 2026 path with fresh profile from Sketches
+                    if err:
+                        try:
+                            doc_sketches = doc.Sketches
+                            sketch = doc_sketches.Item(1)
+                            sketch_profile = sketch.Profile
+                            result, err = self._perform_feature_call(
+                                lambda: models.AddFiniteExtrudedProtrusion(1, (sketch_profile,), dir_const, distance),
+                                consumes_profiles=True,
+                            )
+                        except Exception as e2:
+                            err = {"error": f"SE 2026 fallback also failed: {e2}",
+                                   "traceback": traceback.format_exc()}
             else:
                 # For Cut and Intersect, use ExtrudedCutouts
                 if models.Count == 0:
-                    return {"error": "No base feature exists. Create a base feature first."}
+                    return {
+                        "error": "No base feature exists. Create a base feature first.",
+                        "debug_operation": repr(operation),
+                        "debug_operation_eq_Add": operation == "Add",
+                        "debug_profile": repr(type(profile)),
+                        "debug_models_count": models.Count,
+                }
                 model = models.Item(1)
                 cutouts = model.ExtrudedCutouts
                 result, err = self._perform_feature_call(
@@ -161,7 +177,6 @@ class FeatureManager:
                 )
             if err:
                 return err
-
             return {
                 "status": "created",
                 "type": "extrude",
@@ -362,6 +377,7 @@ class FeatureManager:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
     def create_extrude_symmetric(self, distance: float) -> dict[str, Any]:
+        half = distance / 2.0
         """
         Create a symmetric extrusion (extends equally in both directions).
 
@@ -380,12 +396,23 @@ class FeatureManager:
 
             models = doc.Models
 
-            result, err = self._perform_feature_call(
-                lambda: models.AddFiniteExtrudedProtrusion(
-                    1, (profile,), DirectionConstants.igSymmetric, distance
-                ),
-                consumes_profiles=True,
-            )
+            if models.Count >= 1:
+                # SE 2026+: use collection-level API (same fix as create_extrude)
+                model = models.Item(1)
+                protrusions = model.ExtrudedProtrusions
+                result, err = self._perform_feature_call(
+                    lambda: protrusions.AddFiniteMulti(
+                        1, (profile,), DirectionConstants.igSymmetric, distance
+                    ),
+                    consumes_profiles=True,
+                )
+            else:
+                result, err = self._perform_feature_call(
+                    lambda: models.AddFiniteExtrudedProtrusion(
+                        1, (profile,), DirectionConstants.igSymmetric, distance
+                    ),
+                    consumes_profiles=True,
+                )
             if err:
                 return err
 

@@ -7,7 +7,7 @@ from solidedge_mcp.managers import diagnose_feature, feature_manager
 
 def create_extrude(distance: float, direction: str = "Normal") -> dict:
     """Create an extruded protrusion from the active sketch profile."""
-    return feature_manager.create_extrude(distance, direction)
+    return feature_manager.create_extrude(distance=distance, operation="Add", direction=direction)
 
 
 def create_extrude_infinite(direction: str = "Normal") -> dict:
@@ -37,7 +37,7 @@ def create_extrude_thin_wall(
 
 def create_revolve(angle: float = 360.0) -> dict:
     """Create a revolved protrusion around the set axis."""
-    return feature_manager.create_revolve(angle)
+    return feature_manager.create_revolve(angle=angle, operation="Add")
 
 
 def create_revolve_finite(angle: float, axis_type: str = "CenterLine") -> dict:

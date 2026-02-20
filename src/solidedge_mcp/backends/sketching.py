@@ -6,6 +6,7 @@ Handles creating and manipulating 2D sketches.
 
 import contextlib
 import math
+import profile
 import traceback
 from typing import Any
 
@@ -34,15 +35,12 @@ class SketchManager:
         """
         try:
             doc = self.doc_manager.get_active_document()
-
-            # Get reference planes (Part uses RefPlanes; Assembly uses AsmRefPlanes)
             ref_planes = self._get_ref_planes(doc)
 
-            # Map plane names to indices
             plane_map = {
-                "Top": 1,  # XY plane (top view)
-                "Right": 2,  # YZ plane (right view)
-                "Front": 3,  # XZ plane (front view)
+                "Top": 1,
+                "Right": 2,
+                "Front": 3,
                 "XY": 1,
                 "YZ": 2,
                 "XZ": 3,
@@ -52,37 +50,37 @@ class SketchManager:
             if plane_index is None:
                 return {
                     "error": f"Invalid plane: {plane}. "
-                    "Use 'Top', 'Front', 'Right', "
-                    "'XY', 'XZ', or 'YZ'"
+                    "Use 'Top', 'Front', 'Right', 'XY', 'XZ', or 'YZ'"
                 }
 
             ref_plane = ref_planes.Item(plane_index)
-
-            # NEW: Get plane coordinate info BEFORE creating sketch
             plane_info = self._get_ref_plane_info(plane_index, ref_plane)
 
-            # Get ProfileSets collection
-            profile_sets = doc.ProfileSets
+            try:
+                # SE 2026+: use Sketches.AddByPlane — registers in pathfinder
+                sketch = doc.Sketches.AddByPlane(ref_plane)
+                profile = sketch.Profile
+                self.active_sketch = sketch
+                self.active_profile = profile
+                self.active_refaxis = None
+                sketch_id = sketch.Name if hasattr(sketch, "Name") else "sketch"
+            except Exception:
+                # Fallback for SE 2024 and earlier
+                profile_sets = doc.ProfileSets
+                profile_set = profile_sets.Add()
+                profiles = profile_set.Profiles
+                profile = profiles.Add(ref_plane)
+                self.active_sketch = profile_set
+                self.active_profile = profile
+                self.active_refaxis = None
+                sketch_id = profile_set.Name if hasattr(profile_set, "Name") else "sketch"
 
-            # Add a new profile set
-            profile_set = profile_sets.Add()
-
-            # Create a profile on the reference plane
-            profiles = profile_set.Profiles
-            profile = profiles.Add(ref_plane)
-
-            self.active_sketch = profile_set
-            self.active_profile = profile
-            self.active_refaxis = None  # Clear any previous axis
-
-            # NEW: Return with plane coordinate info
             response = {
                 "status": "created",
                 "plane": plane,
-                "sketch_id": profile_set.Name if hasattr(profile_set, "Name") else "sketch",
+                "sketch_id": sketch_id,
             }
-        
-            # Add plane info to response
+
             if plane_info.get("status") in ["success", "inferred"]:
                 response["plane_origin"] = plane_info["origin"]
                 response["plane_normal"] = plane_info["normal"]
@@ -92,60 +90,69 @@ class SketchManager:
             else:
                 response["plane_info_error"] = plane_info.get("error", "Unknown")
                 response["plane_note"] = "Plane info unavailable"
-        
+
             return response
-        
+
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
-
-    def create_sketch_on_plane_index(self, plane_index: int) -> dict[str, Any]:
-        """
-        Create a new sketch on a reference plane by its 1-based index.
-
-        Useful for sketching on user-created offset planes (index > 3).
-
-        Args:
-            plane_index: 1-based index of the reference plane
-
-        Returns:
-            Dict with status and sketch info
-        """
-        try:
-            doc = self.doc_manager.get_active_document()
-            ref_planes = self._get_ref_planes(doc)
-
-            if plane_index < 1 or plane_index > ref_planes.Count:
-                return {"error": f"Invalid plane index: {plane_index}. Count: {ref_planes.Count}"}
-
+    
+    def create_sketch_on_plane_index(self, plane_index: int) -> dict:
+        """Create sketch on reference plane by 1-based index."""
+        ref_planes = self.doc.RefPlanes
+        if plane_index < 1 or plane_index > ref_planes.Count:
+            raise ValueError(f"plane_index {plane_index} out of range (1–{ref_planes.Count})")
             ref_plane = ref_planes.Item(plane_index)
-
-            profile_sets = doc.ProfileSets
-            profile_set = profile_sets.Add()
-            profiles = profile_set.Profiles
-            profile = profiles.Add(ref_plane)
-
-            self.active_sketch = profile_set
-            self.active_profile = profile
-            self.active_refaxis = None
-            
-            # NEW: Auto-include plane info
-            plane_info = self._get_ref_plane_info(plane_index)
-        
-            response = {
-                "status": "created",
-                "plane_index": plane_index,
-                "sketch_id": profile_set.Name if hasattr(profile_set, "Name") else "sketch",
-            }
-            # Add plane info
-            if plane_info.get("status") in ["success", "inferred"]:
-                response["plane_origin"] = plane_info["origin"]
-                response["plane_normal"] = plane_info["normal"]
-                response["plane_name"] = plane_info.get("name", f"RefPlane_{plane_index}")
-        
-            return response
-        
-        except Exception as e:
-            return {"error": str(e), "traceback": traceback.format_exc()}
+            sketch = self.doc.Sketches.AddByPlane(ref_plane)
+            self._enter_sketch_mode(sketch)
+        return {"status": "ok", "plane_index": plane_index}
+    
+    def _enter_sketch_mode(self, profile, doc=None) -> dict:
+        """
+        Explicitly enter sketch edit mode on a profile object.
+        In SE 2024 and earlier, Profiles.Add(plane) automatically activates sketch
+        mode. In SE 2026+, the profile is created but sketch mode is not entered —
+        draw calls go nowhere and End() commits an empty profile.
+        Tries candidate activation methods in order. Also probes doc.Sketches and
+        returns full dir(profile) for diagnostics.
+        Returns dict with:
+        activation      – result string (see below)
+        profile_methods – sorted list of all public profile attributes
+        doc_has_sketches – whether doc.Sketches is accessible
+        activation values:
+        'not_needed'            – no candidate found (SE 2024 behaviour)
+        '<Method>() ok'         – method found and entered sketch mode
+        '<Method>() failed: …'  – method found but raised a COM error
+        """
+        # Gather full method list from profile for diagnostics
+        try:
+            profile_methods = sorted(m for m in dir(profile) if not m.startswith("_"))
+        except Exception:
+            profile_methods = []
+        # Check for doc.Sketches (possible SE 2026 alternative API path)
+        doc_has_sketches = False
+        if doc is not None:
+            try:
+                _ = doc.Sketches
+                doc_has_sketches = True
+            except Exception:
+                doc_has_sketches = False
+        # Broad set of candidates for entering sketch edit mode
+        activation = "not_needed"
+        for candidate in ("Open", "Activate", "Edit", "Begin", "Start", "Enter"):
+            try:
+                getattr(profile, candidate)()
+                activation = f"{candidate}() ok"
+                break
+            except AttributeError:
+                continue  # method absent in this SE version — try next
+            except Exception as e:
+                activation = f"{candidate}() failed: {e}"
+                break  # method exists but errored — don't try others
+        return {
+            "activation": activation,
+            "profile_methods": profile_methods,
+            "doc_has_sketches": doc_has_sketches,
+        }
 
     def draw_line(self, x1: float, y1: float, x2: float, y2: float) -> dict[str, Any]:
         """Draw a line in the active sketch"""
@@ -839,7 +846,6 @@ class SketchManager:
         try:
             if not self.active_profile:
                 return {"error": "No active sketch to close"}
-
             # Use correct End() flags based on whether axis of revolution is set
             if self.active_refaxis is not None:
                 # Revolve profile needs igProfileClosed | igProfileRefAxisRequired
@@ -847,15 +853,21 @@ class SketchManager:
             else:
                 # Standard profile (extrude, etc.)
                 end_flags = ProfileValidationConstants.igProfileDefault  # 0
-
-            # Validate the profile
-            with contextlib.suppress(BaseException):
+            # Commit the profile.  End() must succeed — if it raises, the
+            # geometry is not valid and any subsequent feature call will fail.
+            # Do NOT suppress: surface the error so the caller knows the sketch
+            # is broken rather than silently producing a bad profile.
+            try:
                 self.active_profile.End(end_flags)
-
+            except Exception as end_err:
+                return {
+                    "error": f"Profile.End() failed — sketch geometry is invalid or open: {end_err}",
+                    "end_flags": end_flags,
+                    "traceback": traceback.format_exc(),
+                }
             # Add to accumulated profiles for loft/sweep operations
             self.accumulated_profiles.append(self.active_profile)
-
-            result = {
+            return {
                 "status": "closed",
                 "sketch_id": (
                     self.active_sketch.Name if hasattr(self.active_sketch, "Name") else "sketch"
@@ -863,13 +875,6 @@ class SketchManager:
                 "has_revolution_axis": self.active_refaxis is not None,
                 "accumulated_profiles": len(self.accumulated_profiles),
             }
-
-            # NOTE: We keep active_profile valid after closing so it can be used
-            # by feature operations (extrude, revolve, etc.). The profile object
-            # remains valid even after End() is called.
-            # Only clear it when a new sketch is created.
-
-            return result
         except Exception as e:
             return {"error": str(e), "traceback": traceback.format_exc()}
 
